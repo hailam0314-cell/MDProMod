@@ -1,0 +1,45 @@
+{
+  "scope": "Load helpers and initialize ten representative card scripts; not a full duel or ruling test.",
+  "card_data_size": 76,
+  "helper_load_logs": [],
+  "helper_check_result": 1,
+  "helper_check_logs": [],
+  "api_probe_result": 0,
+  "api_probe_logs": [
+    {
+      "type": 1,
+      "message": "[string \"./script/mdpromod_probe.lua\"]:1: probe: RevealSelectDeckSequence missing"
+    }
+  ],
+  "sample_card_ids": [
+    55144522,
+    83764718,
+    14558127,
+    70368879,
+    44095762,
+    12580477,
+    44508094,
+    84013237,
+    23995346,
+    33396948
+  ],
+  "sample_initialization_logs": [],
+  "script_read_paths": [
+    "script/constant.lua",
+    "script/utility.lua",
+    "script/procedure.lua",
+    "script/c0.lua",
+    "script/mdpromod_probe.lua",
+    "script/mdpromod_helpers_probe.lua",
+    "script/c55144522.lua",
+    "script/c83764718.lua",
+    "script/c14558127.lua",
+    "script/c70368879.lua",
+    "script/c44095762.lua",
+    "script/c12580477.lua",
+    "script/c44508094.lua",
+    "script/c84013237.lua",
+    "script/c23995346.lua",
+    "script/c33396948.lua"
+  ]
+}

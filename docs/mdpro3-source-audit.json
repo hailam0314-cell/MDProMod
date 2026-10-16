@@ -1,0 +1,2867 @@
+{
+  "root": "D:\\MDProMod\\MDPro3-main\\MDPro3-main",
+  "version_label": "1.2.4",
+  "default_rule": 5,
+  "rule_name": "Master Rule 2020",
+  "bundled_lua": "5.4.6",
+  "database_rows": 13631,
+  "lua_files": 12501,
+  "card_script_files": 12498,
+  "effect_or_pendulum_rows_needing_initial_effect": 12664,
+  "rows_without_expected_script": [],
+  "coverage_scope": "Base zh-CN database and base script.zip only; aliases use this snapshot's interpreter rule; script presence does not prove correct effects.",
+  "database_schema": [
+    {
+      "cid": 0,
+      "name": "id",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "ot",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 2,
+      "name": "alias",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 3,
+      "name": "setcode",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 4,
+      "name": "type",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 5,
+      "name": "atk",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 6,
+      "name": "def",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 7,
+      "name": "level",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 8,
+      "name": "race",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 9,
+      "name": "attribute",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    },
+    {
+      "cid": 10,
+      "name": "category",
+      "type": "INTEGER",
+      "notnull": 0,
+      "default": null,
+      "pk": 0
+    }
+  ],
+  "core_license_file_present": false,
+  "native_core_binaries": [
+    "Assets\\Plugins\\YGO Classes\\libocgcore.so",
+    "Assets\\Plugins\\YGO Classes\\ocgcore.dll"
+  ],
+  "registered_lua_apis": {
+    "Duel": [
+      "Activate",
+      "AddCustomActivityCounter",
+      "AdjustAll",
+      "AdjustInstantly",
+      "AnnounceAttribute",
+      "AnnounceCard",
+      "AnnounceCoin",
+      "AnnounceLevel",
+      "AnnounceNumber",
+      "AnnounceRace",
+      "AnnounceType",
+      "BreakEffect",
+      "CalculateDamage",
+      "ChainAttack",
+      "ChangeAttackTarget",
+      "ChangeAttacker",
+      "ChangeBattleDamage",
+      "ChangeChainOperation",
+      "ChangePosition",
+      "ChangeTargetCard",
+      "ChangeTargetParam",
+      "ChangeTargetPlayer",
+      "CheckChainTarget",
+      "CheckChainUniqueness",
+      "CheckEvent",
+      "CheckLPCost",
+      "CheckLocation",
+      "CheckMustMaterial",
+      "CheckPhaseActivity",
+      "CheckReleaseGroup",
+      "CheckReleaseGroupEx",
+      "CheckRemoveOverlayCard",
+      "CheckSummonedCount",
+      "CheckSynchroMaterial",
+      "CheckTiming",
+      "CheckTribute",
+      "CheckTunerMaterial",
+      "CheckXyzMaterial",
+      "ClearOperationInfo",
+      "ClearTargetCard",
+      "ConfirmCards",
+      "ConfirmDecktop",
+      "ConfirmExtratop",
+      "CreateToken",
+      "Damage",
+      "Destroy",
+      "DisableSelfDestroyCheck",
+      "DisableShuffleCheck",
+      "DiscardDeck",
+      "DiscardHand",
+      "Draw",
+      "EnableGlobalFlag",
+      "Equip",
+      "EquipComplete",
+      "GetActivityCount",
+      "GetAttackTarget",
+      "GetAttacker",
+      "GetBattleDamage",
+      "GetBattleMonster",
+      "GetBattledCount",
+      "GetChainEvent",
+      "GetChainInfo",
+      "GetChainMaterial",
+      "GetCoinResult",
+      "GetControl",
+      "GetCounter",
+      "GetCurrentChain",
+      "GetCurrentPhase",
+      "GetCustomActivityCount",
+      "GetDecktopGroup",
+      "GetDiceResult",
+      "GetDrawCount",
+      "GetExtraTopGroup",
+      "GetFieldCard",
+      "GetFieldGroup",
+      "GetFieldGroupCount",
+      "GetFirstMatchingCard",
+      "GetFirstTarget",
+      "GetFlagEffect",
+      "GetFlagEffectLabel",
+      "GetFusionMaterial",
+      "GetLP",
+      "GetLastSelectHint",
+      "GetLinkedGroup",
+      "GetLinkedGroupCount",
+      "GetLinkedZone",
+      "GetLocationCount",
+      "GetLocationCountFromEx",
+      "GetMZoneCount",
+      "GetMatchingGroup",
+      "GetMatchingGroupCount",
+      "GetMustMaterial",
+      "GetOperatedGroup",
+      "GetOperationCount",
+      "GetOperationInfo",
+      "GetOverlayCount",
+      "GetOverlayGroup",
+      "GetReadyChain",
+      "GetReleaseGroup",
+      "GetReleaseGroupCount",
+      "GetRitualMaterial",
+      "GetRitualMaterialEx",
+      "GetSynchroMaterial",
+      "GetTargetCount",
+      "GetTargetsRelateToChain",
+      "GetTributeCount",
+      "GetTributeGroup",
+      "GetTurnCount",
+      "GetTurnPlayer",
+      "GetUsableMZoneCount",
+      "GrabSelectedCard",
+      "Hint",
+      "HintSelection",
+      "IncreaseSummonedCount",
+      "IsAbleToEnterBP",
+      "IsBattlePhase",
+      "IsCanAddCounter",
+      "IsCanRemoveCounter",
+      "IsChainDisablable",
+      "IsChainDisabled",
+      "IsChainNegatable",
+      "IsChainSolving",
+      "IsDamageCalculated",
+      "IsEnvironment",
+      "IsExistingMatchingCard",
+      "IsExistingTarget",
+      "IsMainPhase",
+      "IsPhase",
+      "IsPlayerAffectedByEffect",
+      "IsPlayerCanAdditionalSummon",
+      "IsPlayerCanDiscardDeck",
+      "IsPlayerCanDiscardDeckAsCost",
+      "IsPlayerCanDraw",
+      "IsPlayerCanFlipSummon",
+      "IsPlayerCanMSet",
+      "IsPlayerCanRelease",
+      "IsPlayerCanRemove",
+      "IsPlayerCanSSet",
+      "IsPlayerCanSendtoDeck",
+      "IsPlayerCanSendtoGrave",
+      "IsPlayerCanSendtoHand",
+      "IsPlayerCanSpecialSummon",
+      "IsPlayerCanSpecialSummonCount",
+      "IsPlayerCanSpecialSummonMonster",
+      "IsPlayerCanSummon",
+      "IsSummonCancelable",
+      "IsTurnPlayer",
+      "LinkSummon",
+      "MSet",
+      "MajesticCopy",
+      "MoveSequence",
+      "MoveToField",
+      "NegateActivation",
+      "NegateAttack",
+      "NegateEffect",
+      "NegateRelatedChain",
+      "NegateSummon",
+      "Overlay",
+      "PayLPCost",
+      "PreserveSelectDeckSequence",
+      "RDComplete",
+      "RaiseEvent",
+      "RaiseSingleEvent",
+      "Readjust",
+      "Recover",
+      "RegisterEffect",
+      "RegisterFlagEffect",
+      "Release",
+      "ReleaseRitualMaterial",
+      "Remove",
+      "RemoveCounter",
+      "RemoveOverlayCard",
+      "ResetFlagEffect",
+      "ReturnToField",
+      "RockPaperScissors",
+      "SSet",
+      "SelectDisableField",
+      "SelectEffectYesNo",
+      "SelectField",
+      "SelectFusionMaterial",
+      "SelectMatchingCard",
+      "SelectOption",
+      "SelectPosition",
+      "SelectReleaseGroup",
+      "SelectReleaseGroupEx",
+      "SelectSequence",
+      "SelectSynchroMaterial",
+      "SelectTarget",
+      "SelectTribute",
+      "SelectTunerMaterial",
+      "SelectXyzMaterial",
+      "SelectYesNo",
+      "SendtoDeck",
+      "SendtoExtraP",
+      "SendtoGrave",
+      "SendtoHand",
+      "SetChainLimit",
+      "SetChainLimitTillChainEnd",
+      "SetCoinResult",
+      "SetDiceResult",
+      "SetFlagEffectLabel",
+      "SetFusionMaterial",
+      "SetLP",
+      "SetOperationInfo",
+      "SetSelectedCard",
+      "SetSynchroMaterial",
+      "SetTargetCard",
+      "SetTargetParam",
+      "SetTargetPlayer",
+      "ShuffleDeck",
+      "ShuffleExtra",
+      "ShuffleHand",
+      "ShuffleSetCard",
+      "SkipPhase",
+      "SortDecktop",
+      "SpecialSummon",
+      "SpecialSummonComplete",
+      "SpecialSummonRule",
+      "SpecialSummonStep",
+      "Summon",
+      "SwapControl",
+      "SwapDeckAndGrave",
+      "SwapSequence",
+      "SynchroSummon",
+      "TossCoin",
+      "TossDice",
+      "Win",
+      "XyzSummon"
+    ],
+    "Card": [
+      "AddCounter",
+      "AddMonsterAttribute",
+      "AssumeProperty",
+      "CancelCardTarget",
+      "CancelToGrave",
+      "CheckActivateEffect",
+      "CheckEquipTarget",
+      "CheckFusionMaterial",
+      "CheckFusionSubstitute",
+      "CheckRemoveOverlayCard",
+      "CheckUnionTarget",
+      "CheckUniqueOnField",
+      "ClearEffectRelation",
+      "CompleteProcedure",
+      "CopyEffect",
+      "CreateEffectRelation",
+      "CreateRelation",
+      "EnableCounterPermit",
+      "EnableDualState",
+      "EnableReviveLimit",
+      "GetActivateEffect",
+      "GetAttack",
+      "GetAttackAnnouncedCount",
+      "GetAttackableTarget",
+      "GetAttackedCount",
+      "GetAttackedGroup",
+      "GetAttackedGroupCount",
+      "GetAttribute",
+      "GetAttributeInGrave",
+      "GetBaseAttack",
+      "GetBaseDefense",
+      "GetBattlePosition",
+      "GetBattleTarget",
+      "GetBattledGroup",
+      "GetBattledGroupCount",
+      "GetCardTarget",
+      "GetCardTargetCount",
+      "GetCode",
+      "GetColumnGroup",
+      "GetColumnGroupCount",
+      "GetColumnZone",
+      "GetControler",
+      "GetCounter",
+      "GetCurrentScale",
+      "GetDefense",
+      "GetDestination",
+      "GetEffectCount",
+      "GetEquipCount",
+      "GetEquipGroup",
+      "GetEquipTarget",
+      "GetFieldID",
+      "GetFirstCardTarget",
+      "GetFlagEffect",
+      "GetFlagEffectLabel",
+      "GetFusionAttribute",
+      "GetFusionCode",
+      "GetFusionType",
+      "GetHandSynchro",
+      "GetLeaveFieldDest",
+      "GetLeftScale",
+      "GetLevel",
+      "GetLink",
+      "GetLinkAttribute",
+      "GetLinkCode",
+      "GetLinkRace",
+      "GetLinkType",
+      "GetLinkedGroup",
+      "GetLinkedGroupCount",
+      "GetLinkedZone",
+      "GetLocation",
+      "GetMaterial",
+      "GetMaterialCount",
+      "GetMutualLinkedGroup",
+      "GetMutualLinkedGroupCount",
+      "GetMutualLinkedZone",
+      "GetOriginalAttribute",
+      "GetOriginalCode",
+      "GetOriginalCodeRule",
+      "GetOriginalLeftScale",
+      "GetOriginalLevel",
+      "GetOriginalRace",
+      "GetOriginalRank",
+      "GetOriginalRightScale",
+      "GetOriginalType",
+      "GetOverlayCount",
+      "GetOverlayGroup",
+      "GetOverlayTarget",
+      "GetOwner",
+      "GetOwnerTarget",
+      "GetOwnerTargetCount",
+      "GetPosition",
+      "GetPreviousAttackOnField",
+      "GetPreviousAttributeOnField",
+      "GetPreviousCodeOnField",
+      "GetPreviousControler",
+      "GetPreviousDefenseOnField",
+      "GetPreviousEquipTarget",
+      "GetPreviousLevelOnField",
+      "GetPreviousLocation",
+      "GetPreviousOverlayCountOnField",
+      "GetPreviousPosition",
+      "GetPreviousRaceOnField",
+      "GetPreviousRankOnField",
+      "GetPreviousSequence",
+      "GetPreviousTypeOnField",
+      "GetRace",
+      "GetRaceInGrave",
+      "GetRank",
+      "GetRealFieldID",
+      "GetReason",
+      "GetReasonCard",
+      "GetReasonEffect",
+      "GetReasonPlayer",
+      "GetRightScale",
+      "GetRitualLevel",
+      "GetSequence",
+      "GetSpecialSummonInfo",
+      "GetSummonLocation",
+      "GetSummonPlayer",
+      "GetSummonType",
+      "GetSynchroLevel",
+      "GetSynchroType",
+      "GetTextAttack",
+      "GetTextDefense",
+      "GetTributeRequirement",
+      "GetTunerLimit",
+      "GetTurnCounter",
+      "GetTurnID",
+      "GetType",
+      "GetUnionCount",
+      "GetXyzType",
+      "IsAbleToChangeControler",
+      "IsAbleToDeck",
+      "IsAbleToDeckAsCost",
+      "IsAbleToDeckOrExtraAsCost",
+      "IsAbleToExtra",
+      "IsAbleToExtraAsCost",
+      "IsAbleToGrave",
+      "IsAbleToGraveAsCost",
+      "IsAbleToHand",
+      "IsAbleToHandAsCost",
+      "IsAbleToRemove",
+      "IsAbleToRemoveAsCost",
+      "IsAllColumn",
+      "IsAllReasons",
+      "IsAllTypes",
+      "IsAttack",
+      "IsAttackAbove",
+      "IsAttackBelow",
+      "IsAttackPos",
+      "IsAttackable",
+      "IsAttribute",
+      "IsCanAddCounter",
+      "IsCanBeBattleTarget",
+      "IsCanBeDisabledByEffect",
+      "IsCanBeEffectTarget",
+      "IsCanBeFusionMaterial",
+      "IsCanBeLinkMaterial",
+      "IsCanBeRitualMaterial",
+      "IsCanBeSpecialSummoned",
+      "IsCanBeSynchroMaterial",
+      "IsCanBeXyzMaterial",
+      "IsCanChangePosition",
+      "IsCanHaveCounter",
+      "IsCanOverlay",
+      "IsCanRemoveCounter",
+      "IsCanTurnSet",
+      "IsChainAttackable",
+      "IsCode",
+      "IsControler",
+      "IsControlerCanBeChanged",
+      "IsDefense",
+      "IsDefenseAbove",
+      "IsDefenseBelow",
+      "IsDefensePos",
+      "IsDestructable",
+      "IsDirectAttacked",
+      "IsDisabled",
+      "IsDiscardable",
+      "IsDualState",
+      "IsExtraDeckMonster",
+      "IsExtraLinkState",
+      "IsFacedown",
+      "IsFaceup",
+      "IsFaceupEx",
+      "IsForbidden",
+      "IsFusionAttribute",
+      "IsFusionCode",
+      "IsFusionSetCard",
+      "IsFusionSummonableCard",
+      "IsFusionType",
+      "IsHasCardTarget",
+      "IsHasDefense",
+      "IsHasEffect",
+      "IsHasLevel",
+      "IsImmuneToEffect",
+      "IsLevel",
+      "IsLevelAbove",
+      "IsLevelBelow",
+      "IsLink",
+      "IsLinkAbove",
+      "IsLinkAttribute",
+      "IsLinkBelow",
+      "IsLinkCode",
+      "IsLinkMarker",
+      "IsLinkRace",
+      "IsLinkSetCard",
+      "IsLinkState",
+      "IsLinkSummonable",
+      "IsLinkType",
+      "IsLocation",
+      "IsMSetable",
+      "IsNonAttribute",
+      "IsNotTuner",
+      "IsOnField",
+      "IsOriginalCodeRule",
+      "IsOriginalSetCard",
+      "IsPosition",
+      "IsPreviousControler",
+      "IsPreviousLocation",
+      "IsPreviousPosition",
+      "IsPreviousSetCard",
+      "IsPublic",
+      "IsRace",
+      "IsRank",
+      "IsRankAbove",
+      "IsRankBelow",
+      "IsReason",
+      "IsRelateToBattle",
+      "IsRelateToCard",
+      "IsRelateToChain",
+      "IsRelateToEffect",
+      "IsReleasable",
+      "IsReleasableByEffect",
+      "IsSSetable",
+      "IsSetCard",
+      "IsSpecialSummonSetCard",
+      "IsSpecialSummonable",
+      "IsSpecialSummonableCard",
+      "IsStatus",
+      "IsSummonLocation",
+      "IsSummonPlayer",
+      "IsSummonType",
+      "IsSummonable",
+      "IsSummonableCard",
+      "IsSynchroSummonable",
+      "IsSynchroType",
+      "IsTuner",
+      "IsType",
+      "IsXyzLevel",
+      "IsXyzSummonable",
+      "IsXyzType",
+      "RegisterEffect",
+      "RegisterFlagEffect",
+      "ReleaseEffectRelation",
+      "ReleaseRelation",
+      "RemoveCounter",
+      "RemoveOverlayCard",
+      "ReplaceEffect",
+      "ResetEffect",
+      "ResetFlagEffect",
+      "ResetNegateEffect",
+      "ReverseInDeck",
+      "SetCardTarget",
+      "SetCounterLimit",
+      "SetFlagEffectLabel",
+      "SetHint",
+      "SetMaterial",
+      "SetReason",
+      "SetSPSummonOnce",
+      "SetStatus",
+      "SetTurnCounter",
+      "SetUniqueOnField"
+    ],
+    "Effect": [
+      "CheckCountLimit",
+      "Clone",
+      "CreateEffect",
+      "GetActivateLocation",
+      "GetActivateSequence",
+      "GetActiveType",
+      "GetCategory",
+      "GetCode",
+      "GetCondition",
+      "GetCost",
+      "GetDescription",
+      "GetFieldID",
+      "GetHandler",
+      "GetHandlerPlayer",
+      "GetLabel",
+      "GetLabelObject",
+      "GetOperation",
+      "GetOwner",
+      "GetOwnerPlayer",
+      "GetProperty",
+      "GetTarget",
+      "GetType",
+      "GetValue",
+      "GlobalEffect",
+      "IsActivatable",
+      "IsActivated",
+      "IsActiveType",
+      "IsCostChecked",
+      "IsHasCategory",
+      "IsHasProperty",
+      "IsHasType",
+      "Reset",
+      "SetAbsoluteRange",
+      "SetCategory",
+      "SetCode",
+      "SetCondition",
+      "SetCost",
+      "SetCostCheck",
+      "SetCountLimit",
+      "SetDescription",
+      "SetHintTiming",
+      "SetLabel",
+      "SetLabelObject",
+      "SetOperation",
+      "SetOwnerPlayer",
+      "SetProperty",
+      "SetRange",
+      "SetReset",
+      "SetTarget",
+      "SetTargetRange",
+      "SetType",
+      "SetValue",
+      "UseCountLimit"
+    ],
+    "Group": [
+      "AddCard",
+      "CancelableSelect",
+      "CheckWithSumEqual",
+      "CheckWithSumGreater",
+      "Clear",
+      "Clone",
+      "CreateGroup",
+      "DeleteGroup",
+      "Equal",
+      "Filter",
+      "FilterCount",
+      "FilterSelect",
+      "ForEach",
+      "FromCards",
+      "GetBinClassCount",
+      "GetClassCount",
+      "GetCount",
+      "GetFirst",
+      "GetMaxGroup",
+      "GetMinGroup",
+      "GetNext",
+      "GetSum",
+      "IsContains",
+      "IsExists",
+      "KeepAlive",
+      "Merge",
+      "RandomSelect",
+      "Remove",
+      "RemoveCard",
+      "SearchCard",
+      "Select",
+      "SelectUnselect",
+      "SelectWithSumEqual",
+      "SelectWithSumGreater",
+      "Sub",
+      "__add",
+      "__band",
+      "__bor",
+      "__bxor",
+      "__len",
+      "__sub"
+    ],
+    "Debug": [
+      "AddCard",
+      "Message",
+      "PreAddCounter",
+      "PreEquip",
+      "PreSetTarget",
+      "PreSummon",
+      "ReloadFieldBegin",
+      "ReloadFieldEnd",
+      "SetAIName",
+      "SetPlayerInfo",
+      "ShowHint"
+    ]
+  },
+  "static_api_candidates": {
+    "Duel": {
+      "RevealSelectDeckSequence": {
+        "occurrences_in_files": 3,
+        "examples": [
+          "script/c43618262.lua",
+          "script/c53323475.lua",
+          "script/c94392192.lua"
+        ]
+      }
+    },
+    "Card": {},
+    "Effect": {},
+    "Group": {
+      "CheckSubGroup": {
+        "occurrences_in_files": 1,
+        "examples": [
+          "script/utility.lua"
+        ]
+      },
+      "CheckSubGroupEach": {
+        "occurrences_in_files": 1,
+        "examples": [
+          "script/utility.lua"
+        ]
+      },
+      "SelectSubGroup": {
+        "occurrences_in_files": 1,
+        "examples": [
+          "script/utility.lua"
+        ]
+      },
+      "SelectSubGroupEach": {
+        "occurrences_in_files": 1,
+        "examples": [
+          "script/utility.lua"
+        ]
+      }
+    },
+    "Debug": {}
+  },
+  "static_api_scope": "Lexical scan, not Lua execution or complete validation. Methods absent from C++ may be defined in Lua.",
+  "function_index": {
+    "processor.cpp": [
+      {
+        "symbol": "field::add_process",
+        "line": 17
+      },
+      {
+        "symbol": "field::process",
+        "line": 35
+      },
+      {
+        "symbol": "field::execute_cost",
+        "line": 730
+      },
+      {
+        "symbol": "field::execute_operation",
+        "line": 783
+      },
+      {
+        "symbol": "field::execute_target",
+        "line": 839
+      },
+      {
+        "symbol": "field::raise_event",
+        "line": 892
+      },
+      {
+        "symbol": "field::raise_event",
+        "line": 909
+      },
+      {
+        "symbol": "field::raise_single_event",
+        "line": 926
+      },
+      {
+        "symbol": "field::check_event",
+        "line": 943
+      },
+      {
+        "symbol": "field::check_event_c",
+        "line": 960
+      },
+      {
+        "symbol": "field::check_hint_timing",
+        "line": 988
+      },
+      {
+        "symbol": "field::process_phase_event",
+        "line": 996
+      },
+      {
+        "symbol": "field::process_point_event",
+        "line": 1286
+      },
+      {
+        "symbol": "field::process_quick_effect",
+        "line": 1586
+      },
+      {
+        "symbol": "field::process_instant_event",
+        "line": 1811
+      },
+      {
+        "symbol": "field::process_single_event",
+        "line": 1944
+      },
+      {
+        "symbol": "field::process_single_event",
+        "line": 1979
+      },
+      {
+        "symbol": "field::process_idle_command",
+        "line": 2059
+      },
+      {
+        "symbol": "field::process_battle_command",
+        "line": 2389
+      },
+      {
+        "symbol": "field::process_damage_step",
+        "line": 3268
+      },
+      {
+        "symbol": "field::calculate_battle_damage",
+        "line": 3342
+      },
+      {
+        "symbol": "field::process_turn",
+        "line": 3659
+      },
+      {
+        "symbol": "field::add_chain",
+        "line": 3981
+      },
+      {
+        "symbol": "field::solve_continuous",
+        "line": 4262
+      },
+      {
+        "symbol": "field::solve_continuous",
+        "line": 4278
+      },
+      {
+        "symbol": "field::solve_chain",
+        "line": 4361
+      },
+      {
+        "symbol": "field::break_effect",
+        "line": 4571
+      },
+      {
+        "symbol": "field::adjust_instant",
+        "line": 4592
+      },
+      {
+        "symbol": "field::adjust_all",
+        "line": 4596
+      },
+      {
+        "symbol": "field::refresh_location_info_instant",
+        "line": 4600
+      },
+      {
+        "symbol": "field::refresh_location_info",
+        "line": 4633
+      },
+      {
+        "symbol": "field::adjust_step",
+        "line": 4796
+      }
+    ],
+    "operations.cpp": [
+      {
+        "symbol": "field::negate_chain",
+        "line": 15
+      },
+      {
+        "symbol": "field::disable_chain",
+        "line": 40
+      },
+      {
+        "symbol": "field::change_chain_effect",
+        "line": 62
+      },
+      {
+        "symbol": "field::change_target",
+        "line": 73
+      },
+      {
+        "symbol": "field::change_target_player",
+        "line": 95
+      },
+      {
+        "symbol": "field::change_target_param",
+        "line": 102
+      },
+      {
+        "symbol": "field::remove_counter",
+        "line": 109
+      },
+      {
+        "symbol": "field::remove_overlay_card",
+        "line": 112
+      },
+      {
+        "symbol": "field::get_control",
+        "line": 115
+      },
+      {
+        "symbol": "field::get_control",
+        "line": 120
+      },
+      {
+        "symbol": "field::swap_control",
+        "line": 125
+      },
+      {
+        "symbol": "field::swap_control",
+        "line": 132
+      },
+      {
+        "symbol": "field::equip",
+        "line": 139
+      },
+      {
+        "symbol": "field::draw",
+        "line": 142
+      },
+      {
+        "symbol": "field::damage",
+        "line": 145
+      },
+      {
+        "symbol": "field::recover",
+        "line": 152
+      },
+      {
+        "symbol": "field::summon",
+        "line": 155
+      },
+      {
+        "symbol": "field::mset",
+        "line": 158
+      },
+      {
+        "symbol": "field::special_summon_rule",
+        "line": 161
+      },
+      {
+        "symbol": "field::special_summon",
+        "line": 164
+      },
+      {
+        "symbol": "field::special_summon_step",
+        "line": 182
+      },
+      {
+        "symbol": "field::special_summon_complete",
+        "line": 196
+      },
+      {
+        "symbol": "field::destroy",
+        "line": 203
+      },
+      {
+        "symbol": "field::destroy",
+        "line": 234
+      },
+      {
+        "symbol": "field::release",
+        "line": 239
+      },
+      {
+        "symbol": "field::release",
+        "line": 253
+      },
+      {
+        "symbol": "field::send_to",
+        "line": 258
+      },
+      {
+        "symbol": "field::send_to",
+        "line": 289
+      },
+      {
+        "symbol": "field::move_to_field",
+        "line": 294
+      },
+      {
+        "symbol": "field::change_position",
+        "line": 302
+      },
+      {
+        "symbol": "field::change_position",
+        "line": 318
+      },
+      {
+        "symbol": "field::operation_replace",
+        "line": 325
+      },
+      {
+        "symbol": "field::select_tribute_cards",
+        "line": 340
+      },
+      {
+        "symbol": "field::draw",
+        "line": 343
+      },
+      {
+        "symbol": "field::damage",
+        "line": 456
+      },
+      {
+        "symbol": "field::recover",
+        "line": 564
+      },
+      {
+        "symbol": "field::pay_lp_cost",
+        "line": 625
+      },
+      {
+        "symbol": "field::remove_counter",
+        "line": 706
+      },
+      {
+        "symbol": "field::remove_overlay_card",
+        "line": 782
+      },
+      {
+        "symbol": "field::get_control",
+        "line": 877
+      },
+      {
+        "symbol": "field::swap_control",
+        "line": 1002
+      },
+      {
+        "symbol": "field::self_destroy",
+        "line": 1169
+      },
+      {
+        "symbol": "field::trap_monster_adjust",
+        "line": 1292
+      },
+      {
+        "symbol": "field::equip",
+        "line": 1369
+      },
+      {
+        "symbol": "field::summon",
+        "line": 1459
+      },
+      {
+        "symbol": "field::flip_summon",
+        "line": 1984
+      },
+      {
+        "symbol": "field::mset",
+        "line": 2083
+      },
+      {
+        "symbol": "field::sset",
+        "line": 2421
+      },
+      {
+        "symbol": "field::sset_g",
+        "line": 2498
+      },
+      {
+        "symbol": "field::special_summon_rule",
+        "line": 2691
+      },
+      {
+        "symbol": "field::special_summon_step",
+        "line": 3188
+      },
+      {
+        "symbol": "field::special_summon",
+        "line": 3302
+      },
+      {
+        "symbol": "field::destroy_replace",
+        "line": 3411
+      },
+      {
+        "symbol": "field::destroy",
+        "line": 3434
+      },
+      {
+        "symbol": "field::release_replace",
+        "line": 3782
+      },
+      {
+        "symbol": "field::release",
+        "line": 3801
+      },
+      {
+        "symbol": "field::send_replace",
+        "line": 3872
+      },
+      {
+        "symbol": "field::send_to",
+        "line": 3893
+      },
+      {
+        "symbol": "field::discard_deck",
+        "line": 4410
+      },
+      {
+        "symbol": "field::move_to_field",
+        "line": 4545
+      },
+      {
+        "symbol": "field::change_position",
+        "line": 4804
+      },
+      {
+        "symbol": "field::operation_replace",
+        "line": 4991
+      },
+      {
+        "symbol": "field::activate_effect",
+        "line": 5247
+      },
+      {
+        "symbol": "field::select_synchro_material",
+        "line": 5290
+      },
+      {
+        "symbol": "field::select_xyz_material",
+        "line": 5654
+      },
+      {
+        "symbol": "field::select_release_cards",
+        "line": 6086
+      },
+      {
+        "symbol": "field::select_tribute_cards",
+        "line": 6187
+      },
+      {
+        "symbol": "field::toss_coin",
+        "line": 6391
+      },
+      {
+        "symbol": "field::toss_dice",
+        "line": 6464
+      },
+      {
+        "symbol": "field::rock_paper_scissors",
+        "line": 6521
+      }
+    ],
+    "field.cpp": [
+      {
+        "symbol": "chain::chain_operation_sort",
+        "line": 18
+      },
+      {
+        "symbol": "chain::set_triggering_state",
+        "line": 29
+      },
+      {
+        "symbol": "field::reload_field_info",
+        "line": 84
+      },
+      {
+        "symbol": "field::add_card",
+        "line": 124
+      },
+      {
+        "symbol": "field::remove_card",
+        "line": 213
+      },
+      {
+        "symbol": "field::move_card",
+        "line": 264
+      },
+      {
+        "symbol": "field::swap_card",
+        "line": 397
+      },
+      {
+        "symbol": "field::swap_card",
+        "line": 489
+      },
+      {
+        "symbol": "field::set_control",
+        "line": 492
+      },
+      {
+        "symbol": "field::is_location_useable",
+        "line": 588
+      },
+      {
+        "symbol": "field::get_useable_count",
+        "line": 630
+      },
+      {
+        "symbol": "field::get_useable_count_fromex",
+        "line": 640
+      },
+      {
+        "symbol": "field::get_spsummonable_count",
+        "line": 660
+      },
+      {
+        "symbol": "field::get_spsummonable_count_fromex",
+        "line": 670
+      },
+      {
+        "symbol": "field::get_useable_count_other",
+        "line": 689
+      },
+      {
+        "symbol": "field::get_tofield_count",
+        "line": 705
+      },
+      {
+        "symbol": "field::get_useable_count_fromex_rule4",
+        "line": 723
+      },
+      {
+        "symbol": "field::get_spsummonable_count_fromex_rule4",
+        "line": 730
+      },
+      {
+        "symbol": "field::get_mzone_limit",
+        "line": 763
+      },
+      {
+        "symbol": "field::get_szone_limit",
+        "line": 796
+      },
+      {
+        "symbol": "field::get_linked_zone",
+        "line": 814
+      },
+      {
+        "symbol": "field::get_rule_zone_fromex",
+        "line": 826
+      },
+      {
+        "symbol": "field::filter_must_use_mzone",
+        "line": 844
+      },
+      {
+        "symbol": "field::get_linked_cards",
+        "line": 868
+      },
+      {
+        "symbol": "field::check_extra_link",
+        "line": 880
+      },
+      {
+        "symbol": "field::check_extra_link",
+        "line": 918
+      },
+      {
+        "symbol": "field::get_cards_in_zone",
+        "line": 937
+      },
+      {
+        "symbol": "field::shuffle",
+        "line": 950
+      },
+      {
+        "symbol": "field::reset_sequence",
+        "line": 1016
+      },
+      {
+        "symbol": "field::swap_deck_and_grave",
+        "line": 1043
+      },
+      {
+        "symbol": "field::reverse_deck",
+        "line": 1105
+      },
+      {
+        "symbol": "field::tag_swap",
+        "line": 1117
+      },
+      {
+        "symbol": "field::add_effect",
+        "line": 1164
+      },
+      {
+        "symbol": "field::remove_effect",
+        "line": 1228
+      },
+      {
+        "symbol": "field::remove_oath_effect",
+        "line": 1289
+      },
+      {
+        "symbol": "field::release_oath_relation",
+        "line": 1303
+      },
+      {
+        "symbol": "field::reset_phase",
+        "line": 1308
+      },
+      {
+        "symbol": "field::reset_chain",
+        "line": 1319
+      },
+      {
+        "symbol": "field::add_effect_code",
+        "line": 1328
+      },
+      {
+        "symbol": "field::get_effect_code",
+        "line": 1336
+      },
+      {
+        "symbol": "field::dec_effect_code",
+        "line": 1347
+      },
+      {
+        "symbol": "field::filter_field_effect",
+        "line": 1359
+      },
+      {
+        "symbol": "field::filter_affected_cards",
+        "line": 1370
+      },
+      {
+        "symbol": "field::filter_inrange_cards",
+        "line": 1404
+      },
+      {
+        "symbol": "field::filter_player_effect",
+        "line": 1437
+      },
+      {
+        "symbol": "field::filter_matching_card",
+        "line": 1447
+      },
+      {
+        "symbol": "field::filter_field_card",
+        "line": 1600
+      },
+      {
+        "symbol": "field::get_release_list",
+        "line": 1665
+      },
+      {
+        "symbol": "field::check_release_list",
+        "line": 1718
+      },
+      {
+        "symbol": "field::get_summon_release_list",
+        "line": 1738
+      },
+      {
+        "symbol": "field::get_summon_count_limit",
+        "line": 1802
+      },
+      {
+        "symbol": "field::get_draw_count",
+        "line": 1813
+      },
+      {
+        "symbol": "field::get_ritual_material",
+        "line": 1829
+      },
+      {
+        "symbol": "field::get_fusion_material",
+        "line": 1860
+      },
+      {
+        "symbol": "field::ritual_release",
+        "line": 1919
+      },
+      {
+        "symbol": "field::get_xyz_material",
+        "line": 1935
+      },
+      {
+        "symbol": "field::get_overlay_group",
+        "line": 1966
+      },
+      {
+        "symbol": "field::get_overlay_count",
+        "line": 1979
+      },
+      {
+        "symbol": "field::update_disable_check_list",
+        "line": 1995
+      },
+      {
+        "symbol": "field::add_to_disable_check_list",
+        "line": 2001
+      },
+      {
+        "symbol": "field::adjust_disable_check_list",
+        "line": 2007
+      },
+      {
+        "symbol": "field::adjust_self_destroy_set",
+        "line": 2038
+      },
+      {
+        "symbol": "field::erase_grant_effect",
+        "line": 2095
+      },
+      {
+        "symbol": "field::adjust_grant_effect",
+        "line": 2101
+      },
+      {
+        "symbol": "field::add_unique_card",
+        "line": 2138
+      },
+      {
+        "symbol": "field::remove_unique_card",
+        "line": 2146
+      },
+      {
+        "symbol": "field::check_spsummon_once",
+        "line": 2173
+      },
+      {
+        "symbol": "field::check_card_counter",
+        "line": 2180
+      },
+      {
+        "symbol": "field::check_card_counter",
+        "line": 2202
+      },
+      {
+        "symbol": "field::check_chain_counter",
+        "line": 2228
+      },
+      {
+        "symbol": "field::set_spsummon_counter",
+        "line": 2251
+      },
+      {
+        "symbol": "field::check_spsummon_counter",
+        "line": 2264
+      },
+      {
+        "symbol": "field::check_lp_cost",
+        "line": 2277
+      },
+      {
+        "symbol": "field::save_lp_cost",
+        "line": 2309
+      },
+      {
+        "symbol": "field::restore_lp_cost",
+        "line": 2316
+      },
+      {
+        "symbol": "field::get_field_counter",
+        "line": 2324
+      },
+      {
+        "symbol": "field::effect_replace_check",
+        "line": 2343
+      },
+      {
+        "symbol": "field::get_attack_target",
+        "line": 2353
+      },
+      {
+        "symbol": "field::confirm_attack_target",
+        "line": 2459
+      },
+      {
+        "symbol": "field::attack_all_target_check",
+        "line": 2466
+      },
+      {
+        "symbol": "field::get_must_material_list",
+        "line": 2479
+      },
+      {
+        "symbol": "field::check_must_material",
+        "line": 2486
+      },
+      {
+        "symbol": "field::get_synchro_material",
+        "line": 2498
+      },
+      {
+        "symbol": "field::check_synchro_material",
+        "line": 2528
+      },
+      {
+        "symbol": "field::check_tuner_material",
+        "line": 2544
+      },
+      {
+        "symbol": "field::check_other_synchro_material",
+        "line": 2771
+      },
+      {
+        "symbol": "field::check_tribute",
+        "line": 2824
+      },
+      {
+        "symbol": "field::check_with_sum_limit",
+        "line": 2859
+      },
+      {
+        "symbol": "field::check_with_sum_limit_m",
+        "line": 2875
+      },
+      {
+        "symbol": "field::check_with_sum_greater_limit",
+        "line": 2890
+      },
+      {
+        "symbol": "field::check_with_sum_greater_limit_m",
+        "line": 2904
+      },
+      {
+        "symbol": "field::check_xyz_material",
+        "line": 2919
+      },
+      {
+        "symbol": "field::is_player_can_draw",
+        "line": 3033
+      },
+      {
+        "symbol": "field::is_player_can_discard_deck",
+        "line": 3036
+      },
+      {
+        "symbol": "field::is_player_can_discard_deck_as_cost",
+        "line": 3041
+      },
+      {
+        "symbol": "field::is_player_can_discard_hand",
+        "line": 3067
+      },
+      {
+        "symbol": "field::is_player_can_action",
+        "line": 3084
+      },
+      {
+        "symbol": "field::is_player_can_summon",
+        "line": 3093
+      },
+      {
+        "symbol": "field::is_player_can_mset",
+        "line": 3111
+      },
+      {
+        "symbol": "field::is_player_can_sset",
+        "line": 3129
+      },
+      {
+        "symbol": "field::is_player_can_spsummon",
+        "line": 3144
+      },
+      {
+        "symbol": "field::is_player_can_spsummon",
+        "line": 3153
+      },
+      {
+        "symbol": "field::is_player_can_flipsummon",
+        "line": 3195
+      },
+      {
+        "symbol": "field::is_player_can_spsummon_monster",
+        "line": 3209
+      },
+      {
+        "symbol": "field::is_player_can_release",
+        "line": 3215
+      },
+      {
+        "symbol": "field::is_player_can_spsummon_count",
+        "line": 3230
+      },
+      {
+        "symbol": "field::is_player_can_place_counter",
+        "line": 3242
+      },
+      {
+        "symbol": "field::is_player_can_remove_counter",
+        "line": 3256
+      },
+      {
+        "symbol": "field::is_player_can_remove_overlay_card",
+        "line": 3275
+      },
+      {
+        "symbol": "field::is_player_can_send_to_grave",
+        "line": 3294
+      },
+      {
+        "symbol": "field::is_player_can_send_to_hand",
+        "line": 3308
+      },
+      {
+        "symbol": "field::is_player_can_send_to_deck",
+        "line": 3325
+      },
+      {
+        "symbol": "field::is_player_can_remove",
+        "line": 3339
+      },
+      {
+        "symbol": "field::is_chain_negatable",
+        "line": 3355
+      },
+      {
+        "symbol": "field::is_chain_disablable",
+        "line": 3374
+      },
+      {
+        "symbol": "field::is_chain_disabled",
+        "line": 3395
+      },
+      {
+        "symbol": "field::check_chain_target",
+        "line": 3416
+      },
+      {
+        "symbol": "field::get_cteffect",
+        "line": 3450
+      },
+      {
+        "symbol": "field::get_cteffect_evt",
+        "line": 3493
+      },
+      {
+        "symbol": "field::check_cteffect_hint",
+        "line": 3505
+      },
+      {
+        "symbol": "field::check_nonpublic_trigger",
+        "line": 3545
+      },
+      {
+        "symbol": "field::check_trigger_effect",
+        "line": 3561
+      },
+      {
+        "symbol": "field::check_spself_from_hand_trigger",
+        "line": 3580
+      },
+      {
+        "symbol": "field::is_able_to_enter_bp",
+        "line": 3591
+      }
+    ],
+    "card.cpp": [
+      {
+        "symbol": "card_sort::operator",
+        "line": 26
+      },
+      {
+        "symbol": "card_state::is_location",
+        "line": 29
+      },
+      {
+        "symbol": "card_state::init_state",
+        "line": 38
+      },
+      {
+        "symbol": "query_cache::clear_cache",
+        "line": 60
+      },
+      {
+        "symbol": "card::card_operation_sort",
+        "line": 79
+      },
+      {
+        "symbol": "card::get_infos",
+        "line": 187
+      },
+      {
+        "symbol": "card::get_info_location",
+        "line": 417
+      },
+      {
+        "symbol": "card::get_original_code",
+        "line": 433
+      },
+      {
+        "symbol": "card::get_code",
+        "line": 454
+      },
+      {
+        "symbol": "card::get_another_code",
+        "line": 470
+      },
+      {
+        "symbol": "card::check_card_setcode",
+        "line": 494
+      },
+      {
+        "symbol": "card::is_set_card",
+        "line": 499
+      },
+      {
+        "symbol": "card::is_origin_set_card",
+        "line": 524
+      },
+      {
+        "symbol": "card::is_pre_set_card",
+        "line": 532
+      },
+      {
+        "symbol": "card::is_fusion_set_card",
+        "line": 552
+      },
+      {
+        "symbol": "card::is_link_set_card",
+        "line": 574
+      },
+      {
+        "symbol": "card::is_special_summon_set_card",
+        "line": 588
+      },
+      {
+        "symbol": "card::get_type",
+        "line": 602
+      },
+      {
+        "symbol": "card::get_fusion_type",
+        "line": 631
+      },
+      {
+        "symbol": "card::get_synchro_type",
+        "line": 636
+      },
+      {
+        "symbol": "card::get_xyz_type",
+        "line": 641
+      },
+      {
+        "symbol": "card::get_link_type",
+        "line": 646
+      },
+      {
+        "symbol": "card::get_base_attack",
+        "line": 952
+      },
+      {
+        "symbol": "card::get_attack",
+        "line": 955
+      },
+      {
+        "symbol": "card::get_base_defense",
+        "line": 958
+      },
+      {
+        "symbol": "card::get_defense",
+        "line": 961
+      },
+      {
+        "symbol": "card::get_battle_attack",
+        "line": 964
+      },
+      {
+        "symbol": "card::get_battle_defense",
+        "line": 976
+      },
+      {
+        "symbol": "card::get_level",
+        "line": 988
+      },
+      {
+        "symbol": "card::get_rank",
+        "line": 1020
+      },
+      {
+        "symbol": "card::get_link",
+        "line": 1053
+      },
+      {
+        "symbol": "card::get_synchro_level",
+        "line": 1058
+      },
+      {
+        "symbol": "card::get_ritual_level",
+        "line": 1070
+      },
+      {
+        "symbol": "card::check_xyz_level",
+        "line": 1082
+      },
+      {
+        "symbol": "card::get_attribute",
+        "line": 1104
+      },
+      {
+        "symbol": "card::get_fusion_attribute",
+        "line": 1132
+      },
+      {
+        "symbol": "card::get_link_attribute",
+        "line": 1144
+      },
+      {
+        "symbol": "card::get_grave_attribute",
+        "line": 1154
+      },
+      {
+        "symbol": "card::get_race",
+        "line": 1174
+      },
+      {
+        "symbol": "card::get_link_race",
+        "line": 1202
+      },
+      {
+        "symbol": "card::get_grave_race",
+        "line": 1212
+      },
+      {
+        "symbol": "card::get_lscale",
+        "line": 1232
+      },
+      {
+        "symbol": "card::get_rscale",
+        "line": 1261
+      },
+      {
+        "symbol": "card::get_link_marker",
+        "line": 1290
+      },
+      {
+        "symbol": "card::is_link_marker",
+        "line": 1295
+      },
+      {
+        "symbol": "card::get_linked_zone",
+        "line": 1298
+      },
+      {
+        "symbol": "card::get_linked_cards",
+        "line": 1345
+      },
+      {
+        "symbol": "card::get_mutual_linked_zone",
+        "line": 1354
+      },
+      {
+        "symbol": "card::get_mutual_linked_cards",
+        "line": 1379
+      },
+      {
+        "symbol": "card::is_link_state",
+        "line": 1388
+      },
+      {
+        "symbol": "card::is_extra_link_state",
+        "line": 1401
+      },
+      {
+        "symbol": "card::is_position",
+        "line": 1440
+      },
+      {
+        "symbol": "card::set_status",
+        "line": 1443
+      },
+      {
+        "symbol": "card::get_status",
+        "line": 1450
+      },
+      {
+        "symbol": "card::is_status",
+        "line": 1454
+      },
+      {
+        "symbol": "card::get_column_zone",
+        "line": 1459
+      },
+      {
+        "symbol": "card::get_column_cards",
+        "line": 1494
+      },
+      {
+        "symbol": "card::is_all_column",
+        "line": 1506
+      },
+      {
+        "symbol": "card::get_select_info_location",
+        "line": 1525
+      },
+      {
+        "symbol": "card::is_treated_as_not_on_field",
+        "line": 1536
+      },
+      {
+        "symbol": "card::equip",
+        "line": 1539
+      },
+      {
+        "symbol": "card::unequip",
+        "line": 1555
+      },
+      {
+        "symbol": "card::get_union_count",
+        "line": 1567
+      },
+      {
+        "symbol": "card::get_old_union_count",
+        "line": 1575
+      },
+      {
+        "symbol": "card::xyz_overlay",
+        "line": 1583
+      },
+      {
+        "symbol": "card::xyz_add",
+        "line": 1678
+      },
+      {
+        "symbol": "card::xyz_remove",
+        "line": 1692
+      },
+      {
+        "symbol": "card::apply_field_effect",
+        "line": 1712
+      },
+      {
+        "symbol": "card::cancel_field_effect",
+        "line": 1724
+      },
+      {
+        "symbol": "card::enable_field_effect",
+        "line": 1738
+      },
+      {
+        "symbol": "card::add_effect",
+        "line": 1770
+      },
+      {
+        "symbol": "card::remove_effect",
+        "line": 1940
+      },
+      {
+        "symbol": "card::remove_effect",
+        "line": 1946
+      },
+      {
+        "symbol": "card::copy_effect",
+        "line": 2026
+      },
+      {
+        "symbol": "card::replace_effect",
+        "line": 2062
+      },
+      {
+        "symbol": "card::reset",
+        "line": 2108
+      },
+      {
+        "symbol": "card::reset_effect_count",
+        "line": 2196
+      },
+      {
+        "symbol": "card::refresh_disable_status",
+        "line": 2205
+      },
+      {
+        "symbol": "card::count_turn",
+        "line": 2235
+      },
+      {
+        "symbol": "card::create_relation",
+        "line": 2242
+      },
+      {
+        "symbol": "card::is_has_relation",
+        "line": 2247
+      },
+      {
+        "symbol": "card::release_relation",
+        "line": 2252
+      },
+      {
+        "symbol": "card::create_relation",
+        "line": 2257
+      },
+      {
+        "symbol": "card::is_has_relation",
+        "line": 2260
+      },
+      {
+        "symbol": "card::release_relation",
+        "line": 2265
+      },
+      {
+        "symbol": "card::clear_relate_effect",
+        "line": 2268
+      },
+      {
+        "symbol": "card::create_relation",
+        "line": 2271
+      },
+      {
+        "symbol": "card::is_has_relation",
+        "line": 2280
+      },
+      {
+        "symbol": "card::release_relation",
+        "line": 2287
+      },
+      {
+        "symbol": "card::leave_field_redirect",
+        "line": 2296
+      },
+      {
+        "symbol": "card::destination_redirect",
+        "line": 2326
+      },
+      {
+        "symbol": "card::add_counter",
+        "line": 2354
+      },
+      {
+        "symbol": "card::remove_counter",
+        "line": 2386
+      },
+      {
+        "symbol": "card::is_can_add_counter",
+        "line": 2407
+      },
+      {
+        "symbol": "card::is_can_have_counter",
+        "line": 2442
+      },
+      {
+        "symbol": "card::get_counter",
+        "line": 2462
+      },
+      {
+        "symbol": "card::set_material",
+        "line": 2468
+      },
+      {
+        "symbol": "card::add_card_target",
+        "line": 2481
+      },
+      {
+        "symbol": "card::cancel_card_target",
+        "line": 2492
+      },
+      {
+        "symbol": "card::clear_card_target",
+        "line": 2506
+      },
+      {
+        "symbol": "card::set_special_summon_status",
+        "line": 2530
+      },
+      {
+        "symbol": "card::filter_effect",
+        "line": 2589
+      },
+      {
+        "symbol": "card::filter_single_continuous_effect",
+        "line": 2633
+      },
+      {
+        "symbol": "card::filter_self_effect",
+        "line": 2662
+      },
+      {
+        "symbol": "card::filter_immune_effect",
+        "line": 2682
+      },
+      {
+        "symbol": "card::filter_disable_related_cards",
+        "line": 2726
+      },
+      {
+        "symbol": "card::filter_summon_procedure",
+        "line": 2748
+      },
+      {
+        "symbol": "card::check_summon_procedure",
+        "line": 2800
+      },
+      {
+        "symbol": "card::filter_set_procedure",
+        "line": 2834
+      },
+      {
+        "symbol": "card::check_set_procedure",
+        "line": 2883
+      },
+      {
+        "symbol": "card::filter_spsummon_procedure",
+        "line": 2913
+      },
+      {
+        "symbol": "card::filter_spsummon_procedure_g",
+        "line": 2942
+      },
+      {
+        "symbol": "card::fusion_check",
+        "line": 3053
+      },
+      {
+        "symbol": "card::fusion_select",
+        "line": 3103
+      },
+      {
+        "symbol": "card::check_fusion_substitute",
+        "line": 3138
+      },
+      {
+        "symbol": "card::is_not_tuner",
+        "line": 3148
+      },
+      {
+        "symbol": "card::is_tuner",
+        "line": 3158
+      },
+      {
+        "symbol": "card::check_unique_code",
+        "line": 3168
+      },
+      {
+        "symbol": "card::get_unique_target",
+        "line": 3181
+      },
+      {
+        "symbol": "card::check_cost_condition",
+        "line": 3202
+      },
+      {
+        "symbol": "card::check_cost_condition",
+        "line": 3225
+      },
+      {
+        "symbol": "card::is_summonable_card",
+        "line": 3249
+      },
+      {
+        "symbol": "card::is_spsummonable_card",
+        "line": 3256
+      },
+      {
+        "symbol": "card::is_fusion_summonable_card",
+        "line": 3278
+      },
+      {
+        "symbol": "card::is_spsummonable",
+        "line": 3298
+      },
+      {
+        "symbol": "card::is_summonable",
+        "line": 3348
+      },
+      {
+        "symbol": "card::is_can_be_summoned",
+        "line": 3371
+      },
+      {
+        "symbol": "card::is_summon_negatable",
+        "line": 3415
+      },
+      {
+        "symbol": "card::get_summon_tribute_count",
+        "line": 3437
+      },
+      {
+        "symbol": "card::get_set_tribute_count",
+        "line": 3470
+      },
+      {
+        "symbol": "card::is_can_be_flip_summoned",
+        "line": 3503
+      },
+      {
+        "symbol": "card::is_special_summonable",
+        "line": 3532
+      },
+      {
+        "symbol": "card::is_can_be_special_summoned",
+        "line": 3549
+      },
+      {
+        "symbol": "card::is_setable_mzone",
+        "line": 3638
+      },
+      {
+        "symbol": "card::is_setable_szone",
+        "line": 3671
+      },
+      {
+        "symbol": "card::is_affect_by_effect",
+        "line": 3690
+      },
+      {
+        "symbol": "card::is_can_be_disabled_by_effect",
+        "line": 3699
+      },
+      {
+        "symbol": "card::is_destructable",
+        "line": 3710
+      },
+      {
+        "symbol": "card::is_destructable_by_battle",
+        "line": 3717
+      },
+      {
+        "symbol": "card::is_destructable_by_effect",
+        "line": 3736
+      },
+      {
+        "symbol": "card::is_removeable",
+        "line": 3782
+      },
+      {
+        "symbol": "card::is_removeable_as_cost",
+        "line": 3791
+      },
+      {
+        "symbol": "card::is_releasable_by_summon",
+        "line": 3819
+      },
+      {
+        "symbol": "card::is_releasable_by_nonsummon",
+        "line": 3834
+      },
+      {
+        "symbol": "card::is_releasable_by_effect",
+        "line": 3849
+      },
+      {
+        "symbol": "card::is_capable_send_to_grave",
+        "line": 3863
+      },
+      {
+        "symbol": "card::is_capable_send_to_hand",
+        "line": 3870
+      },
+      {
+        "symbol": "card::is_capable_send_to_deck",
+        "line": 3883
+      },
+      {
+        "symbol": "card::is_capable_send_to_extra",
+        "line": 3894
+      },
+      {
+        "symbol": "card::is_capable_cost_to_grave",
+        "line": 3903
+      },
+      {
+        "symbol": "card::is_capable_cost_to_hand",
+        "line": 3930
+      },
+      {
+        "symbol": "card::is_capable_cost_to_deck",
+        "line": 3953
+      },
+      {
+        "symbol": "card::is_capable_cost_to_extra",
+        "line": 3976
+      },
+      {
+        "symbol": "card::is_capable_attack",
+        "line": 3999
+      },
+      {
+        "symbol": "card::is_capable_attack_announce",
+        "line": 4012
+      },
+      {
+        "symbol": "card::is_capable_change_position",
+        "line": 4025
+      },
+      {
+        "symbol": "card::is_capable_change_position_by_effect",
+        "line": 4040
+      },
+      {
+        "symbol": "card::is_capable_turn_set",
+        "line": 4045
+      },
+      {
+        "symbol": "card::is_capable_change_control",
+        "line": 4056
+      },
+      {
+        "symbol": "card::is_control_can_be_changed",
+        "line": 4061
+      },
+      {
+        "symbol": "card::is_capable_be_battle_target",
+        "line": 4075
+      },
+      {
+        "symbol": "card::is_capable_be_effect_target",
+        "line": 4084
+      },
+      {
+        "symbol": "card::is_capable_overlay",
+        "line": 4105
+      },
+      {
+        "symbol": "card::is_can_be_fusion_material",
+        "line": 4114
+      },
+      {
+        "symbol": "card::is_can_be_synchro_material",
+        "line": 4136
+      },
+      {
+        "symbol": "card::is_can_be_ritual_material",
+        "line": 4168
+      },
+      {
+        "symbol": "card::is_can_be_xyz_material",
+        "line": 4181
+      },
+      {
+        "symbol": "card::is_can_be_link_material",
+        "line": 4195
+      }
+    ],
+    "effect.cpp": [
+      {
+        "symbol": "effect::is_disable_related",
+        "line": 33
+      },
+      {
+        "symbol": "effect::is_self_destroy_related",
+        "line": 38
+      },
+      {
+        "symbol": "effect::is_can_be_forbidden",
+        "line": 43
+      },
+      {
+        "symbol": "effect::is_available",
+        "line": 51
+      },
+      {
+        "symbol": "effect::limit_counter_is_available",
+        "line": 131
+      },
+      {
+        "symbol": "effect::is_single_ready",
+        "line": 136
+      },
+      {
+        "symbol": "effect::check_count_limit",
+        "line": 162
+      },
+      {
+        "symbol": "effect::get_required_handorset_effects",
+        "line": 181
+      },
+      {
+        "symbol": "effect::is_activateable",
+        "line": 242
+      },
+      {
+        "symbol": "effect::is_action_check",
+        "line": 374
+      },
+      {
+        "symbol": "effect::is_activate_ready",
+        "line": 400
+      },
+      {
+        "symbol": "effect::is_activate_ready",
+        "line": 452
+      },
+      {
+        "symbol": "effect::is_condition_check",
+        "line": 456
+      },
+      {
+        "symbol": "effect::is_activate_check",
+        "line": 486
+      },
+      {
+        "symbol": "effect::is_target",
+        "line": 498
+      },
+      {
+        "symbol": "effect::is_fit_target_function",
+        "line": 534
+      },
+      {
+        "symbol": "effect::is_target_player",
+        "line": 544
+      },
+      {
+        "symbol": "effect::is_player_effect_target",
+        "line": 561
+      },
+      {
+        "symbol": "effect::is_immuned",
+        "line": 571
+      },
+      {
+        "symbol": "effect::is_chainable",
+        "line": 584
+      },
+      {
+        "symbol": "effect::is_hand_trigger",
+        "line": 615
+      },
+      {
+        "symbol": "effect::reset",
+        "line": 620
+      },
+      {
+        "symbol": "effect::dec_count",
+        "line": 660
+      },
+      {
+        "symbol": "effect::recharge",
+        "line": 675
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 680
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 690
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 701
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 712
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 721
+      },
+      {
+        "symbol": "effect::get_value",
+        "line": 731
+      },
+      {
+        "symbol": "effect::check_value_condition",
+        "line": 741
+      },
+      {
+        "symbol": "effect::get_speed",
+        "line": 754
+      },
+      {
+        "symbol": "effect::in_range",
+        "line": 818
+      },
+      {
+        "symbol": "effect::in_range",
+        "line": 823
+      },
+      {
+        "symbol": "effect::set_activate_location",
+        "line": 828
+      },
+      {
+        "symbol": "effect::set_active_type",
+        "line": 833
+      },
+      {
+        "symbol": "effect::get_active_type",
+        "line": 839
+      },
+      {
+        "symbol": "effect::get_code_type",
+        "line": 850
+      }
+    ],
+    "interpreter.cpp": [
+      {
+        "symbol": "interpreter::register_card",
+        "line": 50
+      },
+      {
+        "symbol": "interpreter::register_effect",
+        "line": 78
+      },
+      {
+        "symbol": "interpreter::unregister_effect",
+        "line": 92
+      },
+      {
+        "symbol": "interpreter::register_group",
+        "line": 108
+      },
+      {
+        "symbol": "interpreter::unregister_group",
+        "line": 122
+      },
+      {
+        "symbol": "interpreter::load_script",
+        "line": 128
+      },
+      {
+        "symbol": "interpreter::load_card_script",
+        "line": 145
+      },
+      {
+        "symbol": "interpreter::add_param",
+        "line": 180
+      },
+      {
+        "symbol": "interpreter::add_param",
+        "line": 188
+      },
+      {
+        "symbol": "interpreter::push_param",
+        "line": 196
+      },
+      {
+        "symbol": "interpreter::call_function",
+        "line": 255
+      },
+      {
+        "symbol": "interpreter::call_card_function",
+        "line": 299
+      },
+      {
+        "symbol": "interpreter::call_code_function",
+        "line": 340
+      },
+      {
+        "symbol": "interpreter::check_condition",
+        "line": 381
+      },
+      {
+        "symbol": "interpreter::check_matching",
+        "line": 407
+      },
+      {
+        "symbol": "interpreter::get_operation_value",
+        "line": 439
+      },
+      {
+        "symbol": "interpreter::get_function_value",
+        "line": 471
+      },
+      {
+        "symbol": "interpreter::get_function_value",
+        "line": 503
+      },
+      {
+        "symbol": "interpreter::call_coroutine",
+        "line": 535
+      },
+      {
+        "symbol": "interpreter::clone_function_ref",
+        "line": 619
+      },
+      {
+        "symbol": "interpreter::card2value",
+        "line": 635
+      },
+      {
+        "symbol": "interpreter::group2value",
+        "line": 642
+      },
+      {
+        "symbol": "interpreter::effect2value",
+        "line": 649
+      },
+      {
+        "symbol": "interpreter::function2value",
+        "line": 656
+      },
+      {
+        "symbol": "interpreter::get_function_handle",
+        "line": 663
+      }
+    ],
+    "libeffect.cpp": [
+      {
+        "symbol": "scriptlib::effect_new",
+        "line": 15
+      },
+      {
+        "symbol": "scriptlib::effect_newex",
+        "line": 26
+      },
+      {
+        "symbol": "scriptlib::effect_clone",
+        "line": 34
+      },
+      {
+        "symbol": "scriptlib::effect_reset",
+        "line": 42
+      },
+      {
+        "symbol": "scriptlib::effect_get_field_id",
+        "line": 54
+      },
+      {
+        "symbol": "scriptlib::effect_set_description",
+        "line": 61
+      },
+      {
+        "symbol": "scriptlib::effect_set_code",
+        "line": 69
+      },
+      {
+        "symbol": "scriptlib::effect_set_range",
+        "line": 77
+      },
+      {
+        "symbol": "scriptlib::effect_set_target_range",
+        "line": 85
+      },
+      {
+        "symbol": "scriptlib::effect_set_absolute_range",
+        "line": 96
+      },
+      {
+        "symbol": "scriptlib::effect_set_count_limit",
+        "line": 113
+      },
+      {
+        "symbol": "scriptlib::effect_set_reset",
+        "line": 131
+      },
+      {
+        "symbol": "scriptlib::effect_set_type",
+        "line": 145
+      },
+      {
+        "symbol": "scriptlib::effect_set_property",
+        "line": 166
+      },
+      {
+        "symbol": "scriptlib::effect_set_label",
+        "line": 176
+      },
+      {
+        "symbol": "scriptlib::effect_set_label_object",
+        "line": 187
+      },
+      {
+        "symbol": "scriptlib::effect_set_category",
+        "line": 208
+      },
+      {
+        "symbol": "scriptlib::effect_set_hint_timing",
+        "line": 216
+      },
+      {
+        "symbol": "scriptlib::effect_set_condition",
+        "line": 228
+      },
+      {
+        "symbol": "scriptlib::effect_set_target",
+        "line": 238
+      },
+      {
+        "symbol": "scriptlib::effect_set_cost",
+        "line": 248
+      },
+      {
+        "symbol": "scriptlib::effect_set_value",
+        "line": 258
+      },
+      {
+        "symbol": "scriptlib::effect_set_operation",
+        "line": 278
+      },
+      {
+        "symbol": "scriptlib::effect_set_owner_player",
+        "line": 291
+      },
+      {
+        "symbol": "scriptlib::effect_get_description",
+        "line": 301
+      },
+      {
+        "symbol": "scriptlib::effect_get_code",
+        "line": 311
+      },
+      {
+        "symbol": "scriptlib::effect_get_type",
+        "line": 321
+      },
+      {
+        "symbol": "scriptlib::effect_get_property",
+        "line": 331
+      },
+      {
+        "symbol": "scriptlib::effect_get_label",
+        "line": 342
+      },
+      {
+        "symbol": "scriptlib::effect_get_label_object",
+        "line": 357
+      },
+      {
+        "symbol": "scriptlib::effect_get_category",
+        "line": 374
+      },
+      {
+        "symbol": "scriptlib::effect_get_owner",
+        "line": 384
+      },
+      {
+        "symbol": "scriptlib::effect_get_handler",
+        "line": 391
+      },
+      {
+        "symbol": "scriptlib::effect_get_owner_player",
+        "line": 398
+      },
+      {
+        "symbol": "scriptlib::effect_get_handler_player",
+        "line": 405
+      },
+      {
+        "symbol": "scriptlib::effect_get_condition",
+        "line": 412
+      },
+      {
+        "symbol": "scriptlib::effect_get_target",
+        "line": 419
+      },
+      {
+        "symbol": "scriptlib::effect_get_cost",
+        "line": 426
+      },
+      {
+        "symbol": "scriptlib::effect_get_value",
+        "line": 433
+      },
+      {
+        "symbol": "scriptlib::effect_get_operation",
+        "line": 443
+      },
+      {
+        "symbol": "scriptlib::effect_get_active_type",
+        "line": 450
+      },
+      {
+        "symbol": "scriptlib::effect_is_active_type",
+        "line": 457
+      },
+      {
+        "symbol": "scriptlib::effect_is_has_property",
+        "line": 468
+      },
+      {
+        "symbol": "scriptlib::effect_is_has_category",
+        "line": 480
+      },
+      {
+        "symbol": "scriptlib::effect_is_has_type",
+        "line": 491
+      },
+      {
+        "symbol": "scriptlib::effect_is_activatable",
+        "line": 502
+      },
+      {
+        "symbol": "scriptlib::effect_is_activated",
+        "line": 517
+      },
+      {
+        "symbol": "scriptlib::effect_is_cost_checked",
+        "line": 524
+      },
+      {
+        "symbol": "scriptlib::effect_set_cost_check",
+        "line": 531
+      },
+      {
+        "symbol": "scriptlib::effect_get_activate_location",
+        "line": 539
+      },
+      {
+        "symbol": "scriptlib::effect_get_activate_sequence",
+        "line": 546
+      },
+      {
+        "symbol": "scriptlib::effect_check_count_limit",
+        "line": 553
+      },
+      {
+        "symbol": "scriptlib::effect_use_count_limit",
+        "line": 561
+      },
+      {
+        "symbol": "scriptlib::open_effectlib",
+        "line": 638
+      }
+    ]
+  },
+  "sha256": {
+    "Version.txt": "563a0b4eec3c77bbc34ac630d4fa5214f5c6726ae01468404fd704473110084e",
+    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "Data\\script.zip": "0d41b6689c1d44b80ecde8d7b932c6c320a813c4a635bef213c7cd76fd14845b",
+    "Data\\locales\\zh-CN\\cards.cdb": "66087d6075e65ca1fbad2c8670ceeee6720d9d002a2bd20b28f0b24051c063ab",
+    "Data\\lflist.conf": "3350fe983cfa4196004894b6323cc27151d718eb520e68dad0e55173b9889983",
+    "Assets\\Plugins\\YGO Classes\\ocgcore.dll": "b63bf8ec71fb24f3a9a6159215745bbec0ecfc65bde32b432956dcd9b6e5978c",
+    "Tools\\YGO Classes\\ocgcore\\card.cpp": "0b0baf76be4c3c7bdd82581be8a820ae87cf8c5da6bc2262688dd0e22187d2ae",
+    "Tools\\YGO Classes\\ocgcore\\duel.cpp": "1af5207878ce5226a8e7e650b98b6316274447358e39ccc84aaaba08ce587998",
+    "Tools\\YGO Classes\\ocgcore\\effect.cpp": "b5180ee1b90be4417fc15fe36157d3fded0e6f3b79f8953b29574b0d911a77d7",
+    "Tools\\YGO Classes\\ocgcore\\field.cpp": "104f813ab0400e4bf35509d055cc7317360f3b0abfa88d8bf00873bdabbb4528",
+    "Tools\\YGO Classes\\ocgcore\\group.cpp": "07ec461efc1208809aee9d639f9ccbbb3700ecab504add15ff5f01f029b711cc",
+    "Tools\\YGO Classes\\ocgcore\\interpreter.cpp": "74b5265c8f0bfe2054d6b188971df96b698acf1769eee3a8e0aeb7badd6f15e7",
+    "Tools\\YGO Classes\\ocgcore\\libcard.cpp": "a86007fe5a105a1b42c72b5838e8dd24d3208b73119f5fdfd899a2e7c68840d3",
+    "Tools\\YGO Classes\\ocgcore\\libdebug.cpp": "d6e821ed000832d7286e0d7e28c11e791ed603abf35ff5039b50b297cefa2534",
+    "Tools\\YGO Classes\\ocgcore\\libduel.cpp": "5fcf5f8fe75b989a5e7aa12600217fb276c607561b2a7d845946e8db0ff1ae95",
+    "Tools\\YGO Classes\\ocgcore\\libeffect.cpp": "4a2535987caa6951a2231b4206ba568bca4afab65d06cbc543c1c2be04f0ca0b",
+    "Tools\\YGO Classes\\ocgcore\\libgroup.cpp": "a38c7dac3b88816a9e088ca5cbc0bc787b6f727fc88bf14f4ff33ca8e268aa31",
+    "Tools\\YGO Classes\\ocgcore\\mem.cpp": "03949877a6260f349065e7407518010433080795a70a387736a6f5dc4f3a2959",
+    "Tools\\YGO Classes\\ocgcore\\ocgapi.cpp": "185d0ecf9f44a8955379d5ba7ed4bbcae0cf1108b84ca3a848e470880c9a2879",
+    "Tools\\YGO Classes\\ocgcore\\operations.cpp": "c2683b32d3d6a6060bbac533651eefad2df2fca444bcc176b56de413d00c70c5",
+    "Tools\\YGO Classes\\ocgcore\\playerop.cpp": "7c0ee6a0bd15c0e459a4c7ddf4fb02f0adc0812a27b613d64de1c17a9d65da42",
+    "Tools\\YGO Classes\\ocgcore\\processor.cpp": "9d16dbbd2df276e6502caa5f946e3784195e632192b77de603d7bb0544d8edfd",
+    "Tools\\YGO Classes\\ocgcore\\scriptlib.cpp": "7e38cc950de25ed2c1aba3627fe683aac0277cbd4ea2078276aa6a9c6a2da9ae",
+    "Tools\\YGO Classes\\ocgcore\\buffer.h": "0c9b51befe19430176ac60c6d66e712251c8ba33b92a76f8accdb8d03453b5ff",
+    "Tools\\YGO Classes\\ocgcore\\card.h": "f48b15cca650db50511470a7246182b0d6cc544bf78918560b233931b225adc4",
+    "Tools\\YGO Classes\\ocgcore\\card_data.h": "616a466047fce41b6e1261d4016e0054523d3c5dd01dc7848d0dc0d32bac9eb3",
+    "Tools\\YGO Classes\\ocgcore\\common.h": "e9ac0d65ade8eef9385beac75b609946a55acd9b69b275f93212d2185c921cac",
+    "Tools\\YGO Classes\\ocgcore\\duel.h": "9477fa90d6776b7b7254c9c3c00e9a74aa733f1cec85b7ca9afd005b1681ff12",
+    "Tools\\YGO Classes\\ocgcore\\effect.h": "f28033db61967630ee95f45d46d53622ecbace5e1db4ee17a488571f64b606cd",
+    "Tools\\YGO Classes\\ocgcore\\effectset.h": "1c3f42c3ed7096faeb07561bae84fce1721d41ab00aeaa0d5d1f3e8c30f99768",
+    "Tools\\YGO Classes\\ocgcore\\field.h": "1ebdf799717b1e90895158b87c21de8423b65385cddadd94b9a1f61a810765d4",
+    "Tools\\YGO Classes\\ocgcore\\group.h": "83c87ba801981a9b5d4524def9b70cf692d5bea1f653e4c1bd00a1556e3755d4",
+    "Tools\\YGO Classes\\ocgcore\\interpreter.h": "74971ed73d32c3f81ff09f1cd1706f114dbba0d958fa7b59277b893573a18537",
+    "Tools\\YGO Classes\\ocgcore\\mtrandom.h": "3015fd6857844ca143a428e266f5cd26915579faf733025722bb33f3fabee954",
+    "Tools\\YGO Classes\\ocgcore\\ocgapi.h": "f7fa27efaf894af2b4c64295466b0c687c5bdf0ec3cf3af1c3f88c786d217f98",
+    "Tools\\YGO Classes\\ocgcore\\scriptlib.h": "d6cce3cbf9bdc957364cf6d7fa5ed57da93c52a6eb216d1509254eca388f4270",
+    "Tools\\YGO Classes\\ocgcore\\sort.h": "c20599a1d7f8a994adbc36f94887c3f19c0678d9842110b7368ab807a16e8b56"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "mode": "duel_host_manual",
+  "root": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging",
+  "messages": [
+    {
+      "type": "message",
+      "function": 90,
+      "name": "Draw",
+      "length": 23,
+      "result": 23,
+      "hex": "5A0005002E0D053B49C9058F4DB6038F4DB603FB9A3103"
+    },
+    {
+      "type": "message",
+      "function": 90,
+      "name": "Draw",
+      "length": 23,
+      "result": 23,
+      "hex": "5A0105002E0D053B49C9058F4DB6038F4DB603FB9A3103"
+    },
+    {
+      "type": "message",
+      "function": 40,
+      "name": "NewTurn",
+      "length": 2,
+      "result": 2,
+      "hex": "2800"
+    },
+    {
+      "type": "message",
+      "function": 41,
+      "name": "NewPhase",
+      "length": 10,
+      "result": 10,
+      "hex": "2901000201001B000000"
+    },
+    {
+      "type": "message",
+      "function": 41,
+      "name": "NewPhase",
+      "length": 3,
+      "result": 3,
+      "hex": "290200"
+    },
+    {
+      "type": "message",
+      "function": 41,
+      "name": "NewPhase",
+      "length": 3,
+      "result": 3,
+      "hex": "290400"
+    },
+    {
+      "type": "message",
+      "function": 11,
+      "name": "SelectIdleCmd",
+      "length": 46,
+      "result": 268435502,
+      "hex": "0B000000000005002E0D050002003B49C9050002018F4DB6030002028F4DB603000203FB9A310300020400000101"
+    }
+  ],
+  "states": [
+    {
+      "type": "state",
+      "waiting": true,
+      "function": 11
+    }
+  ],
+  "errors": [],
+  "ended_events": 1
+}

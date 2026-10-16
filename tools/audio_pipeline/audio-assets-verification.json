@@ -1,0 +1,10 @@
+{
+  "clips_verified": 2333,
+  "codec": "Ogg Vorbis",
+  "channels": 1,
+  "ogg_bytes": 69859425,
+  "wav_bytes": 1491942524,
+  "seconds": 2.78,
+  "decoded_overshoot_count": 489,
+  "max_decoded_peak": 1.3145793676376343
+}

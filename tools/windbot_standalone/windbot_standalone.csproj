@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <LangVersion>latest</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <StartupObject>WindBot.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src\Windbot\**\*.cs" />
+    <Compile Include="src\YGOSharp\YGOSharp.Network\**\*.cs" />
+    <Compile Include="src\YGOSharp\YGOSharp.OCGWrapper\**\*.cs" />
+    <Compile Include="src\YGOSharp\YGOSharp.OCGWrapper.Enums\**\*.cs" />
+    <Compile Remove="src\Windbot\BotWrapper.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Data.Sqlite"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\Mono.Data.Sqlite.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

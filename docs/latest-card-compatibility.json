@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-11",
+  "community_current_rows": 14342,
+  "scope": "Community first Japanese release 2025-01-01 through 2026-10-11; exact passwords in local base zh-CN DB; not unique-card or worldwide completeness.",
+  "jp_2025_2026_rows": 1076,
+  "missing_in_local_db": 1044,
+  "selected": [
+    {
+      "cid": 7714,
+      "id": 96782886,
+      "cn_name": "精神脑魔",
+      "sc_name": "心灵主宰",
+      "jp_name": "メンタルマスター",
+      "description": "这个卡名的效果1回合只能使用1次。\r\n①：支付800基本分，把自己场上1只念动力族怪兽解放才能发动。从卡组把1只4星以下的念动力族怪兽攻击表示特殊召唤。",
+      "jp_release": {
+        "date": "2008-04-19",
+        "pack": "ザ・デュエリスト・ジェネシス [ THE DUELIST GENESIS ]"
+      },
+      "local_database_present": true,
+      "local_script_present": true
+    },
+    {
+      "cid": 11207,
+      "id": 17412721,
+      "cn_name": "旧神 诺登",
+      "sc_name": "旧神诺登",
+      "jp_name": "旧神ノーデン",
+      "description": "同调·超量怪兽＋同调·超量怪兽\r\n这个卡名的效果1回合只能使用1次。\r\n①：这张卡从额外卡组特殊召唤时，以自己墓地1只4星以下的怪兽为对象才能发动。那只怪兽效果无效特殊召唤。这张卡从场上离开时那只怪兽除外。",
+      "jp_release": {
+        "date": "2014-09-13",
+        "pack": "EXTRA PACK - KNIGHTS OF ORDER -"
+      },
+      "local_database_present": true,
+      "local_script_present": true
+    },
+    {
+      "cid": 21953,
+      "id": 16509007,
+      "cn_name": "杀手级调整曲·混音手",
+      "sc_name": "杀手旋律・米可丝",
+      "jp_name": "キラーチューン・ミクス",
+      "description": "场上的这张卡为素材作同调召唤的场合，手卡1只调整也能作为同调素材。这个卡名的①②的效果1回合各能使用1次。\r\n①：这张卡召唤·特殊召唤的场合才能发动。从自己的卡组·墓地把2星怪兽以外的1只「杀手级调整曲」怪兽加入手卡。\r\n②：这张卡作为同调素材送去墓地的场合，以对方场上1只怪兽为对象才能发动。那只怪兽破坏。",
+      "jp_release": {
+        "date": "2025-08-23",
+        "pack": "デッキビルドパック - ファントム・リベンジャーズ -"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23161,
+      "id": 7293697,
+      "cn_name": "完美世界 卡通世界",
+      "sc_name": "完美卡通世界",
+      "jp_name": "完全なる世界 トゥーン・ワールド",
+      "description": "这个卡名的②的效果1回合可以使用最多3次。\r\n①：这张卡只要在场地区域存在，卡名当作「卡通世界」使用。\r\n②：1回合1次，自己主要阶段才能发动。把1张「卡通」卡或者有那卡名记述的卡从卡组加入手卡。\r\n③：其他卡发动的效果适用之际，可以把自己场上1只卡通怪兽直到那个效果处理后除外（这个回合，这个卡名的这个效果不能把原本卡名相同的怪兽除外）。",
+      "jp_release": {
+        "date": "2026-05-30",
+        "pack": "REVOLUTION BOOSTER －トゥーン・ウィッチクラフト・破械－"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23162,
+      "id": 34298391,
+      "cn_name": "看透心灵之眼",
+      "sc_name": "心灵透视眼",
+      "jp_name": "心を見通す眼",
+      "description": "这个卡名的②的效果1回合只能使用1次。\r\n①：只要自己的场上或墓地有「卡通」卡存在，对方把手卡全部持续公开，自己随时可以把对方场上的里侧表示卡确认。\r\n②：自己的场上·墓地有卡通怪兽以及「卡通」魔法卡存在的场合，宣言1个同一连锁上没有把效果发动的卡名才能发动。这张卡表侧表示存在期间，直到回合结束时原本卡名和宣言的卡相同的卡发动的效果无效化。",
+      "jp_release": {
+        "date": "2026-05-30",
+        "pack": "REVOLUTION BOOSTER －トゥーン・ウィッチクラフト・破械－"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23541,
+      "id": 12555008,
+      "cn_name": "光器之瀑布",
+      "sc_name": "塞尼特・光器之瀑布",
+      "jp_name": "光器の瀑布",
+      "description": "这个卡名的①②的效果1回合各能使用1次。\r\n①：指定自己场上的通常怪兽以及「塞尼特」仪式怪兽数量的对方的主要怪兽区域才能发动。这个回合中，指定的区域各有1次，发动的怪兽的效果无效化。\r\n②：自己场上的通常怪兽卡的攻击力合计比3000高的场合，把墓地的这张卡除外，以对方场上1只怪兽为对象才能发动。那只怪兽送去墓地。",
+      "jp_release": {
+        "date": "2026-09-05",
+        "pack": "デッキビルドパック - グロリアス・ヴィクターズ -"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23543,
+      "id": 75934716,
+      "cn_name": "盈彩月夜之帐 西艾萝",
+      "sc_name": "盈彩月夜之帐 西艾萝",
+      "jp_name": "レイズ・ムーンの帳 シエロ",
+      "description": "这个卡名的③的效果1回合只能使用1次。\r\n①：把这张卡抽到时，把这张卡给对方观看才能发动。这张卡特殊召唤。\r\n②：这张卡在手卡存在的场合，从自己的手卡·场上（表侧表示）让这张卡以外的1张卡回到卡组最下面才能发动。这张卡特殊召唤。\r\n③：自己·对方的主要阶段才能发动（这个效果发动的回合，自己不能用抽卡以外的方法从卡组把卡加入手卡）。自己抽1张。",
+      "jp_release": {
+        "date": "2026-09-05",
+        "pack": "デッキビルドパック - グロリアス・ヴィクターズ -"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23548,
+      "id": 47605577,
+      "cn_name": "盈彩月夜之朔 斯奎兹",
+      "sc_name": "盈彩月夜之朔 斯奎兹",
+      "jp_name": "レイズ・ムーンの朔 スクイーズ",
+      "description": "这张卡的效果发动的决斗中，自己不能用抽卡以外的方法从卡组把卡加入手卡。\r\n①：自己·对方回合，可以把这张卡从手卡丢弃，从以下效果选择1个发动（这个卡名的以下效果1回合各能选择1次）。\r\n●这个回合中，每次抽卡以外的方法让对方手卡有卡加入，自己抽1张。这个效果的发动后，直到下个回合的结束时自己不是7阶超量怪兽不能从额外卡组特殊召唤。\r\n●自己抽1张。",
+      "jp_release": {
+        "date": "2026-09-05",
+        "pack": "デッキビルドパック - グロリアス・ヴィクターズ -"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    },
+    {
+      "cid": 23549,
+      "id": 73090586,
+      "cn_name": "盈彩月夜之天 西艾萝-一掷乾坤",
+      "sc_name": "盈彩月夜之天 西艾萝－一掷乾坤",
+      "jp_name": "レイズ・ムーンの天 シエロ－ノーモアベット",
+      "description": "7星「盈彩月夜」怪兽×2\r\n这张卡不能作为融合·超量·连接召唤的素材。\r\n①：这张卡只要在额外怪兽区域存在，得到以下效果。\r\n●这张卡不受其他卡的效果影响。\r\n●包含从卡组把卡加入手卡效果的对方发动的效果的处理时，可以把那个效果变成「自己抽1张」。\r\n●自己·对方回合1次，把这张卡1个超量素材取除才能发动。自己抽1张。\r\n②：这张卡被对方送去墓地的场合才能发动。自己抽1张。",
+      "jp_release": {
+        "date": "2026-09-05",
+        "pack": "デッキビルドパック - グロリアス・ヴィクターズ -"
+      },
+      "local_database_present": false,
+      "local_script_present": false
+    }
+  ],
+  "sha256": {
+    "D:\\MDProMod\\downloads\\ygocdb-current-cards.zip": "437b9ce1b1f65b3802a608d0214fb387a3463273c7e25d3b1839a67fcc02e55a",
+    "D:\\MDProMod\\downloads\\ygocdb-releaseDates.json": "a8dc0aa9e2190a4d6a1f8787d2e8feb6fd4eb2f3eab68561d725f1d3c95f523a",
+    "D:\\MDProMod\\MDPro3-main\\MDPro3-main\\Data\\locales\\zh-CN\\cards.cdb": "66087d6075e65ca1fbad2c8670ceeee6720d9d002a2bd20b28f0b24051c063ab",
+    "D:\\MDProMod\\MDPro3-main\\MDPro3-main\\Data\\script.zip": "0d41b6689c1d44b80ecde8d7b932c6c320a813c4a635bef213c7cd76fd14845b"
+  }
+}

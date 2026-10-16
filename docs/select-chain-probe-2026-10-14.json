@@ -1,0 +1,137 @@
+{
+  "seed": 4962,
+  "deck0": "D:\\MDProMod\\runtime\\decks\\珠泪.ydk",
+  "ai_deck": "Data/Windbot/Decks/AI_BlueEyes.ydk",
+  "messages": 7533,
+  "chain_prompts": 303,
+  "chain_candidates": 950,
+  "chains_all_parsed_ok": true,
+  "bad_chains": [],
+  "errors": [],
+  "ended": true,
+  "first_prompt_sample": {
+    "function": 11,
+    "name": "SelectIdleCmd",
+    "seq": 1,
+    "summary": "SelectIdleCmd: summon=4, spsummon=0, position=0, mset=4, sset=1, activate=2, battle=no, end=yes",
+    "keys": [
+      "activateCards",
+      "function",
+      "monsterSetCards",
+      "name",
+      "options",
+      "player",
+      "positionCards",
+      "raw",
+      "responseKind",
+      "seq",
+      "spellSetCards",
+      "spsummonCards",
+      "summary",
+      "summonCards",
+      "toBattle",
+      "toEnd",
+      "type",
+      "waiting"
+    ]
+  },
+  "first_chain_sample": {
+    "seq": 3,
+    "count": 1,
+    "cards": [
+      {
+        "index": 0,
+        "flag": 0,
+        "forced": false,
+        "code": 23434538,
+        "controller": 0,
+        "location": 2,
+        "sequence": 6,
+        "position": 10,
+        "description": 374952608
+      }
+    ]
+  },
+  "sample_chains": [
+    {
+      "raw": "10000100000021000000000000002A9565010002060AA0525916",
+      "count": 1,
+      "parsed": 1,
+      "forced": false,
+      "cards": [
+        {
+          "code": 23434538,
+          "known": true,
+          "location": 2,
+          "location_ok": true,
+          "sequence": 6
+        }
+      ],
+      "all_ok": true
+    },
+    {
+      "raw": "10000100010000000000000000002A9565010002060AA0525916",
+      "count": 1,
+      "parsed": 1,
+      "forced": false,
+      "cards": [
+        {
+          "code": 23434538,
+          "known": true,
+          "location": 2,
+          "location_ok": true,
+          "sequence": 6
+        }
+      ],
+      "all_ok": true
+    },
+    {
+      "raw": "10000100020000000000000000002A9565010002060AA0525916",
+      "count": 1,
+      "parsed": 1,
+      "forced": false,
+      "cards": [
+        {
+          "code": 23434538,
+          "known": true,
+          "location": 2,
+          "location_ok": true,
+          "sequence": 6
+        }
+      ],
+      "all_ok": true
+    },
+    {
+      "raw": "10000100200000000000000000002A9565010002060AA0525916",
+      "count": 1,
+      "parsed": 1,
+      "forced": false,
+      "cards": [
+        {
+          "code": 23434538,
+          "known": true,
+          "location": 2,
+          "location_ok": true,
+          "sequence": 6
+        }
+      ],
+      "all_ok": true
+    },
+    {
+      "raw": "10000100000000000000210000002A9565010002050AA0525916",
+      "count": 1,
+      "parsed": 1,
+      "forced": false,
+      "cards": [
+        {
+          "code": 23434538,
+          "known": true,
+          "location": 2,
+          "location_ok": true,
+          "sequence": 5
+        }
+      ],
+      "all_ok": true
+    }
+  ]
+}

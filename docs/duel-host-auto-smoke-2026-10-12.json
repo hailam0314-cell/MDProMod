@@ -1,0 +1,32 @@
+{
+  "mode": "duel_host_auto",
+  "root": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging",
+  "output_lines": 2179,
+  "messages": 1547,
+  "states": 630,
+  "errors": [],
+  "win_events": [
+    {
+      "type": "message",
+      "function": 5,
+      "name": "Win",
+      "length": 3,
+      "result": 3,
+      "winner": 0,
+      "hex": "050002"
+    }
+  ],
+  "ended_events": 1,
+  "message_functions": {
+    "90": 72,
+    "40": 72,
+    "41": 425,
+    "11": 141,
+    "2": 279,
+    "16": 351,
+    "10": 70,
+    "15": 68,
+    "50": 68,
+    "5": 1
+  }
+}

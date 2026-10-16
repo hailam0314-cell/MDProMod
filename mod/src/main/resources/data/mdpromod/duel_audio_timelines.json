@@ -1,0 +1,2288 @@
+{
+  "prefab": {
+    "DuelTextStart": [
+      {
+        "key": "SE_DUEL_START",
+        "timeMs": 0
+      }
+    ],
+    "DuelTextStartTimeline": [
+      {
+        "key": "SE_DUEL_START",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroCircle03TL": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_03",
+        "timeMs": 2717
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_03",
+        "timeMs": 3333
+      }
+    ],
+    "SummonSynchroCircle03_01": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_03",
+        "timeMs": 2717
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_03",
+        "timeMs": 3333
+      }
+    ],
+    "SummonRitualShowUnitCard01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard04": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard04TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion03_01": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonFusion03_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonLink02_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4117
+      }
+    ],
+    "SummonLink02_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4117
+      }
+    ],
+    "DuelChainResolve01": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE01",
+        "timeMs": 217
+      }
+    ],
+    "DuelChainResolve01TL": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE01",
+        "timeMs": 217
+      }
+    ],
+    "SummonFusion02_01": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonFusion02_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonXYZ02_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_02",
+        "timeMs": 2067
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3050
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3783
+      }
+    ],
+    "SummonXYZ02_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_02",
+        "timeMs": 2067
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3050
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3783
+      }
+    ],
+    "DuelTextDraw": [
+      {
+        "key": "SE_DUEL_DRAW",
+        "timeMs": 0
+      }
+    ],
+    "DuelTextDrawTimeline": [
+      {
+        "key": "SE_DUEL_DRAW",
+        "timeMs": 0
+      }
+    ],
+    "SummonXYZ01_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 67
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_01",
+        "timeMs": 1900
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3000
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3767
+      }
+    ],
+    "SummonXYZ01_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 67
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_01",
+        "timeMs": 1900
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3000
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3767
+      }
+    ],
+    "SummonSynchro02": [
+      {
+        "key": "SE_SMN_SYNCHRO_01_04",
+        "timeMs": 83
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_05",
+        "timeMs": 2417
+      }
+    ],
+    "SummonSynchro02TL": [
+      {
+        "key": "SE_SMN_SYNCHRO_01_04",
+        "timeMs": 83
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_05",
+        "timeMs": 2417
+      }
+    ],
+    "SummonLink05_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonLink05_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "RitualTrailIn01_01": [
+      {
+        "key": "SE_SMN_RITUAL_02_01",
+        "timeMs": 67
+      }
+    ],
+    "RitualTrailIn01_01TL": [
+      {
+        "key": "SE_SMN_RITUAL_02_01",
+        "timeMs": 67
+      }
+    ],
+    "SummonLink06_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonLink06_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonSynchroShowUnitCard05": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard05TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion01_01": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "SummonFusion01_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "SummonFusionShowUnitCard01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 100
+      }
+    ],
+    "SummonFusionShowUnitCard01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 100
+      }
+    ],
+    "SummonRitual02": [
+      {
+        "key": "SE_SMN_RITUAL_01",
+        "timeMs": 217
+      },
+      {
+        "key": "SE_SMN_RITUAL_03",
+        "timeMs": 1250
+      },
+      {
+        "key": "SE_SMN_RITUAL_04",
+        "timeMs": 2433
+      }
+    ],
+    "SummonRitual02TL": [
+      {
+        "key": "SE_SMN_RITUAL_01",
+        "timeMs": 217
+      },
+      {
+        "key": "SE_SMN_RITUAL_03",
+        "timeMs": 1250
+      },
+      {
+        "key": "SE_SMN_RITUAL_04",
+        "timeMs": 2433
+      }
+    ],
+    "SummonPendulumScaleSet": [
+      {
+        "key": "SE_SUMMON_PENDULUM_SET",
+        "timeMs": 33
+      },
+      {
+        "key": "SE_LP_STOP",
+        "timeMs": 267
+      }
+    ],
+    "SummonPendulumScaleSetTL": [
+      {
+        "key": "SE_SUMMON_PENDULUM_SET",
+        "timeMs": 33
+      },
+      {
+        "key": "SE_LP_STOP",
+        "timeMs": 267
+      }
+    ],
+    "SummonSynchroCircle02TL": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_02",
+        "timeMs": 2733
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_02",
+        "timeMs": 3317
+      }
+    ],
+    "SummonSynchroCircle02_01": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_02",
+        "timeMs": 2733
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_02",
+        "timeMs": 3317
+      }
+    ],
+    "DuelTextWin": [
+      {
+        "key": "SE_DUEL_WIN",
+        "timeMs": 0
+      }
+    ],
+    "DuelTextWinTL": [
+      {
+        "key": "SE_DUEL_WIN",
+        "timeMs": 0
+      }
+    ],
+    "SummonXYZ06_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2033
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3000
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3733
+      }
+    ],
+    "SummonXYZ06_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2033
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3000
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3733
+      }
+    ],
+    "SummonLink04_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonLink04_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonRitualShowUnitCard06": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard06TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard06": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard06TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard07": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard07TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard04": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard04TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard03": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusionShowUnitCard03TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusionShowUnitCard02": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 67
+      }
+    ],
+    "SummonFusionShowUnitCard02TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 67
+      }
+    ],
+    "DuelTextDefeat": [
+      {
+        "key": "SE_DUEL_LOSE",
+        "timeMs": 0
+      }
+    ],
+    "DuelTextDefeatTimeline": [
+      {
+        "key": "SE_DUEL_LOSE",
+        "timeMs": 0
+      }
+    ],
+    "SummonXYZ00_01": [
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 1833
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 2600
+      }
+    ],
+    "SummonXYZ00_01TL": [
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 1833
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 2600
+      }
+    ],
+    "SummonFusionShowUnitCardNum": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCardNumTL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "DuelDeckAppearance": [
+      {
+        "key": "SE_DUEL_DECK_ENTRY",
+        "timeMs": 150
+      }
+    ],
+    "DuelDeckAppearanceTL": [
+      {
+        "key": "SE_DUEL_DECK_ENTRY",
+        "timeMs": 150
+      }
+    ],
+    "SummonSynchroShowUnitCard03": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard03TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "DuelTurnChange00": [
+      {
+        "key": "SE_NEXT_TURN_PLAYER",
+        "timeMs": 483
+      }
+    ],
+    "DuelTurnChange00Timeline": [
+      {
+        "key": "SE_NEXT_TURN_PLAYER",
+        "timeMs": 483
+      }
+    ],
+    "SummonRitualShowUnitCardNum": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCardNumTL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion05_01": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "SummonFusion05_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "FusionNum": [
+      {
+        "key": "SE_SMN_FUSION_01_03",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "SummonFusionNumTL": [
+      {
+        "key": "SE_SMN_FUSION_01_03",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3150
+      }
+    ],
+    "DuelEntryTeam": [
+      {
+        "key": "SE_DUEL_ENTRY_VS",
+        "timeMs": 267
+      },
+      {
+        "key": "SE_DUEL_ENTRY_LOOP_02",
+        "timeMs": 11117
+      }
+    ],
+    "DuelEntry_Timeline_Team": [
+      {
+        "key": "SE_DUEL_ENTRY_VS",
+        "timeMs": 267
+      },
+      {
+        "key": "SE_DUEL_ENTRY_LOOP_02",
+        "timeMs": 11117
+      }
+    ],
+    "SummonRitualShowUnitCard02": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard02TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard02": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCard02TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "DuelChainStack01": [
+      {
+        "key": "SE_DUELCHAIN_STACK01",
+        "timeMs": 17
+      },
+      {
+        "key": "SE_DUEL_CHAIN_NUMEFF_01_2nd",
+        "timeMs": 650
+      }
+    ],
+    "DuelChainStack01TL": [
+      {
+        "key": "SE_DUELCHAIN_STACK01",
+        "timeMs": 17
+      },
+      {
+        "key": "SE_DUEL_CHAIN_NUMEFF_01_2nd",
+        "timeMs": 650
+      }
+    ],
+    "SummonFusionShowUnitCard08": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard08TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitual01": [
+      {
+        "key": "SE_SMN_RITUAL_01",
+        "timeMs": 1367
+      },
+      {
+        "key": "SE_SMN_RITUAL_03",
+        "timeMs": 3583
+      },
+      {
+        "key": "SE_SMN_RITUAL_04",
+        "timeMs": 4767
+      }
+    ],
+    "SummonRitual01TL": [
+      {
+        "key": "SE_SMN_RITUAL_01",
+        "timeMs": 1367
+      },
+      {
+        "key": "SE_SMN_RITUAL_03",
+        "timeMs": 3583
+      },
+      {
+        "key": "SE_SMN_RITUAL_04",
+        "timeMs": 4767
+      }
+    ],
+    "SummonXYZ04_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1267
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2067
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3083
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3733
+      }
+    ],
+    "SummonXYZ04_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1267
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2067
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3083
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3733
+      }
+    ],
+    "RitualTrailIn03_01": [
+      {
+        "key": "SE_SMN_RITUAL_02_03",
+        "timeMs": 0
+      }
+    ],
+    "RitualTrailIn03_01TL": [
+      {
+        "key": "SE_SMN_RITUAL_02_03",
+        "timeMs": 0
+      }
+    ],
+    "SummonXYZ03_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2050
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3117
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3717
+      }
+    ],
+    "SummonXYZ03_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2050
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3117
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3717
+      }
+    ],
+    "SummonSynchroCircleSS": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_04",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_04",
+        "timeMs": 1167
+      }
+    ],
+    "SummonSynchroCircleSSTL": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_04",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_04",
+        "timeMs": 1167
+      }
+    ],
+    "DuelChainResolve03": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE03",
+        "timeMs": 17
+      },
+      {
+        "key": "SE_DUELCHAIN_STACK02",
+        "timeMs": 1183
+      }
+    ],
+    "DuelChainResolve03TL": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE03",
+        "timeMs": 17
+      },
+      {
+        "key": "SE_DUELCHAIN_STACK02",
+        "timeMs": 1183
+      }
+    ],
+    "SummonRitualShowUnitCard03": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard03TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroCircle01TL": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_01",
+        "timeMs": 2750
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_01",
+        "timeMs": 3267
+      }
+    ],
+    "SummonSynchroCircle01_01": [
+      {
+        "key": "SE_SMN_SYNCHRO_03_01",
+        "timeMs": 2750
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_04_01",
+        "timeMs": 3267
+      }
+    ],
+    "RitualTrailIn02_01": [
+      {
+        "key": "SE_SMN_RITUAL_02_02",
+        "timeMs": 17
+      }
+    ],
+    "RitualTrailIn02_01TL": [
+      {
+        "key": "SE_SMN_RITUAL_02_02",
+        "timeMs": 17
+      }
+    ],
+    "SummonXYZ05_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2017
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3017
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3717
+      }
+    ],
+    "SummonXYZ05_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_XYZ_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_XYZ_02_03",
+        "timeMs": 2017
+      },
+      {
+        "key": "SE_SMN_XYZ_03",
+        "timeMs": 3017
+      },
+      {
+        "key": "SE_SMN_XYZ_04",
+        "timeMs": 3717
+      }
+    ],
+    "SummonLink01_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1817
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2100
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 2783
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 3633
+      }
+    ],
+    "SummonLink01_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1817
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2100
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 2783
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 3633
+      }
+    ],
+    "SummonFusionShowUnitCard05": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard05TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCardNum": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonSynchroShowUnitCardNumTL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "DuelTextLoseTimeline": [
+      {
+        "key": "SE_DUEL_LOSE",
+        "timeMs": 0
+      }
+    ],
+    "DueltextLose": [
+      {
+        "key": "SE_DUEL_LOSE",
+        "timeMs": 0
+      }
+    ],
+    "SummonLink03_01": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "SummonLink03_01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_LINK_01",
+        "timeMs": 1283
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 1933
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2183
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2433
+      },
+      {
+        "key": "SE_SMN_LINK_03_01",
+        "timeMs": 2683
+      },
+      {
+        "key": "SE_SMN_LINK_02",
+        "timeMs": 2983
+      },
+      {
+        "key": "SE_SMN_LINK_03_02",
+        "timeMs": 3250
+      },
+      {
+        "key": "SE_SMN_LINK_04",
+        "timeMs": 3683
+      },
+      {
+        "key": "SE_SMN_LINK_05",
+        "timeMs": 4500
+      }
+    ],
+    "DuelChainResolve02": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE02",
+        "timeMs": 50
+      },
+      {
+        "key": "SE_DUELCHAIN_STACK02",
+        "timeMs": 1133
+      }
+    ],
+    "DuelChainResolve02TL": [
+      {
+        "key": "SE_DUELCHAIN_RESOLVE02",
+        "timeMs": 50
+      },
+      {
+        "key": "SE_DUELCHAIN_STACK02",
+        "timeMs": 1133
+      }
+    ],
+    "ChainSpot": [
+      {
+        "key": "SE_DUELCHAIN_01",
+        "timeMs": 0
+      }
+    ],
+    "DuelChainSpot01Timeline": [
+      {
+        "key": "SE_DUELCHAIN_01",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard06": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusionShowUnitCard06TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion00_01": [
+      {
+        "key": "SE_SMN_FUSION_01_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 1817
+      }
+    ],
+    "SummonFusion00_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 1817
+      }
+    ],
+    "SummonSynchro01": [
+      {
+        "key": "SE_SMN_SYNCHRO_01_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_02",
+        "timeMs": 1850
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_05",
+        "timeMs": 3683
+      }
+    ],
+    "SummonSynchro01TL": [
+      {
+        "key": "SE_SMN_SYNCHRO_01_01",
+        "timeMs": 1317
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_02",
+        "timeMs": 1850
+      },
+      {
+        "key": "SE_SMN_SYNCHRO_05",
+        "timeMs": 3683
+      }
+    ],
+    "SummonPendulum01": [
+      {
+        "key": "SE_SMN_PENDULUM_01_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01_03",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01",
+        "timeMs": 667
+      },
+      {
+        "key": "SE_SMN_PENDULUM_02",
+        "timeMs": 2833
+      }
+    ],
+    "SummonPendulum01TL": [
+      {
+        "key": "SE_SMN_PENDULUM_01_01",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01_02",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01_03",
+        "timeMs": 0
+      },
+      {
+        "key": "SE_SMN_PENDULUM_01",
+        "timeMs": 667
+      },
+      {
+        "key": "SE_SMN_PENDULUM_02",
+        "timeMs": 2833
+      }
+    ],
+    "SummonFusionShowUnitCard04": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusionShowUnitCard04TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_01",
+        "timeMs": 50
+      }
+    ],
+    "DuelTurnChange01": [
+      {
+        "key": "SE_NEXT_TURN_RIVAL",
+        "timeMs": 417
+      }
+    ],
+    "DuelTurnChange01Timeline": [
+      {
+        "key": "SE_NEXT_TURN_RIVAL",
+        "timeMs": 417
+      }
+    ],
+    "DuelEntry": [
+      {
+        "key": "SE_DUEL_ENTRY_VS",
+        "timeMs": 250
+      },
+      {
+        "key": "SE_DUEL_ENTRY_LOOP_02",
+        "timeMs": 6100
+      }
+    ],
+    "DuelEntry_Timeline": [
+      {
+        "key": "SE_DUEL_ENTRY_VS",
+        "timeMs": 250
+      },
+      {
+        "key": "SE_DUEL_ENTRY_LOOP_02",
+        "timeMs": 6100
+      }
+    ],
+    "SummonFusion04_01": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonFusion04_01TL": [
+      {
+        "key": "SE_SMN_FUSION_01_02",
+        "timeMs": 1333
+      },
+      {
+        "key": "SE_SMN_FUSION_02",
+        "timeMs": 3133
+      }
+    ],
+    "SummonRitualShowUnitCard05": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonRitualShowUnitCard05TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bglit_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_LIGHT",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bglit_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_LIGHT",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgeah_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_EARTH",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgeah_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_EARTH",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgwid_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_WIND",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgwid_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_WIND",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgdve_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_DIVINE",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgdve_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_DIVINE",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgfie_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_FIRE",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgfie_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_FIRE",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgdak_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_DARK",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgdak_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_DARK",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgwtr_S2": [
+      {
+        "key": "SE_MONSTER_CUTIN_WATER",
+        "timeMs": 0
+      }
+    ],
+    "SummonMonster_Bgwtr_S2_Timeline": [
+      {
+        "key": "SE_MONSTER_CUTIN_WATER",
+        "timeMs": 0
+      }
+    ],
+    "SummonSpecialWin4027": [
+      {
+        "key": "SE_EV_EXODIA",
+        "timeMs": 300
+      }
+    ],
+    "SummonSpecialWin4027Timeline": [
+      {
+        "key": "SE_EV_EXODIA",
+        "timeMs": 300
+      }
+    ],
+    "SummonSpecialWin14585": [
+      {
+        "key": "SE_EV_DESTINYBOARD",
+        "timeMs": 1217
+      }
+    ],
+    "SummonSpecialWin14585Timeline": [
+      {
+        "key": "SE_EV_DESTINYBOARD",
+        "timeMs": 1217
+      }
+    ],
+    "SummonSpecialWin11422": [
+      {
+        "key": "SE_EV_GHOSTRICK_ANGEL",
+        "timeMs": 83
+      }
+    ],
+    "SummonSpecialWin11422Timeline": [
+      {
+        "key": "SE_EV_GHOSTRICK_ANGEL",
+        "timeMs": 83
+      }
+    ],
+    "SummonSpecialWin5224": [
+      {
+        "key": "SE_EV_DESTINYBOARD",
+        "timeMs": 1217
+      }
+    ],
+    "SummonSpecialWin17158": [
+      {
+        "key": "SE_EV_MUSICALSUMO_DICE",
+        "timeMs": 0
+      }
+    ],
+    "SummonSpecialWin17158Timeline": [
+      {
+        "key": "SE_EV_MUSICALSUMO_DICE",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard01": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard01TL": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard02": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard02TL": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard03": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard03TL": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard04": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard04TL": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard05": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard05TL": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion03432ShowUnitCard01": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard01TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard02": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard02TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard03": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard03TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard04": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard04TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard05": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard05TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard06": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard06TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard07": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard07TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard08": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCard08TL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCardNum": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion03432ShowUnitCardNumTL": [
+      {
+        "key": "SE_EV_045_SPECIAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion07445ShowUnitCard01": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 100
+      }
+    ],
+    "SummonFusion07445ShowUnitCard01TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 100
+      }
+    ],
+    "SummonFusion07445ShowUnitCard02": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 67
+      }
+    ],
+    "SummonFusion07445ShowUnitCard02TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 67
+      }
+    ],
+    "SummonFusion07445ShowUnitCard03": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusion07445ShowUnitCard03TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusion07445ShowUnitCard04": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusion07445ShowUnitCard04TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 50
+      }
+    ],
+    "SummonFusion07445ShowUnitCard05": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard05TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard06": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard06TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard07": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard07TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard08": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCard08TL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCardNum": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion07445ShowUnitCardNumTL": [
+      {
+        "key": "SE_SMN_CMN_CARD_SUPER",
+        "timeMs": 0
+      }
+    ],
+    "SummonFusion12852ShowUnitCard01": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard01TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard02": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard02TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard03": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard03TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard04": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard04TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard05": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard05TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard06": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard06TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard07": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard07TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard08": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCard08TL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCardNum": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ],
+    "SummonFusion12852ShowUnitCardNumTL": [
+      {
+        "key": "SE_EV_045_NORMAL",
+        "timeMs": 17
+      }
+    ]
+  },
+  "cutin": {
+    "LIGHT": [
+      {
+        "key": "SE_MONSTER_CUTIN_LIGHT",
+        "timeMs": 0
+      }
+    ],
+    "EARTH": [
+      {
+        "key": "SE_MONSTER_CUTIN_EARTH",
+        "timeMs": 0
+      }
+    ],
+    "WIND": [
+      {
+        "key": "SE_MONSTER_CUTIN_WIND",
+        "timeMs": 0
+      }
+    ],
+    "DIVINE": [
+      {
+        "key": "SE_MONSTER_CUTIN_DIVINE",
+        "timeMs": 0
+      }
+    ],
+    "FIRE": [
+      {
+        "key": "SE_MONSTER_CUTIN_FIRE",
+        "timeMs": 0
+      }
+    ],
+    "DARK": [
+      {
+        "key": "SE_MONSTER_CUTIN_DARK",
+        "timeMs": 0
+      }
+    ],
+    "WATER": [
+      {
+        "key": "SE_MONSTER_CUTIN_WATER",
+        "timeMs": 0
+      }
+    ]
+  },
+  "specialwin": {
+    "33396948": [
+      {
+        "key": "SE_EV_EXODIA",
+        "timeMs": 300
+      }
+    ],
+    "40771118": [
+      {
+        "key": "SE_EV_DESTINYBOARD",
+        "timeMs": 1217
+      }
+    ],
+    "53334641": [
+      {
+        "key": "SE_EV_GHOSTRICK_ANGEL",
+        "timeMs": 83
+      }
+    ],
+    "94212438": [
+      {
+        "key": "SE_EV_DESTINYBOARD",
+        "timeMs": 1217
+      }
+    ],
+    "96637156": [
+      {
+        "key": "SE_EV_MUSICALSUMO_DICE",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard01": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard02": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard03": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard04": [
+      {
+        "key": "SE_SMN_CMN_CARD_02",
+        "timeMs": 0
+      }
+    ],
+    "SpecialWinCommonCard05": [
+      {
+        "key": "SE_DUEL_SPECIALWIN_CARD",
+        "timeMs": 0
+      }
+    ]
+  }
+}

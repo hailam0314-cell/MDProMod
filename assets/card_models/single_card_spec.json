@@ -1,0 +1,145 @@
+{
+  "name": "single_card_v1",
+  "version": 1,
+  "model": {
+    "file": "single_card_v1.bbmodel",
+    "root_group": "single_card",
+    "body_group": "card_body",
+    "cube": "Card_Body",
+    "thickness": 0.06,
+    "previews": [
+      "single_card_face_preview.png",
+      "single_card_back_preview.png",
+      "single_card_perspective_preview.png"
+    ]
+  },
+  "card": {
+    "width": 6.875,
+    "depth": 10.0,
+    "thickness": 0.06,
+    "aspect_ratio": "704:1024",
+    "origin": "bottom center",
+    "duel_mat_top_y": 0.75
+  },
+  "textures": {
+    "face_placeholder": "textures/card_face_placeholder.jpg",
+    "back": "textures/card_back.png",
+    "edge": "textures/card_edge.png"
+  },
+  "uv": {
+    "face": [
+      0,
+      0,
+      704,
+      1024
+    ],
+    "back": [
+      0,
+      0,
+      320,
+      467
+    ],
+    "edge": [
+      0,
+      0,
+      32,
+      64
+    ],
+    "underside": [
+      0,
+      32,
+      32,
+      64
+    ]
+  },
+  "groups": {
+    "card_body": "Single shared card geometry. The top face is the dynamic card face, the bottom face is the shared card back, and the sides use the card-edge texture."
+  },
+  "locators": [
+    "card_origin",
+    "card_face_surface",
+    "card_back_surface",
+    "card_attack_anchor",
+    "card_defense_anchor",
+    "card_texture_swap"
+  ],
+  "state_rendering": {
+    "face_up": "Bind the dynamic card image to the top face and render the top face.",
+    "face_down": "Use the shared card back on the top face, or rotate the model 180 degrees around X to expose the bottom face.",
+    "attack": "Card long axis points along the player forward direction.",
+    "defense": "Rotate the card 90 degrees around Y while keeping the same texture mapping.",
+    "graveyard_or_banished": "Use the same card model and bind a face texture only for visible face-up cards."
+  },
+  "dynamic_texture": {
+    "source_directory": "D:\\MyCardLibrary\\mdpro3\\Picture\\CardGenerated",
+    "file_pattern": "<card_code>.jpg",
+    "full_size": [
+      704,
+      1024
+    ],
+    "default_profile": "field_176x256_q80",
+    "detail_profile": "master_on_demand",
+    "legacy_detail_profile": "field_352x512_q85",
+    "recommended_field_size": [
+      176,
+      256
+    ],
+    "detail_size": [
+      704,
+      1024
+    ],
+    "gpu_mib_full_rgba": 2.75,
+    "gpu_mib_field_rgba": 0.172,
+    "recommended_cache_entries": 128,
+    "eviction": "LRU, unload when a card leaves the visible field",
+    "fallback": "card back texture for missing or failed images",
+    "profiles": {
+      "field_176x256_q80": {
+        "directory": "D:/MDProMod/runtime/card_textures_176x256_q80",
+        "size": [
+          176,
+          256
+        ],
+        "quality": 80,
+        "format": "jpeg",
+        "files": 15019,
+        "mib": 203.68,
+        "complete": true
+      },
+      "field_352x512_q85": {
+        "directory": "D:/MDProMod/runtime/card_textures_352x512_q85",
+        "size": [
+          352,
+          512
+        ],
+        "quality": 85,
+        "format": "jpeg",
+        "files": 6745,
+        "mib": 332.35,
+        "complete": false,
+        "note": "Partial legacy detail cache; regenerate for the full set if needed."
+      }
+    },
+    "master": {
+      "directory": "D:\\MyCardLibrary\\mdpro3\\Picture\\CardGenerated",
+      "size": [
+        704,
+        1024
+      ],
+      "format": "jpg",
+      "files": 15019,
+      "mib": 2199.81,
+      "complete": true
+    },
+    "sample_code": "89631139",
+    "sample_sha256": "595bdbead0cf68f7ff353748acecc278e5b1fc197af4a8c0d6fbef9198323b18"
+  },
+  "inventory_snapshot": {
+    "count": 15019,
+    "total_gib": 2.1483,
+    "dimension_histogram": {
+      "704x1024": 15019
+    },
+    "missing_log": []
+  }
+}

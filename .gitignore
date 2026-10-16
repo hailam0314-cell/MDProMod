@@ -1,0 +1,72 @@
+# 本仓库只放「代码 + 文档」：资源、游戏安装和构建产物都不进 git（原因见 README 的 Assets 一节）
+
+# ---- Java 模组：构建产物与本地运行目录 ----
+mod/build/
+mod/run/
+mod/logs/
+mod/.gradle/
+mod/smoke/out/
+mod/server-test*.log
+
+# ---- 模组内的 Konami 音频素材（168 MB / 2,443 个 ogg）----
+# 想连音频一起开源就注释掉下面这行；GitHub 上这类素材有被 DMCA 下架的先例，自己判断。
+mod/src/main/resources/assets/mdpromod/sounds/
+
+# ---- 资源流水线原料：体积大、版权不属于本仓库 ----
+runtime/
+analysis/
+cache/
+downloads/
+tmp/
+tmp_compare/
+
+# ---- 第三方游戏安装 / 解包（MDPro3 源码副本、从安装包里解出来的资源）----
+MDPro3-main/
+MDPro3-main.zip
+Windows/
+Android/
+upstream/
+
+# ---- 工具链里的第三方大件 ----
+tools/dotnet/
+# 我做过几种宿主发布方式的实验产物（单文件 / 自包含），都不进仓库
+tools/duel_host/publish/
+tools/duel_host/publish_self/
+tools/duel_host/*.jsonl
+tools/ilspy/
+tools/ilspycmd/
+tools/ilspy.zip
+tools/ilspycmd.nupkg
+tools/unitypy/
+tools/audio_pipeline/deps/
+tools/ygo_tcp_probe/staging/
+tools/**/bin/
+tools/**/obj/
+
+# ---- 抓下来的官方资料（Konami 的页面/文本，只当研究底稿）----
+docs/official-*
+docs/card-*-community.*
+docs/card-search-page.html
+
+# ---- 从游戏里抽出来的原图（建模时的参考素材，构建用不到）----
+assets/*/source/
+assets/*/reference/
+assets/card_case_models/card_case_reference.png
+assets/card_models/textures/card_face_placeholder.jpg
+
+# ---- 杂物 ----
+*.log
+__pycache__/
+*.pyc
+.vs/
+.idea/
+*.user
+
+# ---- Java 模板里那几条（GitHub 建仓库时选的 Java .gitignore）----
+*.class
+*.ctxt
+hs_err_pid*
+replay_pid*
+
+# ---- 发布用的那个仓库文件夹（它自己有 .git，是最终要 push 的地方）----
+/MDProMod/

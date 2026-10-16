@@ -1,0 +1,1354 @@
+{
+  "name": "mdpromod_duel_field_v1",
+  "version": 1,
+  "units_per_block": 16,
+  "model_format": "free",
+  "bounds": {
+    "from": [
+      -64,
+      0,
+      -56
+    ],
+    "to": [
+      64,
+      1.6,
+      56
+    ]
+  },
+  "size_blocks": [
+    8,
+    0.1,
+    7
+  ],
+  "orientation": {
+    "p1": "stands at +Z; own right is +X",
+    "p2": "stands at -Z; own right is -X"
+  },
+  "card_size_model_units": [
+    6.875,
+    10
+  ],
+  "texture": {
+    "file": "textures/duel_field_atlas.png",
+    "bitmap_size": [
+      1024,
+      1024
+    ],
+    "logical_uv_size": [
+      128,
+      128
+    ],
+    "surface_uv": [
+      0,
+      0,
+      128,
+      112
+    ],
+    "swatches": {
+      "base": [
+        3,
+        116,
+        13,
+        124
+      ],
+      "binding": [
+        19,
+        116,
+        29,
+        124
+      ],
+      "edge": [
+        35,
+        116,
+        45,
+        124
+      ],
+      "zone_side": [
+        51,
+        116,
+        61,
+        124
+      ],
+      "control_side": [
+        67,
+        116,
+        77,
+        124
+      ],
+      "lp_side": [
+        83,
+        116,
+        93,
+        124
+      ],
+      "monster_edge": [
+        98.0,
+        116.0,
+        102.0,
+        118.0
+      ],
+      "spell_trap_edge": [
+        106.0,
+        116.0,
+        110.0,
+        118.0
+      ],
+      "deck_edge": [
+        114.0,
+        116.0,
+        118.0,
+        118.0
+      ],
+      "extra_edge": [
+        122.0,
+        116.0,
+        126.0,
+        118.0
+      ],
+      "graveyard_edge": [
+        98.0,
+        122.0,
+        102.0,
+        124.0
+      ],
+      "banished_edge": [
+        106.0,
+        122.0,
+        110.0,
+        124.0
+      ],
+      "field_edge": [
+        114.0,
+        122.0,
+        118.0,
+        124.0
+      ],
+      "extra_monster_edge": [
+        122.0,
+        122.0,
+        126.0,
+        124.0
+      ]
+    }
+  },
+  "zones": [
+    {
+      "id": "p1_mzone_0",
+      "owner": "p1",
+      "kind": "monster",
+      "label": "怪兽 1",
+      "sequence": 0,
+      "center": [
+        -32,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        -32,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        26,
+        67,
+        38,
+        81
+      ]
+    },
+    {
+      "id": "p1_szone_0",
+      "owner": "p1",
+      "kind": "spell_trap",
+      "label": "魔陷 1",
+      "sequence": 0,
+      "center": [
+        -32,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        -32,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": "left",
+      "atlas_uv": [
+        26,
+        83,
+        38,
+        97
+      ]
+    },
+    {
+      "id": "p1_mzone_1",
+      "owner": "p1",
+      "kind": "monster",
+      "label": "怪兽 2",
+      "sequence": 1,
+      "center": [
+        -16,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        -16,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        42,
+        67,
+        54,
+        81
+      ]
+    },
+    {
+      "id": "p1_szone_1",
+      "owner": "p1",
+      "kind": "spell_trap",
+      "label": "魔陷 2",
+      "sequence": 1,
+      "center": [
+        -16,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        -16,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        42,
+        83,
+        54,
+        97
+      ]
+    },
+    {
+      "id": "p1_mzone_2",
+      "owner": "p1",
+      "kind": "monster",
+      "label": "怪兽 3",
+      "sequence": 2,
+      "center": [
+        0,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        0,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        58,
+        67,
+        70,
+        81
+      ]
+    },
+    {
+      "id": "p1_szone_2",
+      "owner": "p1",
+      "kind": "spell_trap",
+      "label": "魔陷 3",
+      "sequence": 2,
+      "center": [
+        0,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        0,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        58,
+        83,
+        70,
+        97
+      ]
+    },
+    {
+      "id": "p1_mzone_3",
+      "owner": "p1",
+      "kind": "monster",
+      "label": "怪兽 4",
+      "sequence": 3,
+      "center": [
+        16,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        16,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        74,
+        67,
+        86,
+        81
+      ]
+    },
+    {
+      "id": "p1_szone_3",
+      "owner": "p1",
+      "kind": "spell_trap",
+      "label": "魔陷 4",
+      "sequence": 3,
+      "center": [
+        16,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        16,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        74,
+        83,
+        86,
+        97
+      ]
+    },
+    {
+      "id": "p1_mzone_4",
+      "owner": "p1",
+      "kind": "monster",
+      "label": "怪兽 5",
+      "sequence": 4,
+      "center": [
+        32,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        32,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        90,
+        67,
+        102,
+        81
+      ]
+    },
+    {
+      "id": "p1_szone_4",
+      "owner": "p1",
+      "kind": "spell_trap",
+      "label": "魔陷 5",
+      "sequence": 4,
+      "center": [
+        32,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        32,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": "right",
+      "atlas_uv": [
+        90,
+        83,
+        102,
+        97
+      ]
+    },
+    {
+      "id": "p1_deck",
+      "owner": "p1",
+      "kind": "deck",
+      "label": "主卡组",
+      "sequence": null,
+      "center": [
+        52,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        52,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        110,
+        83,
+        122,
+        97
+      ]
+    },
+    {
+      "id": "p1_extra",
+      "owner": "p1",
+      "kind": "extra",
+      "label": "额外卡组",
+      "sequence": null,
+      "center": [
+        -52,
+        0.82,
+        34
+      ],
+      "card_anchor": [
+        -52,
+        1.05,
+        34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        6,
+        83,
+        18,
+        97
+      ]
+    },
+    {
+      "id": "p1_graveyard",
+      "owner": "p1",
+      "kind": "graveyard",
+      "label": "墓地",
+      "sequence": null,
+      "center": [
+        52,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        52,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        110,
+        67,
+        122,
+        81
+      ]
+    },
+    {
+      "id": "p1_banished",
+      "owner": "p1",
+      "kind": "banished",
+      "label": "除外",
+      "sequence": null,
+      "center": [
+        52,
+        0.82,
+        2
+      ],
+      "card_anchor": [
+        52,
+        1.05,
+        2
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        110,
+        51,
+        122,
+        65
+      ]
+    },
+    {
+      "id": "p1_field",
+      "owner": "p1",
+      "kind": "field",
+      "label": "场地魔法",
+      "sequence": 5,
+      "center": [
+        -52,
+        0.82,
+        18
+      ],
+      "card_anchor": [
+        -52,
+        1.05,
+        18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        6,
+        67,
+        18,
+        81
+      ]
+    },
+    {
+      "id": "p2_mzone_0",
+      "owner": "p2",
+      "kind": "monster",
+      "label": "怪兽 1",
+      "sequence": 0,
+      "center": [
+        32,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        32,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        90,
+        31,
+        102,
+        45
+      ]
+    },
+    {
+      "id": "p2_szone_0",
+      "owner": "p2",
+      "kind": "spell_trap",
+      "label": "魔陷 1",
+      "sequence": 0,
+      "center": [
+        32,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        32,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": "left",
+      "atlas_uv": [
+        90,
+        15,
+        102,
+        29
+      ]
+    },
+    {
+      "id": "p2_mzone_1",
+      "owner": "p2",
+      "kind": "monster",
+      "label": "怪兽 2",
+      "sequence": 1,
+      "center": [
+        16,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        16,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        74,
+        31,
+        86,
+        45
+      ]
+    },
+    {
+      "id": "p2_szone_1",
+      "owner": "p2",
+      "kind": "spell_trap",
+      "label": "魔陷 2",
+      "sequence": 1,
+      "center": [
+        16,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        16,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        74,
+        15,
+        86,
+        29
+      ]
+    },
+    {
+      "id": "p2_mzone_2",
+      "owner": "p2",
+      "kind": "monster",
+      "label": "怪兽 3",
+      "sequence": 2,
+      "center": [
+        0,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        0,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        58,
+        31,
+        70,
+        45
+      ]
+    },
+    {
+      "id": "p2_szone_2",
+      "owner": "p2",
+      "kind": "spell_trap",
+      "label": "魔陷 3",
+      "sequence": 2,
+      "center": [
+        0,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        0,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        58,
+        15,
+        70,
+        29
+      ]
+    },
+    {
+      "id": "p2_mzone_3",
+      "owner": "p2",
+      "kind": "monster",
+      "label": "怪兽 4",
+      "sequence": 3,
+      "center": [
+        -16,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        -16,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        42,
+        31,
+        54,
+        45
+      ]
+    },
+    {
+      "id": "p2_szone_3",
+      "owner": "p2",
+      "kind": "spell_trap",
+      "label": "魔陷 4",
+      "sequence": 3,
+      "center": [
+        -16,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        -16,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        42,
+        15,
+        54,
+        29
+      ]
+    },
+    {
+      "id": "p2_mzone_4",
+      "owner": "p2",
+      "kind": "monster",
+      "label": "怪兽 5",
+      "sequence": 4,
+      "center": [
+        -32,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        -32,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        26,
+        31,
+        38,
+        45
+      ]
+    },
+    {
+      "id": "p2_szone_4",
+      "owner": "p2",
+      "kind": "spell_trap",
+      "label": "魔陷 5",
+      "sequence": 4,
+      "center": [
+        -32,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        -32,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": "right",
+      "atlas_uv": [
+        26,
+        15,
+        38,
+        29
+      ]
+    },
+    {
+      "id": "p2_deck",
+      "owner": "p2",
+      "kind": "deck",
+      "label": "主卡组",
+      "sequence": null,
+      "center": [
+        -52,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        -52,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        6,
+        15,
+        18,
+        29
+      ]
+    },
+    {
+      "id": "p2_extra",
+      "owner": "p2",
+      "kind": "extra",
+      "label": "额外卡组",
+      "sequence": null,
+      "center": [
+        52,
+        0.82,
+        -34
+      ],
+      "card_anchor": [
+        52,
+        1.05,
+        -34
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        110,
+        15,
+        122,
+        29
+      ]
+    },
+    {
+      "id": "p2_graveyard",
+      "owner": "p2",
+      "kind": "graveyard",
+      "label": "墓地",
+      "sequence": null,
+      "center": [
+        -52,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        -52,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        6,
+        31,
+        18,
+        45
+      ]
+    },
+    {
+      "id": "p2_banished",
+      "owner": "p2",
+      "kind": "banished",
+      "label": "除外",
+      "sequence": null,
+      "center": [
+        -52,
+        0.82,
+        -2
+      ],
+      "card_anchor": [
+        -52,
+        1.05,
+        -2
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        6,
+        47,
+        18,
+        61
+      ]
+    },
+    {
+      "id": "p2_field",
+      "owner": "p2",
+      "kind": "field",
+      "label": "场地魔法",
+      "sequence": 5,
+      "center": [
+        52,
+        0.82,
+        -18
+      ],
+      "card_anchor": [
+        52,
+        1.05,
+        -18
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 180,
+      "pendulum": null,
+      "atlas_uv": [
+        110,
+        31,
+        122,
+        45
+      ]
+    },
+    {
+      "id": "shared_emz_left",
+      "owner": "shared",
+      "kind": "extra_monster",
+      "label": "额外怪兽区",
+      "sequence": null,
+      "center": [
+        -16,
+        0.82,
+        0
+      ],
+      "card_anchor": [
+        -16,
+        1.05,
+        0
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        42,
+        49,
+        54,
+        63
+      ],
+      "engine_mapping": {
+        "p1_mzone": 5,
+        "p2_mzone": 6
+      }
+    },
+    {
+      "id": "shared_emz_right",
+      "owner": "shared",
+      "kind": "extra_monster",
+      "label": "额外怪兽区",
+      "sequence": null,
+      "center": [
+        16,
+        0.82,
+        0
+      ],
+      "card_anchor": [
+        16,
+        1.05,
+        0
+      ],
+      "clear_rectangle": [
+        12,
+        14
+      ],
+      "rotation_y": 0,
+      "pendulum": null,
+      "atlas_uv": [
+        74,
+        49,
+        86,
+        63
+      ],
+      "engine_mapping": {
+        "p1_mzone": 6,
+        "p2_mzone": 5
+      }
+    }
+  ],
+  "controls": [
+    {
+      "id": "p1_phase_dp",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "DP",
+      "label": "抽卡",
+      "center": [
+        -29,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_phase_sp",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "SP",
+      "label": "准备",
+      "center": [
+        -19,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_phase_m1",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "M1",
+      "label": "主要1",
+      "center": [
+        -9,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_phase_bp",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "BP",
+      "label": "战斗",
+      "center": [
+        1,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_phase_m2",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "M2",
+      "label": "主要2",
+      "center": [
+        11,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_phase_ep",
+      "owner": "p1",
+      "kind": "phase",
+      "phase": "EP",
+      "label": "结束",
+      "center": [
+        21,
+        0.95,
+        49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_confirm",
+      "owner": "p1",
+      "kind": "confirm",
+      "label": "准备 / 响应确认",
+      "center": [
+        34.5,
+        0.95,
+        49
+      ],
+      "size": [
+        11,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p1_lp_display",
+      "owner": "p1",
+      "kind": "lp_display",
+      "label": "生命值",
+      "center": [
+        -48,
+        0.9,
+        49
+      ],
+      "size": [
+        20,
+        6
+      ],
+      "rotation_y": 0
+    },
+    {
+      "id": "p2_phase_dp",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "DP",
+      "label": "抽卡",
+      "center": [
+        29,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_phase_sp",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "SP",
+      "label": "准备",
+      "center": [
+        19,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_phase_m1",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "M1",
+      "label": "主要1",
+      "center": [
+        9,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_phase_bp",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "BP",
+      "label": "战斗",
+      "center": [
+        -1,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_phase_m2",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "M2",
+      "label": "主要2",
+      "center": [
+        -11,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_phase_ep",
+      "owner": "p2",
+      "kind": "phase",
+      "phase": "EP",
+      "label": "结束",
+      "center": [
+        -21,
+        0.95,
+        -49
+      ],
+      "size": [
+        8,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_confirm",
+      "owner": "p2",
+      "kind": "confirm",
+      "label": "准备 / 响应确认",
+      "center": [
+        -34.5,
+        0.95,
+        -49
+      ],
+      "size": [
+        11,
+        6
+      ],
+      "rotation_y": 180
+    },
+    {
+      "id": "p2_lp_display",
+      "owner": "p2",
+      "kind": "lp_display",
+      "label": "生命值",
+      "center": [
+        48,
+        0.9,
+        -49
+      ],
+      "size": [
+        20,
+        6
+      ],
+      "rotation_y": 180
+    }
+  ],
+  "rules": {
+    "shared_extra_monster_zones": 2,
+    "personal_zones_per_player": 15,
+    "pendulum_szone_sequences": [
+      0,
+      4
+    ],
+    "field_szone_sequence": 5,
+    "phase_controls_require_engine_authorization": true,
+    "hands": "temporary Minecraft inventory",
+    "cards_and_deck_stacks": "separate future models/entities"
+  }
+}

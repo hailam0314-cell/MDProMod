@@ -1,0 +1,9 @@
+{
+  "block.mdpromod.duel_anchor": "决斗场锚点",
+  "item.mdpromod.duel_field": "决斗场地",
+  "item.mdpromod.card_case": "卡盒",
+  "item.mdpromod.duel_card": "决斗卡牌",
+  "item.mdpromod.music_settings": "音乐设置",
+  "item.mdpromod.ai_deck": "人机卡组",
+  "itemGroup.mdpromod.duel": "MDProMod 决斗"
+}

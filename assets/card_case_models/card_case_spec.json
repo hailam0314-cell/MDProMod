@@ -1,0 +1,126 @@
+{
+  "name": "card_case_v1",
+  "source": {
+    "default_item_id": "1080001",
+    "bundle": "D:\\MyCardLibrary\\mdpro3\\MDPro3_Data\\StandaloneWindows64\\MDPro3\\icon_assets_deckcase0001_l_hd.bundle",
+    "extracted_reference": "reference/"
+  },
+  "dimensions": {
+    "body_width": 8.4,
+    "body_height": 8.0,
+    "body_depth": 5.6,
+    "lid_width": 8.6,
+    "lid_height": 3.5,
+    "lid_depth": 5.8,
+    "top_cap_height": 0.3,
+    "wall_thickness": 0.35,
+    "stack_width": 6.875,
+    "stack_height": 10.0,
+    "stack_depth": 2.4,
+    "origin": "bottom center",
+    "duel_mat_top_y": 0.75
+  },
+  "hinge": {
+    "position": [
+      0,
+      11.5,
+      -2.9
+    ],
+    "closed_rotation": [
+      0,
+      0,
+      0
+    ],
+    "open_rotation": [
+      110,
+      0,
+      0
+    ]
+  },
+  "uv": {
+    "body_front": [
+      0,
+      0,
+      128,
+      192
+    ],
+    "body_back": [
+      256,
+      0,
+      384,
+      192
+    ],
+    "lid_front": [
+      0,
+      384,
+      192,
+      462
+    ],
+    "lid_back": [
+      192,
+      384,
+      384,
+      462
+    ],
+    "body_side": [
+      0,
+      192,
+      64,
+      384
+    ],
+    "lid_side": [
+      64,
+      192,
+      128,
+      320
+    ],
+    "interior": [
+      128,
+      192,
+      256,
+      384
+    ],
+    "lid_interior": [
+      256,
+      192,
+      384,
+      320
+    ],
+    "stack_side": [
+      384,
+      128,
+      448,
+      384
+    ],
+    "lid_top": [
+      384,
+      384,
+      512,
+      448
+    ],
+    "red": [
+      384,
+      448,
+      448,
+      512
+    ],
+    "dark": [
+      448,
+      448,
+      512,
+      512
+    ]
+  },
+  "textures": {
+    "atlas": "textures/card_case_atlas.png",
+    "card_back": "textures/card_back.png"
+  },
+  "colors": {
+    "red": "#c8102e",
+    "red_dark": "#8e0b20",
+    "white": "#f2f2f2",
+    "silver": "#d8d8d8",
+    "interior": "#3a0a12",
+    "gold": "#c89a54"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "mdpromod_duel",
+  "ingredients": [
+    { "item": "mdpromod:card_case" },
+    { "item": "minecraft:observer" }
+  ],
+  "result": { "item": "mdpromod:ai_deck" }
+}

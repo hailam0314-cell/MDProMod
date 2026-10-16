@@ -1,0 +1,109 @@
+{
+  "root": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging",
+  "core": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging\\ocgcore.dll",
+  "seed": 20261012,
+  "deck_a": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging\\starter.ydk",
+  "deck_b": "D:\\MDProMod\\tools\\ygo_tcp_probe\\staging\\starter.ydk",
+  "card_count": 15019,
+  "messages": [
+    {
+      "function": 90,
+      "name": "Draw",
+      "length": 23,
+      "hex_prefix": "5a0005ce989102ce989102ce989102eaa03802eaa03802",
+      "process_result": 23
+    },
+    {
+      "function": 90,
+      "name": "Draw",
+      "length": 23,
+      "hex_prefix": "5a0105ce989102ce989102ce989102eaa03802eaa03802",
+      "process_result": 23
+    },
+    {
+      "function": 40,
+      "name": "NewTurn",
+      "length": 2,
+      "hex_prefix": "2800",
+      "process_result": 2
+    },
+    {
+      "function": 41,
+      "name": "NewPhase",
+      "length": 10,
+      "hex_prefix": "2901000201001b000000",
+      "process_result": 10
+    },
+    {
+      "function": 41,
+      "name": "NewPhase",
+      "length": 3,
+      "hex_prefix": "290200",
+      "process_result": 3
+    },
+    {
+      "function": 41,
+      "name": "NewPhase",
+      "length": 3,
+      "hex_prefix": "290400",
+      "process_result": 3
+    },
+    {
+      "function": 11,
+      "name": "SelectIdleCmd",
+      "length": 81,
+      "hex_prefix": "0b0005ce989102000200ce989102000201ce989102000202eaa03802000203eaa03802000204000005ce989102000200ce989102000201ce989102000202eaa0",
+      "process_result": 268435537
+    }
+  ],
+  "waiting": {
+    "function": 11,
+    "name": "SelectIdleCmd",
+    "length": 81,
+    "hex_prefix": "0b0005ce989102000200ce989102000201ce989102000202eaa03802000203eaa03802000204000005ce989102000200ce989102000201ce989102000202eaa0",
+    "process_result": 268435537
+  },
+  "native_logs": [],
+  "script_read_paths": [
+    "script/constant.lua",
+    "script/utility.lua",
+    "script/procedure.lua",
+    "script/c84749824.lua",
+    "script/c97077563.lua",
+    "script/c62279055.lua",
+    "script/c53582587.lua",
+    "script/c44095762.lua",
+    "script/c37390589.lua",
+    "script/c29401950.lua",
+    "script/c56747793.lua",
+    "script/c17626381.lua",
+    "script/c10012614.lua",
+    "script/c27243130.lua",
+    "script/c5318639.lua",
+    "script/c72302403.lua",
+    "script/c53129443.lua",
+    "script/c34016756.lua",
+    "script/c31305911.lua",
+    "script/c2009101.lua",
+    "script/c85138716.lua",
+    "script/c18063928.lua",
+    "script/c11012887.lua",
+    "script/c70095154.lua",
+    "script/c9748752.lua",
+    "script/c44330098.lua",
+    "script/c10000000.lua",
+    "script/c44508094.lua",
+    "script/c69031175.lua",
+    "script/c33698022.lua",
+    "script/c73580471.lua",
+    "script/c56832966.lua",
+    "script/c16195942.lua",
+    "script/c84013237.lua",
+    "script/c74294676.lua",
+    "script/c42752141.lua",
+    "script/c48739166.lua",
+    "script/c82633039.lua",
+    "script/c95169481.lua",
+    "script/c581014.lua"
+  ]
+}

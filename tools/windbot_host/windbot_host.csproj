@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\analysis\latest\windbot_extract\WindBot\*.cs" Link="WindBot\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\WindBot.Game\*.cs" Link="WindBot.Game\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\WindBot.Game.AI\*.cs" Link="WindBot.Game.AI\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\WindBot.Game.AI.Decks\*.cs" Link="WindBot.Game.AI.Decks\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\YGOSharp.Network\*.cs" Link="YGOSharp.Network\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\YGOSharp.Network.Enums\*.cs" Link="YGOSharp.Network.Enums\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\YGOSharp.Network.Utils\*.cs" Link="YGOSharp.Network.Utils\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\YGOSharp.OCGWrapper\*.cs" Link="YGOSharp.OCGWrapper\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\MDPro3.IO\*.cs" Link="MDPro3.IO\%(Filename)%(Extension)" />
+    <Compile Include="..\..\analysis\latest\windbot_extract\MDPro3.Utility\*.cs" Link="MDPro3.Utility\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\UnityEngine.CoreModule.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\UnityEngine.UI.dll</HintPath></Reference>
+    <Reference Include="UnityEngine.InputSystem"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\Unity.InputSystem.dll</HintPath></Reference>
+    <Reference Include="Mono.Data.Sqlite"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\Mono.Data.Sqlite.dll</HintPath></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(MSBuildThisFileDirectory)..\..\refs\Newtonsoft.Json.dll</HintPath></Reference>
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+</Project>
+

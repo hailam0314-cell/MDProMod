@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "mdpromod:ai_deck" }
+    },
+    "has_observer": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": [ "minecraft:observer" ] } ] }
+    }
+  },
+  "requirements": [ [ "has_the_recipe", "has_observer" ] ],
+  "rewards": { "recipes": [ "mdpromod:ai_deck" ] }
+}

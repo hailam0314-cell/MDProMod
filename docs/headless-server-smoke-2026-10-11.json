@@ -1,0 +1,24 @@
+{
+  "args": "17911 -1 5 0 F F F 8000 5 1 180 0",
+  "port": 17911,
+  "connected": true,
+  "packets": [
+    {
+      "function": 18,
+      "payload_length": 20,
+      "payload_hex_prefix": "000000000500050000000000401f00000501b400"
+    },
+    {
+      "function": 19,
+      "payload_length": 1,
+      "payload_hex_prefix": "10"
+    },
+    {
+      "function": 32,
+      "payload_length": 41,
+      "payload_hex_prefix": "6d006400700072006f006d006f0064002d00700072006f006200650000000000"
+    }
+  ],
+  "errors": [],
+  "remaining_bytes": 0
+}

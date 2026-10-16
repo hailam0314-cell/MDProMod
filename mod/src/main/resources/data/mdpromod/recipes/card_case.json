@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "mdpromod_duel",
+  "pattern": [
+    "PPP",
+    "LLL",
+    "PPP"
+  ],
+  "key": {
+    "P": { "item": "minecraft:paper" },
+    "L": { "item": "minecraft:leather" }
+  },
+  "result": { "item": "mdpromod:card_case" }
+}

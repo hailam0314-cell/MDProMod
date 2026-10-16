@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "mdpromod:duel_field" }
+    },
+    "has_iron": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": [ "minecraft:iron_ingot" ] } ] }
+    }
+  },
+  "requirements": [ [ "has_the_recipe", "has_iron" ] ],
+  "rewards": { "recipes": [ "mdpromod:duel_field" ] }
+}

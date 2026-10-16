@@ -1,0 +1,36 @@
+{
+  "seed": 305419896,
+  "auto": {
+    "events": 2458,
+    "messages": 1547,
+    "prompts": 0,
+    "responses": 211,
+    "response_bytes": 68,
+    "errors": [],
+    "ended": true,
+    "responses_used": 0,
+    "wins": [
+      {
+        "type": "message",
+        "function": 5,
+        "name": "Win",
+        "length": 3,
+        "result": 3,
+        "winner": 0,
+        "hex": "050002"
+      }
+    ]
+  },
+  "recorded_responses": 279,
+  "manual": {
+    "events": 16239348,
+    "messages": 16239341,
+    "prompts": 2,
+    "responses": 0,
+    "response_bytes": 0,
+    "errors": [],
+    "ended": false,
+    "responses_used": 2,
+    "wins": []
+  }
+}

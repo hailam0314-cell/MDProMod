@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "mdpromod:music_settings" }
+    },
+    "has_note_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": [ "minecraft:note_block" ] } ] }
+    }
+  },
+  "requirements": [ [ "has_the_recipe", "has_note_block" ] ],
+  "rewards": { "recipes": [ "mdpromod:music_settings" ] }
+}

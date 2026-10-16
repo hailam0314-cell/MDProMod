@@ -1,0 +1,2 @@
+{"type":"ready","root":"D:\\MDProMod\\tools\\ygo_tcp_probe\\staging"}
+{"type":"error","message":"Unable to load DLL \u0027sqlite3\u0027 or one of its dependencies: \u627E\u4E0D\u5230\u6307\u5B9A\u7684\u6A21\u5757\u3002 (0x8007007E)"}

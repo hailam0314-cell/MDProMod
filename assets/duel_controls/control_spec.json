@@ -1,0 +1,408 @@
+{
+  "name": "mdpromod_duel_controls",
+  "units_per_block": 16,
+  "note": "所有 Y 都是相对决斗场地实体原点的模型单位；场地表面在 y = 0.16。",
+  "textures": {
+    "control_frame": {
+      "file": "textures/control_frame.png",
+      "size": [
+        64,
+        48
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          64,
+          32
+        ],
+        "side": [
+          0,
+          32,
+          64,
+          40
+        ],
+        "pad": [
+          0,
+          40,
+          64,
+          48
+        ]
+      }
+    },
+    "control_phase_disabled": {
+      "file": "textures/control_phase_disabled.png",
+      "size": [
+        160,
+        96
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          160,
+          72
+        ],
+        "side": [
+          0,
+          72,
+          160,
+          88
+        ],
+        "pad": [
+          0,
+          88,
+          160,
+          96
+        ]
+      }
+    },
+    "control_phase_available": {
+      "file": "textures/control_phase_available.png",
+      "size": [
+        160,
+        96
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          160,
+          72
+        ],
+        "side": [
+          0,
+          72,
+          160,
+          88
+        ],
+        "pad": [
+          0,
+          88,
+          160,
+          96
+        ]
+      }
+    },
+    "control_phase_current": {
+      "file": "textures/control_phase_current.png",
+      "size": [
+        160,
+        96
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          160,
+          72
+        ],
+        "side": [
+          0,
+          72,
+          160,
+          88
+        ],
+        "pad": [
+          0,
+          88,
+          160,
+          96
+        ]
+      }
+    },
+    "control_confirm_disabled": {
+      "file": "textures/control_confirm_disabled.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_ready": {
+      "file": "textures/control_confirm_ready.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_started": {
+      "file": "textures/control_confirm_started.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_turn_mine": {
+      "file": "textures/control_confirm_turn_mine.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_turn_opponent": {
+      "file": "textures/control_confirm_turn_opponent.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_victory": {
+      "file": "textures/control_confirm_victory.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_confirm_defeat": {
+      "file": "textures/control_confirm_defeat.png",
+      "size": [
+        320,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          320,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          320,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          320,
+          100
+        ]
+      }
+    },
+    "control_lp_screen": {
+      "file": "textures/control_lp_screen.png",
+      "size": [
+        336,
+        100
+      ],
+      "tiles": {
+        "top": [
+          0,
+          0,
+          336,
+          76
+        ],
+        "side": [
+          0,
+          76,
+          336,
+          92
+        ],
+        "pad": [
+          0,
+          92,
+          336,
+          100
+        ]
+      }
+    }
+  },
+  "frame": {
+    "texture": "control_frame",
+    "thickness": 0.8,
+    "bottom": 0.2
+  },
+  "phase_button": {
+    "footprint": [
+      20,
+      10
+    ],
+    "cap": [
+      17.2,
+      7.8
+    ],
+    "cap_top": 1.8,
+    "cap_bottom": 1.0,
+    "label_plane": 1.82,
+    "states": {
+      "disabled": "control_phase_disabled",
+      "available": "control_phase_available",
+      "current": "control_phase_current"
+    }
+  },
+  "confirm_button": {
+    "footprint": [
+      42,
+      12
+    ],
+    "cap": [
+      38.8,
+      9.4
+    ],
+    "cap_top": 1.8,
+    "cap_bottom": 1.0,
+    "label_plane": 1.82,
+    "states": {
+      "disabled": "control_confirm_disabled",
+      "ready": "control_confirm_ready",
+      "started": "control_confirm_started",
+      "my_turn": "control_confirm_turn_mine",
+      "opponent_turn": "control_confirm_turn_opponent"
+    }
+  },
+  "lp_panel": {
+    "footprint": [
+      42,
+      12
+    ],
+    "slab_top": 1.1,
+    "slab_bottom": 0.2,
+    "rim_top": 1.8,
+    "rim_width": 1.6,
+    "screen": {
+      "half_x": 19.4,
+      "half_z": 4.6,
+      "surface": 1.1,
+      "text_height": 5.5,
+      "text_color": "#b9e8b0",
+      "max_text_width": 36.0
+    },
+    "texture": "control_lp_screen"
+  },
+  "top_height": 1.8,
+  "states": {
+    "phase": {
+      "disabled": "灰色，不能按",
+      "available": "绿色，可以按",
+      "current": "蓝色，当前阶段"
+    },
+    "confirm": {
+      "disabled": "灰色，开始决斗",
+      "ready": "绿色，准备",
+      "started": "蓝色，游戏中",
+      "my_turn": "绿色，我的回合",
+      "opponent_turn": "红色，对方回合"
+    }
+  }
+}

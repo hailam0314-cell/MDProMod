@@ -1,0 +1,124 @@
+{
+  "source": {
+    "file": "source/DefaultProtector.png",
+    "sha256": "31b187074cd51eaf2093f249c474fb579400afb0cbcade8885f6039ba7a0f70e",
+    "original_size": [
+      480,
+      700
+    ],
+    "mdpro_protector_id": "1070001"
+  },
+  "atlas": {
+    "file": "textures/deck_atlas.png",
+    "size": [
+      512,
+      512
+    ],
+    "card_back_uv": [
+      0,
+      0,
+      320,
+      467
+    ],
+    "main_deck_side_uv": [
+      320,
+      0,
+      352,
+      512
+    ],
+    "extra_deck_side_uv": [
+      352,
+      0,
+      384,
+      512
+    ],
+    "card_edge_uv": [
+      384,
+      0,
+      416,
+      512
+    ],
+    "shadow_uv": [
+      416,
+      0,
+      448,
+      512
+    ],
+    "dark_base_uv": [
+      448,
+      0,
+      480,
+      512
+    ]
+  },
+  "card": {
+    "width": 6.875,
+    "depth": 10.0,
+    "source_pixels": [
+      480,
+      700
+    ]
+  },
+  "main_deck": {
+    "stack_height": 2.42,
+    "core_height": 2.22,
+    "top_card_height": 0.12,
+    "shadow_height": 0.08,
+    "target_cards": "40-60 sleeved cards"
+  },
+  "extra_deck": {
+    "stack_height": 1.02,
+    "core_height": 0.82,
+    "top_card_height": 0.12,
+    "shadow_height": 0.08,
+    "target_cards": "10-15 sleeved cards"
+  },
+  "models": {
+    "main_deck": {
+      "file": "main_deck_v1.bbmodel",
+      "group": "main_deck",
+      "total_height": 2.42,
+      "card_footprint": [
+        6.875,
+        10.0
+      ],
+      "shadow_footprint": [
+        7.1,
+        10.3
+      ],
+      "locators": [
+        "main_deck_origin",
+        "main_deck_stack_surface",
+        "main_deck_top_surface",
+        "main_deck_card_anchor",
+        "main_deck_vertical_scale_origin"
+      ]
+    },
+    "extra_deck": {
+      "file": "extra_deck_v1.bbmodel",
+      "group": "extra_deck",
+      "total_height": 1.02,
+      "card_footprint": [
+        6.875,
+        10.0
+      ],
+      "shadow_footprint": [
+        7.1,
+        10.3
+      ],
+      "locators": [
+        "extra_deck_origin",
+        "extra_deck_stack_surface",
+        "extra_deck_top_surface",
+        "extra_deck_card_anchor",
+        "extra_deck_vertical_scale_origin"
+      ]
+    }
+  },
+  "placement": {
+    "origin": "bottom center",
+    "duel_mat_top_y": 0.75,
+    "note": "Add 0.75 to Y when placing either model on the duel mat.",
+    "dynamic_count": "Scale the core cube vertically and move the top-card group with it."
+  }
+}

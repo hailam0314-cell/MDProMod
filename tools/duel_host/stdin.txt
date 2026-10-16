@@ -1,0 +1,3 @@
+{"cmd":"start","deck0":"starter.ydk","deck1":"starter.ydk"}
+{"cmd":"response","value":7}
+{"cmd":"stop"}
