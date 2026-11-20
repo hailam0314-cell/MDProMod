@@ -1,3118 +1,2830 @@
-using YGOSharp.OCGWrapper.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
 using YGOSharp.OCGWrapper;
+using YGOSharp.OCGWrapper.Enums;
 
-namespace WindBot.Game.AI.Decks
+namespace WindBot.Game.AI.Decks;
+
+[Deck("Swordsoul", "AI_Swordsoul", "Normal")]
+public class SwordsoulExecutor : DefaultExecutor
 {
-    [Deck("Swordsoul", "AI_Swordsoul")]
-
-    public class SwordsoulExecutor : DefaultExecutor
-    {
-        public class CardId
-        {
-            public const int NibiruThePrimalBeing = 27204311;
-            public const int TenyiSpirit_Ashuna = 87052196;
-            public const int TenyiSpirit_Vishuda = 23431858;
-            public const int SwordsoulStrategistLongyuan = 93490856;
-            public const int SwordsoulOfTaia = 56495147;
-            public const int SwordsoulOfMoYe = 20001443;
-            public const int IncredibleEcclesiaTheVirtuous = 55273560;
-            // _CardId.AshBlossom = 14558127;
-            // _CardId.MaxxC = 23434538;
-            // _CardId.EffectVeiler = 97268402;
-            public const int TenyiSpirit_Adhara = 98159737;
-
-            // _CardId.PotOfDesires = 35261759;
-            public const int SwordsoulEmergence = 56465981;
-            public const int SwordsoulSacredSummit = 93850690;
-            // _CardId.CalledByTheGrave = 24224830;
-            public const int CrossoutDesignator = 65681983;
-
-            // _CardId.InfiniteImpermanence = 10045474;
-            public const int SwordsoulBlackout = 14821890;
-
-            public const int GeomathmechFinalSigma = 42632209;
-            public const int PsychicEndPunisher = 60465049;
-            public const int SwordsoulSupremeSovereign_Chengying = 96633955;
-            public const int BaronneDeFleur = 84815190;
-            public const int SwordsoulSinisterSovereign_QixingLongyuan = 47710198;
-            public const int AdamancipatorRisen_Dragite = 9464441;
-            public const int DracoBerserkerOfTheTenyi = 5041348;
-            public const int SwordsoulGrandmaster_Chixiao = 69248256;
-            public const int BaxiaBrightnessOfTheYangZing = 83755611;
-            public const int YaziEvilOfTheYangZing = 43202238;
-            public const int ShamanOfTheTenyi = 78917791;
-            public const int MonkOfTheTenyi = 32519092;
-
-            public const int SwordsoulToken = 20001444;
-
-            public const int NaturalExterio = 99916754;
-            public const int NaturalBeast = 33198837;
-            public const int ImperialOrder = 61740673;
-            public const int SwordsmanLV7 = 37267041;
-            public const int RoyalDecree = 51452091;
-            public const int Number41BagooskatheTerriblyTiredTapir = 90590303;
-            public const int InspectorBoarder = 15397015;
-        }
-
-        public SwordsoulExecutor(GameAI ai, Duel duel)
-            : base(ai, duel)
-        {
-            // startup effect
-            AddExecutor(ExecutorType.Activate, CardId.BaxiaBrightnessOfTheYangZing,  BaxiaBrightnessOfTheYangZingActivate);
-            AddExecutor(ExecutorType.Activate, CardId.YaziEvilOfTheYangZing,         YaziEvilOfTheYangZingActivate);
-            AddExecutor(ExecutorType.Activate, CardId.IncredibleEcclesiaTheVirtuous, IncredibleEcclesiaTheVirtuousActivate);
-
-            // quick effect
-            AddExecutor(ExecutorType.Activate, _CardId.CalledByTheGrave,                         CalledbytheGraveActivate);
-            AddExecutor(ExecutorType.Activate, CardId.CrossoutDesignator,                        CrossoutDesignatorActivate);
-            AddExecutor(ExecutorType.Activate, _CardId.AshBlossom,                               AshBlossomActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulGrandmaster_Chixiao,              SwordsoulGrandmaster_ChixiaoActivate);
-            AddExecutor(ExecutorType.Activate, _CardId.EffectVeiler,                             EffectVeilerActivate);
-            AddExecutor(ExecutorType.Activate, _CardId.InfiniteImpermanence,                     InfiniteImpermanenceActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulSinisterSovereign_QixingLongyuan, SwordsoulSinisterSovereign_QixingLongyuanActivate);
-            AddExecutor(ExecutorType.Activate, CardId.DracoBerserkerOfTheTenyi,                  DracoBerserkerOfTheTenyiActivate);
-            AddExecutor(ExecutorType.Activate, CardId.AdamancipatorRisen_Dragite,                AdamancipatorRisen_DragiteActivate);
-            AddExecutor(ExecutorType.Activate, CardId.BaronneDeFleur,                            BaronneDeFleurActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulSupremeSovereign_Chengying,       SwordsoulSupremeSovereign_ChengyingActivate);
-
-            // free chain
-            AddExecutor(ExecutorType.Activate, _CardId.MaxxC, MaxxCActivate);
-            AddExecutor(ExecutorType.Activate, CardId.NibiruThePrimalBeing, NibiruThePrimalBeingActivate);
-
-            // startup effect
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulEmergence,  SwordsoulEmergenceActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulBlackout,   SwordsoulBlackoutActivate);
-
-            // synchro
-            AddExecutor(ExecutorType.SpSummon, CardId.YaziEvilOfTheYangZing,        YaziEvilOfTheYangZingSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.BaxiaBrightnessOfTheYangZing, BaxiaBrightnessOfTheYangZingSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.SwordsoulGrandmaster_Chixiao, SwordsoulGrandmaster_ChixiaoSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.AdamancipatorRisen_Dragite,   AdamancipatorRisen_DragiteSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.DracoBerserkerOfTheTenyi,     DracoBerserkerOfTheTenyiSpSummon);
-
-            AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckInit);
-            AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckCount);
-            AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckDecide);
-            AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckFinal);
-
-            // startup effect
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulOfMoYe,   SwordsoulOfMoYeActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulOfTaia,   SwordsoulOfTaiaActivate);
-
-            // summon
-            AddExecutor(ExecutorType.Activate, TenyiForShamanSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.IncredibleEcclesiaTheVirtuous, IncredibleEcclesiaTheVirtuousSpSummon);
-            AddExecutor(ExecutorType.Summon, CardId.SwordsoulOfMoYe,                 SwordsoulOfMoYeSummon);
-            AddExecutor(ExecutorType.Summon, CardId.IncredibleEcclesiaTheVirtuous,   IncredibleEcclesiaTheVirtuousSummon);
-            AddExecutor(ExecutorType.Summon, CardId.SwordsoulOfTaia,                 SwordsoulOfTaiaSummon);
-
-            // activate
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulStrategistLongyuan, SwordsoulStrategistLongyuanActivate);
-            AddExecutor(ExecutorType.Activate, _CardId.PotOfDesires,               PotOfDesiresActivate);
-            AddExecutor(ExecutorType.Activate, CardId.ShamanOfTheTenyi,  ShamanOfTheTenyiActivate);
-            AddExecutor(ExecutorType.Activate, CardId.SwordsoulSacredSummit,       SwordsoulSacredSummitActivate);
-            AddExecutor(ExecutorType.Activate, CardId.TenyiSpirit_Vishuda,         TenyiSpirit_VishudaActivate);
-            AddExecutor(ExecutorType.Activate, CardId.TenyiSpirit_Ashuna,          TenyiSpirit_AshunaActivate);
-            AddExecutor(ExecutorType.Activate, CardId.TenyiSpirit_Adhara,          TenyiSpirit_AdharaActivate);
-            AddExecutor(ExecutorType.Activate, TenyiForBlackoutSpSummon);
-
-            // other
-            AddExecutor(ExecutorType.SpSummon, CardId.GeomathmechFinalSigma, GeomathmechFinalSigmaSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.PsychicEndPunisher,    PsychicEndPunisherSpSummon);
-            AddExecutor(ExecutorType.Summon, TunerForSynchroSummon);
-            AddExecutor(ExecutorType.Summon, WyrmForBlackoutSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.ShamanOfTheTenyi,   ShamanOfTheTenyiSpSummon);
-            AddExecutor(ExecutorType.SpSummon, CardId.MonkOfTheTenyi,     MonkOfTheTenyiSpSummon);
-            AddExecutor(ExecutorType.Repos, DefaultMonsterRepos);
-
-            AddExecutor(ExecutorType.Activate, CardId.PsychicEndPunisher, PsychicEndPunisherActivate);
-            AddExecutor(ExecutorType.SpellSet, SpellSetCheck);
-        }
-
-        const int SetcodeTimeLord = 0x4a;
-        const int SetcodeYangZing = 0x9e;
-        const int SetcodePhantom = 0xdb;
-        const int SetcodeOrcust = 0x11b;
-        const int SetcodeTenyi = 0x12c;
-        const int SetcodeSwordsoul = 0x16b;
-        const int SetcodeFloowandereeze = 0x16d;
-        List<int> normalCounterList = new List<int>
-        {
-            _CardId.AshBlossom, CardId.BaronneDeFleur, 27548199, 4280258, 53262004
-        };
-        List<int> notToNegateIdList = new List<int>{
-            58699500
-        };
-        const int hintTimingMainEnd = 0x4;
-        const int hintReplaceDestroy = 96;
-
-        Dictionary<int, List<int>> DeckCountTable = new Dictionary<int, List<int>>{
-            {3, new List<int> { CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.IncredibleEcclesiaTheVirtuous,
-                                _CardId.AshBlossom, _CardId.MaxxC, _CardId.EffectVeiler, CardId.SwordsoulEmergence, _CardId.InfiniteImpermanence }},
-            {2, new List<int> { CardId.TenyiSpirit_Ashuna, _CardId.PotOfDesires, _CardId.CalledByTheGrave, CardId.SwordsoulBlackout }},
-            {1, new List<int> { CardId.NibiruThePrimalBeing, CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Adhara, CardId.SwordsoulSacredSummit,
-                                CardId.CrossoutDesignator }},
-        };
-
-        List<int> currentNegatingIdList = new List<int>();
-        bool enemyActivateMaxxC = false;
-        bool enemyActivateLockBird = false;
-        bool enemyActivateInfiniteImpermanenceFromHand = false;
-        List<int> infiniteImpermanenceList = new List<int>();
-
-        bool summoned = false;
-        bool onlyWyrmSpSummon = false;
-        List<int> activatedCardIdList = new List<int>();
-        List<int> canSpSummonLevel10IdList = new List<int>();
-
-        List<ClientCard> effectUsedBaronneDeFleurList = new List<ClientCard>();
-        List<ClientCard> currentNegateMonsterList = new List<ClientCard>();
-
-        /// <summary>
-        /// Shuffle List<ClientCard> and return a random-order card list
-        /// </summary>
-        public List<ClientCard> ShuffleCardList(List<ClientCard> list)
-        {
-            List<ClientCard> result = list;
-            int n = result.Count;
-            while (n-- > 1)
-            {
-                int index = Program.Rand.Next(result.Count);
-                int nextIndex = (index + Program.Rand.Next(result.Count - 1)) % result.Count;
-                ClientCard tempCard = result[index];
-                result[index] = result[nextIndex];
-                result[nextIndex] = tempCard;
-            }
-            return result;
-        }
-
-        public ClientCard GetProblematicEnemyMonster(int attack = 0, bool canBeTarget = false)
-        {
-            List<ClientCard> floodagateList = Enemy.GetMonsters().Where(c => c?.Data != null &&
-                c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (floodagateList.Count() > 0)
-            {
-                floodagateList.Sort(CardContainer.CompareCardAttack);
-                floodagateList.Reverse();
-                return floodagateList[0];
-            }
-
-            List<ClientCard> dangerList = Enemy.MonsterZone.Where(c => c?.Data != null &&
-                c.IsMonsterDangerous() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (dangerList.Count() > 0)
-            {
-                dangerList.Sort(CardContainer.CompareCardAttack);
-                dangerList.Reverse();
-                return dangerList[0];
-            }
-
-            List<ClientCard> invincibleList = Enemy.MonsterZone.Where(c => c?.Data != null &&
-                c.IsMonsterInvincible() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (invincibleList.Count() > 0)
-            {
-                invincibleList.Sort(CardContainer.CompareCardAttack);
-                invincibleList.Reverse();
-                return invincibleList[0];
-            }
-
-            if (attack == 0)
-                attack = Util.GetBestAttack(Bot);
-            List<ClientCard> betterList = Enemy.MonsterZone.GetMonsters()
-                .Where(card => card.GetDefensePower() >= attack && card.IsAttack() && (!canBeTarget || !card.IsShouldNotBeTarget())).ToList();
-            if (betterList.Count() > 0)
-            {
-                betterList.Sort(CardContainer.CompareCardAttack);
-                betterList.Reverse();
-                return betterList[0];
-            }
-            return null;
-        }
-
-        public List<ClientCard> GetProblematicEnemyCardList(bool canBeTarget = false, bool ignoreNormalSpell = false)
-        {
-            List<ClientCard> resultList = new List<ClientCard>();
-
-            List<ClientCard> floodagateList = Enemy.MonsterZone.Where(c => c?.Data != null
-                && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (floodagateList.Count() > 0)
-            {
-                floodagateList.Sort(CardContainer.CompareCardAttack);
-                floodagateList.Reverse();
-                resultList.AddRange(floodagateList);
-            }
-            
-            List<ClientCard> problemEnemySpellList = Enemy.SpellZone.Where(c => c?.Data != null && !resultList.Contains(c)
-                && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (problemEnemySpellList.Count() > 0)
-            {
-                resultList.AddRange(ShuffleCardList(problemEnemySpellList));
-            }
-
-            List<ClientCard> dangerList = Enemy.MonsterZone.Where(c => c?.Data != null && !resultList.Contains(c)
-                && c.IsMonsterDangerous() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (dangerList.Count() > 0
-                && (Duel.Player == 0 || (Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2)))
-            {
-                dangerList.Sort(CardContainer.CompareCardAttack);
-                dangerList.Reverse();
-                resultList.AddRange(dangerList);
-            }
-
-            List<ClientCard> invincibleList = Enemy.MonsterZone.Where(c => c?.Data != null && !resultList.Contains(c)
-                && c.IsMonsterInvincible() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (invincibleList.Count() > 0)
-            {
-                invincibleList.Sort(CardContainer.CompareCardAttack);
-                invincibleList.Reverse();
-                resultList.AddRange(invincibleList);
-            }
-
-            List<ClientCard> enemyMonsters = Enemy.GetMonsters().ToList();
-            if (enemyMonsters.Count() > 0)
-            {
-                enemyMonsters.Sort(CardContainer.CompareCardAttack);
-                enemyMonsters.Reverse();
-                foreach(ClientCard target in enemyMonsters)
-                {
-                    if (target.HasType(CardType.Fusion | CardType.Ritual | CardType.Synchro | CardType.Xyz)
-                        || (target.HasType(CardType.Link) && target.LinkCount >= 2) )
-                    {
-                        if (!canBeTarget || !(target.IsShouldNotBeTarget() || target.IsShouldNotBeMonsterTarget())) 
-                        {
-                            if (!resultList.Contains(target))
-                            {
-                                resultList.Add(target);
-                            }
-                        }
-                    }
-                }
-            }
-
-            List<ClientCard> spells = Enemy.GetSpells().Where(c => c.IsFaceup()
-                && c.HasType(CardType.Equip | CardType.Pendulum | CardType.Field | CardType.Continuous)).ToList();
-            if (spells.Count() > 0 && !ignoreNormalSpell)
-            {
-                resultList.AddRange(ShuffleCardList(spells));
-            }
-
-            return resultList;
-        }
-        
-        public ClientCard GetBestEnemyMonster(bool onlyFaceup = false, bool canBeTarget = false)
-        {
-            ClientCard card = GetProblematicEnemyMonster(0, canBeTarget);
-            if (card != null)
-                return card;
-
-            card = Enemy.MonsterZone.GetHighestAttackMonster(canBeTarget);
-            if (card != null)
-                return card;
-
-            List<ClientCard> monsters = Enemy.GetMonsters();
-
-            // after GetHighestAttackMonster, the left monsters must be face-down.
-            if (monsters.Count() > 0 && !onlyFaceup)
-                return ShuffleCardList(monsters)[0];
-
-            return null;
-        }
-
-        public ClientCard GetBestEnemySpell(bool onlyFaceup = false, bool canBeTarget = false)
-        {
-            List<ClientCard> problemEnemySpellList = Enemy.SpellZone.Where(c => c?.Data != null
-                && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
-            if (problemEnemySpellList.Count() > 0)
-            {
-                return ShuffleCardList(problemEnemySpellList)[0];
-            }
-
-            List<ClientCard> spells = Enemy.GetSpells().Where(card => !(card.IsFaceup() && card.IsCode(_CardId.EvenlyMatched))).ToList();
-
-            List<ClientCard> faceUpList = spells.Where(ecard => ecard.IsFaceup() &&
-                ecard.HasType(CardType.Equip | CardType.Pendulum | CardType.Field | CardType.Continuous)).ToList();
-            if (faceUpList.Count() > 0)
-            {
-                return ShuffleCardList(faceUpList)[0];
-            }
-
-            if (spells.Count() > 0 && !onlyFaceup)
-            {
-                return ShuffleCardList(spells)[0];
-            }
-
-            return null;
-        }
-
-        public ClientCard GetBestEnemyCard(bool onlyFaceup = false, bool canBeTarget = false, bool checkGrave = false)
-        {
-            ClientCard card = GetBestEnemyMonster(onlyFaceup, canBeTarget);
-            if (card != null)
-            {
-                return card;
-            }
-
-            card = GetBestEnemySpell(onlyFaceup, canBeTarget);
-            if (card != null)
-            {
-                return card;
-            }
-            
-            if (checkGrave && Enemy.Graveyard.Count() > 0)
-            {
-                List<ClientCard> graveMonsterList = Enemy.Graveyard.GetMatchingCards(c => c.IsMonster()).ToList();
-                if (graveMonsterList.Count() > 0)
-                {
-                    graveMonsterList.Sort(CardContainer.CompareCardAttack);
-                    graveMonsterList.Reverse();
-                    return graveMonsterList[0];
-                }
-                return ShuffleCardList(Enemy.Graveyard.ToList())[0];
-            }
-
-            return null;
-        }
-
-        public List<ClientCard> GetNormalEnemyTargetList(bool canBeTarget = true)
-        {
-            List<ClientCard> targetList = GetProblematicEnemyCardList(canBeTarget);
-            List<ClientCard> enemyMonster = Enemy.GetMonsters().Where(card => card.IsFaceup() && !targetList.Contains(card)).ToList();
-            enemyMonster.Sort(CardContainer.CompareCardAttack);
-            enemyMonster.Reverse();
-            targetList.AddRange(enemyMonster);
-            targetList.AddRange(ShuffleCardList(Enemy.GetSpells()));
-            targetList.AddRange(ShuffleCardList(Enemy.GetMonsters().Where(card => card.IsFacedown()).ToList()));
-
-            return targetList;
-        }
-
-        public List<ClientCard> GetMonsterListForTargetNegate(bool canBeMonsterTarget = false, bool canBeTrapTarget = false)
-        {
-            List<ClientCard> resultList = new List<ClientCard>();
-            if (CheckWhetherNegated())
-            {
-                return resultList;
-            }
-
-            // negate before used
-            ClientCard target = Enemy.MonsterZone.FirstOrDefault(card => card?.Data != null
-                    && card.IsMonsterShouldBeDisabledBeforeItUseEffect() && card.IsFaceup() && !card.IsShouldNotBeTarget()
-                    && (!canBeMonsterTarget || !card.IsShouldNotBeMonsterTarget()) && (!canBeTrapTarget || !card.IsShouldNotBeSpellTrapTarget())
-                    && !currentNegateMonsterList.Contains(card));
-            if (target != null)
-            {
-                resultList.Add(target);
-            }
-
-            // negate monster effect on the field
-            foreach (ClientCard chainingCard in Duel.CurrentChain)
-            {
-                if (chainingCard.Location == CardLocation.MonsterZone && chainingCard.Controller == 1 && !chainingCard.IsDisabled()
-                && (!canBeMonsterTarget || !chainingCard.IsShouldNotBeMonsterTarget()) && (!canBeTrapTarget || !chainingCard.IsShouldNotBeSpellTrapTarget())
-                && !chainingCard.IsShouldNotBeTarget() && !currentNegateMonsterList.Contains(chainingCard))
-                {
-                    resultList.Add(chainingCard);
-                }
-            }
-
-            return resultList;
-        }
-
-        /// <summary>
-        /// Check whether negate opposite's effect and clear flag
-        /// </summary>
-        public void CheckDeactiveFlag()
-        {
-            ClientCard lastChainCard = Util.GetLastChainCard();
-            if (lastChainCard != null && Duel.LastChainPlayer == 1)
-            {
-                if (lastChainCard.Controller == 1 && lastChainCard.Location == CardLocation.MonsterZone)
-                {
-                    currentNegateMonsterList.Add(lastChainCard);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Check negated turn count of id
-        /// </summary>
-        public int CheckCalledbytheGrave(int id)
-        {
-            if (currentNegatingIdList.Contains(id)) return 1;
-            if (DefaultCheckWhetherCardIdIsNegated(id)) return 1;
-            return 0;
-        }
-
-        /// <summary>
-        /// Check remain cards in deck
-        /// </summary>
-        /// <param name="id">Card's ID</param>
-        public int CheckRemainInDeck(int id)
-        {
-            for (int count = 1; count < 4; ++count)
-            {
-                if (DeckCountTable[count].Contains(id)) {
-                    return Bot.GetRemainingCount(id, count);
-                }
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// Whether spell or trap will be negate. If so, return true.
-        /// </summary>
-        /// <param name="isCounter">is counter trap</param>
-        /// <param name="target">check target</param>
-        /// <returns></returns>
-        public bool CheckSpellWillBeNegate(bool isCounter = false, ClientCard target = null)
-        {
-            // target default set
-            if (target == null) target = Card;
-            // won't negate if not on field
-            if (target.Location != CardLocation.SpellZone && target.Location != CardLocation.Hand) return false;
-
-            // negate judge
-            if (Enemy.HasInMonstersZone(CardId.NaturalExterio, true) && !isCounter) return true;
-            if (target.IsSpell())
-            {
-                if (Enemy.HasInMonstersZone(CardId.NaturalBeast, true)) return true;
-                if (Enemy.HasInSpellZone(CardId.ImperialOrder, true) || Bot.HasInSpellZone(CardId.ImperialOrder, true)) return true;
-                if (Enemy.HasInMonstersZone(CardId.SwordsmanLV7, true) || Bot.HasInMonstersZone(CardId.SwordsmanLV7, true)) return true;
-            }
-            if (target.IsTrap())
-            {
-                if (Enemy.HasInSpellZone(CardId.RoyalDecree, true) || Bot.HasInSpellZone(CardId.RoyalDecree, true)) return true;
-            }
-            if (target.Location == CardLocation.SpellZone && (target.IsSpell() || target.IsTrap()))
-            {
-                int selfSeq = -1;
-                for (int i = 0; i < 5; ++i)
-                {
-                    if (Bot.SpellZone[i] == Card) selfSeq = i;
-                }
-                if (infiniteImpermanenceList.Contains(selfSeq)) {
-                    return true;
-                }
-            }
-            // how to get here?
-            return false;
-        }
-
-        /// <summary>
-        /// Check whether'll be negated
-        /// </summary>
-        /// <param name="isCounter">check whether card itself is disabled.</param>
-        public bool CheckWhetherNegated()
-        {
-            if ((Card.IsSpell() || Card.IsTrap()) && CheckSpellWillBeNegate()){
-                return true;
-            }
-            if (DefaultCheckWhetherCardIsNegated(Card)) {
-                return true;
-            }
-            if (Card.IsMonster() && Card.Location == CardLocation.MonsterZone && Card.IsDefense())
-            {
-                if (Enemy.MonsterZone.Any(card => CheckNumber41(card)) || Bot.MonsterZone.Any(card => CheckNumber41(card)))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool CheckNumber41(ClientCard card)
-        {
-            return card != null && card.IsFaceup() && card.IsCode(CardId.Number41BagooskatheTerriblyTiredTapir) && card.IsDefense() && !card.IsDisabled();
-        }
-
-        /// <summary>
-        /// Check whether bot is at advantage.
-        /// </summary>
-        public bool CheckAtAdvantage()
-        {
-            if (GetProblematicEnemyMonster() == null && 
-                (Bot.GetMonsters().Any(card => card.IsFaceup()) || (Duel.Player == 0 && Duel.Turn == 1)))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Check whether last chain card should be disabled.
-        /// </summary>
-        public bool CheckLastChainShouldNegated()
-        {
-            ClientCard lastcard = Util.GetLastChainCard();
-            if (lastcard == null || lastcard.Controller != 1) return false;
-            if (lastcard.IsMonster() && lastcard.HasSetcode(SetcodeTimeLord) && Duel.Phase == DuelPhase.Standby) return false;
-            if (notToNegateIdList.Contains(lastcard.Id)) return false;
-            if (DefaultCheckWhetherCardIsNegated(lastcard)) return false;
-            if (Duel.CurrentChain.Count >= 2)
-            {
-                ClientCard lastlastChainCard = Duel.CurrentChain[Duel.CurrentChain.Count - 2];
-                ClientCard lastChainCard = Duel.CurrentChain[Duel.CurrentChain.Count - 1];
-                if (lastlastChainCard?.Controller == 0 && lastChainCard?.Controller == 1 && lastChainCard.IsCode(normalCounterList))
-                {
-                    bool notImportantFlag = lastlastChainCard.Location == CardLocation.Grave
-                        && (lastlastChainCard.IsCode(CardId.SwordsoulOfTaia) || lastlastChainCard.IsCode(CardId.SwordsoulOfMoYe) || lastlastChainCard.IsCode(CardId.SwordsoulStrategistLongyuan));
-                    notImportantFlag |= lastlastChainCard.IsCode(CardId.PsychicEndPunisher) && Bot.LifePoints < Enemy.LifePoints;
-                    if (notImportantFlag)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// check enemy's dangerous card in grave
-        /// </summary>
-        public List<ClientCard> CheckDangerousCardinEnemyGrave(bool onlyMonster = false)
-        {
-            List<ClientCard> result = Enemy.Graveyard.GetMatchingCards(card => 
-                (!onlyMonster || card.IsMonster()) && (card.HasSetcode(SetcodeOrcust) || card.HasSetcode(SetcodePhantom))).ToList();
-            List<int> dangerMonsterIdList = new List<int>{
-                99937011, 63542003, CardId.TenyiSpirit_Adhara, CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Vishuda,
-                9411399, 28954097, 30680659
-            };
-            return result;
-        }
-
-        /// <summary>
-        /// go first
-        /// </summary>
-        public override bool OnSelectHand()
-        {
-            return true;
-        }
-
-        public override int OnSelectPlace(int cardId, int player, CardLocation location, int available)
-        {
-            // Geomathmech Final Sigma always place on extra monster zone
-            if (cardId == CardId.GeomathmechFinalSigma && location == CardLocation.MonsterZone)
-            {
-                if ((Zones.z5 & available) > 0) return Zones.z5;
-                if ((Zones.z6 & available) > 0) return Zones.z6;
-            }
-            return base.OnSelectPlace(cardId, player, location, available);
-        }
-
-        public override CardPosition OnSelectPosition(int cardId, IList<CardPosition> positions)
-        {
-            YGOSharp.OCGWrapper.NamedCard cardData = YGOSharp.OCGWrapper.NamedCard.Get(cardId);
-            if (cardData != null)
-            {
-                if (cardData.Id == CardId.PsychicEndPunisher)
-                {
-                    return CardPosition.FaceUpAttack;
-                }
-                if (Util.IsTurn1OrMain2())
-                {
-                    bool turnDefense = false;
-                    if (!cardData.HasType(CardType.Synchro) || cardData.Attack <= cardData.Defense)
-                    {
-                        turnDefense = true;
-                    }
-                    if (turnDefense)
-                    {
-                        return CardPosition.FaceUpDefence;
-                    }
-                }
-                if (Duel.Player == 1)
-                {
-                    if (!cardData.HasType(CardType.Synchro) || cardData.Defense >= cardData.Attack || Util.IsOneEnemyBetterThanValue(cardData.Attack, true))
-                    {
-                        return CardPosition.FaceUpDefence;
-                    }
-                } else if (cardData.HasType(CardType.Synchro))
-                {
-                    return CardPosition.FaceUpAttack;
-                }
-                int bestBotAttack = Math.Max(Util.GetBestAttack(Bot), cardData.Attack);
-                if (Util.IsAllEnemyBetterThanValue(bestBotAttack, true))
-                {
-                    return CardPosition.FaceUpDefence;
-                }
-            }
-            return base.OnSelectPosition(cardId, positions);
-        }
-
-        public override IList<ClientCard> OnSelectCard(IList<ClientCard> cards, int min, int max, int hint, bool cancelable)
-        {   
-            if (Util.ChainContainPlayer(1) && hint == HintMsg.Remove && Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2)
-            {
-                int botCount = Bot.GetMonsterCount() + Bot.GetSpellCount();
-                int oppositeCount = Enemy.GetMonsterCount() + Enemy.GetSpellCount();
-                if (botCount - oppositeCount == min && min == max)
-                {
-                    Logger.DebugWriteLine("=== Evenly Matched activated.");
-                    List<ClientCard> banishList = new List<ClientCard>();
-                    List<ClientCard> botMonsters = Bot.GetMonsters().Where(card => !card.HasType(CardType.Token)).ToList();
-                    
-                    // non-synchro monster
-                    List<ClientCard> faceDownMonsters = botMonsters.Where(card => card.IsFacedown()).ToList();
-                    banishList.AddRange(faceDownMonsters);
-                    List<ClientCard> nonSynchroMonsters = botMonsters.Where(card => !card.HasType(CardType.Synchro) && !banishList.Contains(card)).ToList();
-                    nonSynchroMonsters.Sort(CardContainer.CompareCardAttack);
-                    banishList.AddRange(nonSynchroMonsters);
-
-                    // spells
-                    List<ClientCard> spells = Bot.GetSpells();
-                    banishList.AddRange(ShuffleCardList(spells));
-
-                    // synchro monster
-                    List<ClientCard> synchroMonsters = botMonsters.Where(card => card.HasType(CardType.Synchro) && !banishList.Contains(card)).ToList();
-                    synchroMonsters.Sort(CardContainer.CompareCardAttack);
-                    banishList.AddRange(synchroMonsters);
- 
-                    return Util.CheckSelectCount(banishList, cards, min, max);
-                }
-            }
-
-            return base.OnSelectCard(cards, min, max, hint, cancelable);
-        }
-
-        public override void OnNewTurn()
-        {
-            enemyActivateMaxxC = false;
-            enemyActivateLockBird = false;
-
-            infiniteImpermanenceList.Clear();
-
-            summoned = false;
-            onlyWyrmSpSummon = false;
-            enemyActivateInfiniteImpermanenceFromHand = false;
-            activatedCardIdList.Clear();
-            currentNegateMonsterList.Clear();
-            currentNegatingIdList.Clear();
-            base.OnNewTurn();
-        }
-
-        public override void OnChainSolved(int chainIndex)
-        {
-            ClientCard currentCard = Duel.GetCurrentSolvingChainCard();
-            if (currentCard != null && !Duel.IsCurrentSolvingChainNegated() && currentCard.Controller == 1)
-            {
-                if (currentCard.IsCode(_CardId.MaxxC))
-                    enemyActivateMaxxC = true;
-                if (currentCard.IsCode(_CardId.LockBird))
-                    enemyActivateLockBird = true;
-                if (currentCard.IsCode(_CardId.InfiniteImpermanence) && !enemyActivateInfiniteImpermanenceFromHand)
-                {
-                    for (int i = 0; i < 5; ++i)
-                    {
-                        if (Enemy.SpellZone[i] == currentCard)
-                        {
-                            infiniteImpermanenceList.Add(4 - i);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        public override void OnChainEnd()
-        {
-            currentNegateMonsterList.Clear();
-            currentNegatingIdList.Clear();
-            for (int idx = effectUsedBaronneDeFleurList.Count() - 1; idx >= 0; -- idx)
-            {
-                ClientCard checkTarget = effectUsedBaronneDeFleurList[idx];
-                if (checkTarget == null || checkTarget.IsFacedown() || checkTarget.Location != CardLocation.MonsterZone)
-                {
-                    effectUsedBaronneDeFleurList.RemoveAt(idx);
-                }
-            }
-            enemyActivateInfiniteImpermanenceFromHand = false;
-            base.OnChainEnd();
-        }
-
-        public override void OnMove(ClientCard card, int previousControler, int previousLocation, int currentControler, int currentLocation)
-        {
-            if (previousControler == 1)
-            {
-                if (card != null)
-                {
-                    if (card.IsCode(_CardId.InfiniteImpermanence) && previousLocation == (int)CardLocation.Hand && currentLocation == (int)CardLocation.SpellZone)
-                        enemyActivateInfiniteImpermanenceFromHand = true;
-                }
-            }
-
-            base.OnMove(card, previousControler, previousLocation, currentControler, currentLocation);
-        }
-
-        /// <summary>
-        /// Select spell/trap's place randomly to avoid InfiniteImpermanence and so on.
-        /// </summary>
-        /// <param name="card">Card to set(default current card)</param>
-        /// <param name="avoidImpermanence">Whether need to avoid InfiniteImpermanence</param>
-        /// <param name="avoidList">Whether need to avoid set in this place</param>
-        public void SelectSTPlace(ClientCard card = null, bool avoidImpermanence = false, List<int> avoidList = null)
-        {
-            if (card == null) card = Card;
-            List<int> list = new List<int>();
-            for (int seq = 0; seq < 5; ++seq)
-            {
-                if (Bot.SpellZone[seq] == null)
-                {
-                    if (card != null && card.Location == CardLocation.Hand && avoidImpermanence && infiniteImpermanenceList.Contains(seq)) continue;
-                    if (avoidList != null && avoidList.Contains(seq)) continue;
-                    list.Add(seq);
-                }
-            }
-            int n = list.Count;
-            while (n-- > 1)
-            {
-                int index = Program.Rand.Next(list.Count);
-                int nextIndex = (index + Program.Rand.Next(list.Count - 1)) % list.Count;
-                int tempInt = list[index];
-                list[index] = list[nextIndex];
-                list[nextIndex] = tempInt;
-            }
-            if (avoidImpermanence && Bot.GetMonsters().Any(c => c.IsFaceup() && !c.IsDisabled()))
-            {
-                foreach (int seq in list)
-                {
-                    ClientCard enemySpell = Enemy.SpellZone[4 - seq];
-                    if (enemySpell != null && enemySpell.IsFacedown()) continue;
-                    int zone = (int)System.Math.Pow(2, seq);
-                    AI.SelectPlace(zone);
-                    return;
-                }
-            }
-            foreach (int seq in list)
-            {
-                int zone = (int)System.Math.Pow(2, seq);
-                AI.SelectPlace(zone);
-                return;
-            }
-            AI.SelectPlace(0);
-        }
-
-        public bool NibiruThePrimalBeingActivate()
-        {
-            if (CheckWhetherNegated()) return false;
-            if (Duel.Player == 0 || Bot.GetMonsters().Any(card => card.IsFaceup() && card.HasType(CardType.Synchro)))
-            {
-                return false;
-            }
-            
-            if (Util.GetBestAttack(Enemy) > Util.GetBestAttack(Bot))
-            {
-                // end main phase
-                if ((CurrentTiming & hintTimingMainEnd) != 0)
-                {
-                    SelectNibiruPosition();
-                    return true;
-                }
-                
-                // avoid Baronne de Fleur
-                List<ClientCard> tunerList = Enemy.GetMonsters().Where(card => card.IsFaceup() && card.IsTuner() && !card.HasType(CardType.Xyz | CardType.Link)).ToList();
-                List<ClientCard> nonTunerList = Enemy.GetMonsters().Where(card => card.IsFaceup() && !card.IsTuner() && !card.HasType(CardType.Xyz | CardType.Link)).ToList();
-                foreach (ClientCard tuner in tunerList)
-                {
-                    foreach (ClientCard nonTuner in nonTunerList)
-                    {
-                        if (tuner.Level + nonTuner.Level == 10)
-                        {
-                            SelectNibiruPosition();
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public void SelectNibiruPosition()
-        {
-            int totalAttack = Bot.GetMonsters().Where(card => card.IsFaceup()).Sum(m => (int?)m.Attack) ?? 0;
-            totalAttack += Enemy.GetMonsters().Where(card => card.IsFaceup()).Sum(m => (int?)m.Attack) ?? 0;
-            Logger.DebugWriteLine("Nibiru token attack: " + totalAttack.ToString());
-            if (totalAttack >= 3000)
-            {
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-            } else {
-                AI.SelectPosition(CardPosition.FaceUpAttack);
-                AI.SelectPosition(CardPosition.FaceUpAttack);
-            }
-        }
-
-        public bool TenyiSpirit_AshunaActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Ashuna, 0))
-            {
-                // special summon
-                if (TenyiSpSummonForTaiaCheck() || Level7TenyiSpSummonCheck())
-                {
-                    return true;
-                }
-
-            } else if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Ashuna, 1) && Card.Location == CardLocation.Grave && CheckCalledbytheGrave(Card.Id) == 0)
-            {
-                // deck summon
-
-                // trigger blackout
-                if (Bot.HasInHandOrInSpellZone(CardId.SwordsoulBlackout))
-                {
-                    List<ClientCard> blackoutTarget = Bot.GetMonsters().Where(card => card.IsFaceup()
-                       && !card.HasType(CardType.Synchro) && card.HasRace(CardRace.Wyrm)).ToList();
-                    if (blackoutTarget.Count() == 0)
-                    {
-                        AI.SelectCard(CardId.TenyiSpirit_Adhara, CardId.TenyiSpirit_Vishuda);
-                        onlyWyrmSpSummon = true;
-                        activatedCardIdList.Add(Card.Id);
-                        return true;
-                    }
-                }
-
-                // for level8/10 synchro
-                List<int> tunerIdList = new List<int>{_CardId.AshBlossom, _CardId.EffectVeiler, CardId.TenyiSpirit_Adhara};
-                bool hasTuner = Bot.GetMonsters().Any(card => card.IsFaceup() && card.IsCode(tunerIdList));
-                hasTuner |= !summoned && Bot.HasInHand(tunerIdList);
-                if (hasTuner && CheckRemainInDeck(CardId.TenyiSpirit_Vishuda) > 0)
-                {
-                    AI.SelectCard(CardId.TenyiSpirit_Ashuna);
-                    onlyWyrmSpSummon = true;
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-                if (Bot.HasInMonstersZone(CardId.TenyiSpirit_Ashuna, false, false, true) && CheckRemainInDeck(CardId.TenyiSpirit_Adhara) > 0)
-                {
-                    AI.SelectCard(CardId.TenyiSpirit_Adhara);
-                    onlyWyrmSpSummon = true;
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool TenyiSpirit_VishudaActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Vishuda, 0))
-            {
-                // special summon
-                if (TenyiSpSummonForTaiaCheck() || Level7TenyiSpSummonCheck())
-                {
-                    return true;
-                }
-
-            } else if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Vishuda, 1) && Card.Location == CardLocation.Grave && CheckCalledbytheGrave(Card.Id) == 0)
-            {
-                // bounce
-                List<ClientCard> dangerList = GetProblematicEnemyCardList(true, true);
-                if (dangerList.Count() > 0)
-                {
-                    AI.SelectCard(dangerList);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool Level7TenyiSpSummonCheck()
-        {
-            List<int> advanceSummonCheckList = new List<int>{CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia, CardId.IncredibleEcclesiaTheVirtuous};
-            List<int> tunerList = new List<int>{CardId.TenyiSpirit_Adhara, _CardId.EffectVeiler, _CardId.AshBlossom};
-            if (!summoned && !Bot.HasInHand(advanceSummonCheckList) && Bot.HasInHand(tunerList))
-            {
-                return true;
-            }
-            if (Bot.HasInExtra(CardId.PsychicEndPunisher) && Bot.HasInMonstersZone(CardId.SwordsoulToken) && !onlyWyrmSpSummon)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulStrategistLongyuanActivate()
-        {
-            // damage effect
-            if (Card.Location != CardLocation.Hand)
-            {
-                return true;
-            }
-
-            // special summon token
-            if (CheckWhetherNegated() || (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2()))
-            {
-                return false;
-            }
-            List<int> discardIdList = new List<int>();
-
-            // discard Taia to SS
-            if (CheckAtAdvantage())
-            {
-                if (Bot.HasInHand(CardId.SwordsoulSacredSummit) && Bot.HasInHand(CardId.SwordsoulOfTaia)
-                    && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && !activatedCardIdList.Contains(CardId.SwordsoulSacredSummit))
-                {
-                    discardIdList.Add(CardId.SwordsoulOfTaia);
-                }
-            }
-
-            // discard tenyi
-            if (discardIdList.Count() == 0)
-            {
-                List<int> tenyiList = new List<int>{CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Adhara};
-                foreach (int tenyiId in tenyiList)
-                {
-                    if (Bot.HasInHand(tenyiId))
-                    {
-                        discardIdList.Add(tenyiId);
-                    }
-                }
-            }
-
-            // discard dump card
-            if (discardIdList.Count() == 0)
-            {
-                List<int> checkIdList = new List<int>{
-                    CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.SwordsoulBlackout, CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulEmergence
-                };
-                foreach (int checkId in checkIdList)
-                {
-                    if (Bot.Hand.Count(card => card != Card && card.IsCode(checkIdList)) > 1)
-                    {
-                        discardIdList.Add(checkId);
-                    }
-                }
-            }
-
-            // discard card
-            if (discardIdList.Count() == 0)
-            {
-                List<int> checkIdList = new List<int>{
-                    CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.SwordsoulBlackout, CardId.SwordsoulStrategistLongyuan,
-                    CardId.SwordsoulSacredSummit, CardId.SwordsoulEmergence
-                };
-                foreach (int checkId in checkIdList)
-                {
-                    if (Bot.Hand.Count(card => card != Card && card.IsCode(checkIdList)) >= 1)
-                    {
-                        discardIdList.Add(checkId);
-                    }
-                }
-            }
-
-            if (discardIdList.Count() > 0)
-            {
-                AI.SelectCard(discardIdList);
-                AI.SelectPosition(CardPosition.FaceUpAttack);
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                activatedCardIdList.Add(Card.Id);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulOfTaiaActivate()
-        {
-            // send to GY effect
-            if (Card.Location != CardLocation.MonsterZone)
-            {
-                List<int> sendToGYTarget = new List<int>();
-
-                // send Mo Ye to SS
-                if (!Bot.HasInGraveyard(CardId.SwordsoulOfMoYe) && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0)
-                {
-                    bool sendMoYe = false;
-                    // baxia
-                    if (Bot.HasInMonstersZone(CardId.BaxiaBrightnessOfTheYangZing, true, false, true
-                    && !activatedCardIdList.Contains(CardId.BaxiaBrightnessOfTheYangZing)))
-                    {
-                        sendMoYe = true;
-                        
-                    } 
-                    if (Bot.HasInHand(CardId.SwordsoulSacredSummit) && !activatedCardIdList.Contains(CardId.SwordsoulSacredSummit)) {
-                        if (Bot.Hand.Any(card => card.Id != CardId.SwordsoulSacredSummit && (card.HasSetcode(SetcodeSwordsoul) || card.HasRace(CardRace.Wyrm))))
-                        {
-                            sendMoYe = true;
-                        }
-                    }
-
-                    if (sendMoYe)
-                    {
-                        sendToGYTarget.Add(CardId.SwordsoulOfMoYe);
-                    }
-                }
-                
-                // send Tenyi
-                List<int> checkTenyiList = new List<int> {CardId.TenyiSpirit_Adhara, CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna};
-                foreach (int id in checkTenyiList)
-                {
-                    if (CheckRemainInDeck(id) > 0)
-                    {
-                        sendToGYTarget.Add(id);
-                    }
-                }
-
-                if (sendToGYTarget.Count() > 0)
-                {
-                    AI.SelectCard(sendToGYTarget);
-                    return true;
-                }
-                return false;
-            }
-            
-            // special summon token
-            // ignore negate check if blackout in GY
-            if (Bot.HasInGraveyard(CardId.SwordsoulBlackout) && !activatedCardIdList.Contains(CardId.SwordsoulBlackout))
-            {
-                AI.SelectCard(CardId.SwordsoulBlackout);
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                activatedCardIdList.Add(Card.Id);
-                return true;
-            }
-
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            List<int> banishIdList = new List<int>();
-
-            List<int> checkIdList = new List<int>{
-                CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulEmergence, CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.MonkOfTheTenyi,
-                CardId.ShamanOfTheTenyi, CardId.SwordsoulSacredSummit, CardId.SwordsoulGrandmaster_Chixiao, CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Vishuda,
-                CardId.SwordsoulSinisterSovereign_QixingLongyuan, CardId.SwordsoulSupremeSovereign_Chengying, CardId.DracoBerserkerOfTheTenyi,
-                CardId.TenyiSpirit_Adhara
-            };
-
-            // dump check
-            foreach (int checkId in checkIdList)
-            {
-                if (Bot.Graveyard.Count(card => card.IsCode(checkId)) > 1)
-                {
-                    banishIdList.Add(checkId);
-                }
-            }
-
-            // priority check
-            if (banishIdList.Count() == 0)
-            {
-                foreach (int checkId in checkIdList)
-                {
-                    if (Bot.HasInGraveyard(checkId))
-                    {
-                        banishIdList.Add(checkId);
-                    }
-                }
-            }
-
-            if (banishIdList.Count() > 0)
-            {
-                AI.SelectCard(banishIdList);
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                activatedCardIdList.Add(Card.Id);
-                return true;
-            }
-
-            return false;
-        }
-        
-        public bool SwordsoulOfTaiaSummon()
-        {
-            if (Bot.HasInGraveyard(CardId.SwordsoulBlackout))
-            {
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && !activatedCardIdList.Contains(CardId.SwordsoulBlackout))
-                {
-                    summoned = true;
-                    return true;
-                }
-            }
-            if (SummonLevel4ForSynchro())
-            {
-                summoned = true;
-                return true;
-            }
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            if (SwordsoulOfTaiaEffectCheck() && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia))
-            {
-                summoned = true;
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulOfTaiaEffectCheck(ClientCard exceptTarget = null)
-        {
-            if (exceptTarget == null)
-            {
-                exceptTarget = Card;
-            }
-            return Bot.Graveyard.Count(card => card != exceptTarget && (card.HasSetcode(SetcodeSwordsoul) || card.HasRace(CardRace.Wyrm))) > 0;
-        }
-
-        public bool SwordsoulOfMoYeActivate()
-        {
-            // draw effect
-            if (Card.Location != CardLocation.MonsterZone)
-            {
-                return true;
-            }
-
-            // special summon token
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            List<ClientCard> revealList = Bot.Hand.Where(card => card.HasSetcode(SetcodeSwordsoul) || card.HasRace(CardRace.Wyrm)).ToList();
-            if (revealList.Count() > 0)
-            {
-                revealList = ShuffleCardList(revealList);
-                AI.SelectCard(revealList);
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                activatedCardIdList.Add(Card.Id);
-                return true;
-            }
-            return false;
-        }
-
-        public bool SwordsoulOfMoYeSummon()
-        {
-            if (SummonLevel4ForSynchro())
-            {
-                summoned = true;
-                return true;
-            }
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            if (SwordsoulOfMoYeEffectCheck() && !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe))
-            {
-                summoned = true;
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulOfMoYeEffectCheck(List<ClientCard> exceptList = null)
-        {
-            if (exceptList == null)
-            {
-                exceptList = new List<ClientCard>{Card};
-            }
-            return Bot.Hand.Count(card => !exceptList.Contains(card) && (card.HasSetcode(SetcodeSwordsoul) || card.HasRace(CardRace.Wyrm))) > 0;
-        }
-
-        public bool SummonLevel4ForSynchro()
-        {
-            bool hasNonTuner = Bot.GetMonsters().Any(card => card.IsFaceup() && !card.HasType(CardType.Xyz | CardType.Link) && !card.IsTuner());
-            if (hasNonTuner)
-            {
-                return false;
-            }
-            List<ClientCard> tunerList = Bot.GetMonsters().Where(card =>
-                card.IsFaceup() && !card.HasType(CardType.Xyz | CardType.Link) && card.IsTuner()).ToList();
-            if (tunerList.Count() > 0)
-            {
-                foreach (ClientCard tuner in tunerList)
-                {
-                    int checkLevel = tuner.Level + 4;
-                    if (Bot.ExtraDeck.Any(card => card.HasType(CardType.Synchro) && card.Level == checkLevel))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public bool IncredibleEcclesiaTheVirtuousActivate()
-        {
-            if (Card.Location == CardLocation.Grave)
-            {
-                return true;
-            }
-            if (Duel.Player == 0 && !CheckWhetherNegated())
-            {
-                bool canActivateMoye = !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0 && SwordsoulOfMoYeEffectCheck();
-                bool canActivateTaia = !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0 && SwordsoulOfTaiaEffectCheck();
-                if (canActivateMoye && !summoned && !Bot.HasInHand(CardId.SwordsoulOfMoYe))
-                {
-                    AI.SelectCard(CardId.SwordsoulOfMoYe);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-                if (canActivateTaia && !summoned && !Bot.HasInHand(CardId.SwordsoulOfTaia))
-                {
-                    AI.SelectCard(CardId.SwordsoulOfTaia);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-                if (canActivateMoye)
-                {
-                    AI.SelectCard(CardId.SwordsoulOfMoYe);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-                if (canActivateTaia)
-                {
-                    AI.SelectCard(CardId.SwordsoulOfTaia);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool IncredibleEcclesiaTheVirtuousSummon()
-        {
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            if (SwordsoulOfMoYeSummon() && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0)
-            {
-                summoned = true;
-                return true;
-            }
-            if (SwordsoulOfTaiaSummon() && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0)
-            {
-                summoned = true;
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool IncredibleEcclesiaTheVirtuousSpSummon()
-        {
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            if (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2())
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool AshBlossomActivate()
-        {
-            if (CheckWhetherNegated() || !CheckLastChainShouldNegated()) return false;
-            if (CheckAtAdvantage() && Duel.LastChainPlayer == 1 && Util.GetLastChainCard().IsCode(_CardId.MaxxC))
-            {
-                return false;
-            }
-            if (DefaultAshBlossomAndJoyousSpring())
-            {
-                CheckDeactiveFlag();
-                return true;
-            }
-            return false;
-        }
-
-        public bool MaxxCActivate()
-        {
-            if (CheckWhetherNegated() || Duel.LastChainPlayer == 0) return false;
-            return DefaultMaxxC();
-        }
-
-        public bool EffectVeilerActivate()
-        {
-            if (CheckWhetherNegated()) return false;
-
-            List<ClientCard> shouldNegateList = GetMonsterListForTargetNegate(true);
-            if (shouldNegateList.Count() > 0)
-            {
-                ClientCard target = shouldNegateList[0];
-                currentNegateMonsterList.Add(target);
-                AI.SelectCard(target);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool TunerForSynchroSummon()
-        {
-            if (!Card.IsCode(_CardId.AshBlossom) && !Card.IsCode(CardId.TenyiSpirit_Adhara) && !Card.IsCode(_CardId.EffectVeiler))
-            {
-                return false;
-            }
-            // taia check
-            if (Bot.HasInExtra(CardId.MonkOfTheTenyi) && Bot.HasInHand(CardId.SwordsoulOfTaia)
-                && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-            {
-                return false;
-            }
-
-            // already has tuner, skip (maybe affected by Dimensional Barrier)
-            if (Bot.GetMonsters().Any(card => card.IsFaceup() && card.IsTuner()))
-            {
-                return false;
-            }
-
-            // level10 check
-            List<int> checkOnField = new List<int>{CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna};
-            bool hasLevel7NonTuner = Bot.GetMonsters().Any(card => card.IsFaceup() && checkOnField.Contains(card.Id) && !card.IsTuner());
-            if (hasLevel7NonTuner)
-            {
-                int totalLevel = Card.Level + 7;
-                if (Bot.ExtraDeck.Any(card => card.HasType(CardType.Synchro) && card.Level == totalLevel && (!onlyWyrmSpSummon || card.HasRace(CardRace.Wyrm))))
-                {
-                    summoned = true;
-                    return true;
-                }
-            }
-
-            List<ClientCard> checkNonTuner = Bot.GetMonsters().Where(card => card.IsFaceup() && !card.IsTuner()).ToList();
-            checkNonTuner.Sort(CardContainer.CompareCardAttack);
-            // level7 check
-            if (Bot.HasInExtra(CardId.YaziEvilOfTheYangZing) && GetProblematicEnemyCardList(true, true).Count() > 0)
-            {
-                foreach (ClientCard checkCard in checkNonTuner)
-                {
-                    if (Card.Level + checkCard.Level == 7)
-                    {
-                        summoned = true;
-                        return true;
-                    }
-                }
-            }
-            // level 11 check
-            if (Bot.HasInExtra(CardId.PsychicEndPunisher))
-            {
-                foreach (ClientCard checkCard in checkNonTuner)
-                {
-                    if ((checkCard.IsDisabled() || !checkCard.HasType(CardType.Synchro)) && (Card.Level + checkCard.Level == 11))
-                    {
-                        summoned = true;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public bool WyrmForBlackoutSummon()
-        {
-            if (Card.Level > 4 || !Card.HasRace(CardRace.Wyrm))
-            {
-                return false;
-            }
-            if (Bot.HasInHandOrInSpellZone(CardId.SwordsoulBlackout) && !Bot.GetMonsters().Any(card => card.IsFaceup() && card.HasRace(CardRace.Wyrm)))
-            {
-                summoned = true;
-                return true;
-            }
-            return false;
-        }
-
-        public bool TenyiSpirit_AdharaActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Adhara, 0))
-            {
-                // special summon
-                if (TenyiSpSummonForTaiaCheck())
-                {
-                    return true;
-                }
-
-            }
-            else if (ActivateDescription == Util.GetStringId(CardId.TenyiSpirit_Adhara, 1) && Card.Location == CardLocation.Grave && CheckCalledbytheGrave(Card.Id) == 0)
-            {
-                // recycle
-                if (!activatedCardIdList.Contains(CardId.SwordsoulStrategistLongyuan) && SwordsoulOfMoYeEffectCheck()
-                    && Bot.HasInBanished(CardId.SwordsoulStrategistLongyuan))
-                {
-                    AI.SelectCard(CardId.SwordsoulStrategistLongyuan);
-                    return true;
-                }
-                if (!summoned)
-                {
-                    if (!activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && SwordsoulOfMoYeEffectCheck()
-                        && Bot.HasInBanished(CardId.SwordsoulOfMoYe))
-                    {
-                        AI.SelectCard(CardId.SwordsoulOfMoYe);
-                        return true;
-                    }
-                    if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && SwordsoulOfTaiaEffectCheck()
-                        && Bot.HasInBanished(CardId.SwordsoulOfTaia))
-                    {
-                        AI.SelectCard(CardId.SwordsoulOfTaia);
-                        return true;
-                    }
-                }
-                List<int> recycleList = new List<int>{CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna};
-                foreach (int recycle in recycleList)
-                {
-                    if (Bot.HasInBanished(recycle))
-                    {
-                        AI.SelectCard(recycle);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public bool TenyiSpSummonForTaiaCheck()
-        {
-            if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-            {
-                bool hasTaia = (!summoned && Bot.HasInHand(CardId.SwordsoulOfTaia)) || Bot.HasInMonstersZone(CardId.SwordsoulOfTaia);
-                bool noTargetInGrave = !Bot.Graveyard.Any(card => card.HasRace(CardRace.Wyrm) || card.HasSetcode(SetcodeSwordsoul));
-                bool hasInExtra = Bot.HasInExtra(CardId.MonkOfTheTenyi);
-                bool notLongyuan = activatedCardIdList.Contains(CardId.SwordsoulStrategistLongyuan) || !Bot.HasInHand(CardId.SwordsoulStrategistLongyuan);
-
-                if (hasTaia && noTargetInGrave && hasInExtra && notLongyuan)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool TenyiForShamanSpSummon()
-        {
-            List<int> checkEffectDesc = new List<int>{
-                Util.GetStringId(CardId.TenyiSpirit_Adhara, 0), Util.GetStringId(CardId.TenyiSpirit_Vishuda, 0),
-                Util.GetStringId(CardId.TenyiSpirit_Ashuna, 0)
-            };
-            if (!checkEffectDesc.Contains(ActivateDescription) || summoned || !Bot.HasInExtra(CardId.ShamanOfTheTenyi)
-            || (CheckAtAdvantage() && enemyActivateMaxxC))
-            {
-                return false;
-            }
-            ClientCard toSummonMoye = Bot.Hand.FirstOrDefault(card => card.IsCode(CardId.SwordsoulOfMoYe));
-            if (toSummonMoye == null)
-            {
-                return false;
-            }
-            List<ClientCard> notRevealCheckList = new List<ClientCard>{Card, toSummonMoye};
-            if (!SwordsoulOfMoYeEffectCheck(notRevealCheckList) || activatedCardIdList.Contains(CardId.SwordsoulOfMoYe))
-            {
-                return false;
-            }
-            if (activatedCardIdList.Contains(CardId.SwordsoulOfTaia) || !Bot.HasInHandOrInGraveyard(CardId.SwordsoulOfTaia))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool TenyiForBlackoutSpSummon()
-        {
-            List<int> checkEffectDesc = new List<int>{
-                Util.GetStringId(CardId.TenyiSpirit_Adhara, 0), Util.GetStringId(CardId.TenyiSpirit_Vishuda, 0),
-                Util.GetStringId(CardId.TenyiSpirit_Ashuna, 0)
-            };
-            if (!checkEffectDesc.Contains(ActivateDescription))
-            {
-                return false;
-            }
-            if (CheckAtAdvantage() && enemyActivateMaxxC)
-            {
-                return false;
-            }
-            if (Bot.HasInHandOrInSpellZone(CardId.SwordsoulBlackout) && !Bot.GetMonsters().Any(card => card.IsFaceup() && card.HasRace(CardRace.Wyrm)))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        public bool PotOfDesiresActivate()
-        {
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-            if (CheckAtAdvantage())
-            {
-                bool result = Bot.Deck.Count() >= 15;
-                if (result)
-                {
-                    SelectSTPlace(null, true);
-                }
-                return result;
-            }
-            SelectSTPlace(null, true);
-            return true;
-        }
-
-        public bool SwordsoulEmergenceActivate()
-        {
-            if (Card.Location == CardLocation.Removed)
-            {
-                return SwordsoulSpellBanishedEffect();
-            }
-
-            // Mo Ye
-            if (!Bot.HasInHand(CardId.SwordsoulOfMoYe) && !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe)
-                && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0 && SwordsoulOfMoYeEffectCheck())
-            {
-                AI.SelectCard(CardId.SwordsoulOfMoYe);
-                activatedCardIdList.Add(Card.Id);
-                SelectSTPlace(null, true);
-                return true;
-            }
-
-            // Taia
-            if (!Bot.HasInHand(CardId.SwordsoulOfTaia) && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia)
-                && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0 && SwordsoulOfTaiaEffectCheck())
-            {
-                AI.SelectCard(CardId.SwordsoulOfTaia);
-                activatedCardIdList.Add(Card.Id);
-                SelectSTPlace(null, true);
-                return true;
-            }
-
-            // Longyuan
-            if (!Bot.HasInHand(CardId.SwordsoulStrategistLongyuan) && !activatedCardIdList.Contains(CardId.SwordsoulStrategistLongyuan)
-                && CheckRemainInDeck(CardId.SwordsoulStrategistLongyuan) > 0 && SwordsoulOfMoYeEffectCheck())
-            {
-                AI.SelectCard(CardId.SwordsoulStrategistLongyuan);
-                activatedCardIdList.Add(Card.Id);
-                SelectSTPlace(null, true);
-                return true;
-            }
-
-            // dump check
-            if (!Bot.HasInHand(CardId.SwordsoulOfMoYe) && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0 && SwordsoulOfMoYeEffectCheck())
-            {
-                AI.SelectCard(CardId.SwordsoulOfMoYe);
-                activatedCardIdList.Add(Card.Id);
-                SelectSTPlace(null, true);
-                return true;
-            }
-            List<int> checkIdList = new List<int>{CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.SwordsoulStrategistLongyuan};
-            foreach (int checkId in checkIdList)
-            {
-                if (CheckRemainInDeck(checkId) > 0)
-                {
-                    AI.SelectCard(checkId);
-                    activatedCardIdList.Add(Card.Id);
-                    SelectSTPlace(null, true);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulSacredSummitActivate()
-        {
-            if (Card.Location == CardLocation.Removed)
-            {
-                return SwordsoulSpellBanishedEffect();
-            }
-            if (CheckAtAdvantage())
-            {
-                if (enemyActivateMaxxC && Util.IsTurn1OrMain2())
-                {
-                    return false;
-                }
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && Bot.HasInGraveyard(CardId.SwordsoulOfMoYe)
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0 && SwordsoulOfMoYeEffectCheck())
-                {
-                    AI.SelectCard(CardId.SwordsoulOfMoYe);
-                    activatedCardIdList.Add(Card.Id);
-                    SelectSTPlace(null, true);
-                    return true;
-                }
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-                {
-                    ClientCard taia = Bot.Graveyard.FirstOrDefault(card => card.IsCode(CardId.SwordsoulOfTaia));
-                    if (taia != null && SwordsoulOfTaiaEffectCheck(taia))
-                    {
-                        AI.SelectCard(CardId.SwordsoulOfTaia);
-                        activatedCardIdList.Add(Card.Id);
-                        SelectSTPlace(null, true);
-                        return true;
-                    }
-                }
-            }
-            bool controlSynchro = Bot.GetMonsters().Any(card => card.IsFaceup() && card.HasType(CardType.Synchro));
-
-            List<ClientCard> rebornTargetList = Bot.Graveyard.Where(card =>
-                card.IsMonster() && (card.HasSetcode(SetcodeSwordsoul) || (controlSynchro && card.HasRace(CardRace.Wyrm)))).ToList();
-            rebornTargetList.Sort(CardContainer.CompareCardAttack);
-            rebornTargetList.Reverse();
-
-            if (rebornTargetList.Count() > 0)
-            {
-                ClientCard rebornTarget = rebornTargetList[0];
-                if (rebornTarget.IsCode(CardId.SwordsoulOfMoYe) && (activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) || !SwordsoulOfMoYeEffectCheck()))
-                {
-                    return false;
-                }
-                if (rebornTarget.IsCode(CardId.SwordsoulOfTaia) && activatedCardIdList.Contains(CardId.SwordsoulOfTaia))
-                {
-                    return false;
-                }
-                AI.SelectCard(rebornTargetList);
-                activatedCardIdList.Add(Card.Id);
-                SelectSTPlace(null, true);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulSpellBanishedEffect()
-        {
-            // TODO
-            return false;
-        }
-
-        public bool CalledbytheGraveActivate()
-        {
-            if (CheckWhetherNegated() || !CheckLastChainShouldNegated()) return false;
-            if (CheckAtAdvantage() && Duel.LastChainPlayer == 1 && Util.GetLastChainCard().IsCode(_CardId.MaxxC))
-            {
-                return false;
-            }
-            if (Duel.LastChainPlayer == 1)
-            {
-                // negate
-                if (Util.GetLastChainCard().IsMonster())
-                {
-                    int code = Util.GetLastChainCard().GetOriginCode();
-                    if (code == 0) return false;
-                    if (CheckCalledbytheGrave(code) > 0) return false;
-                    if (Util.GetLastChainCard().IsCode(_CardId.MaxxC) && CheckAtAdvantage())
-                    {
-                        return false;
-                    }
-                    ClientCard graveTarget = Enemy.Graveyard.GetFirstMatchingCard(card => card.IsMonster() && card.GetOriginCode() == code);
-                    if (graveTarget != null)
-                    {
-                        if (!(Card.Location == CardLocation.SpellZone))
-                        {
-                            SelectSTPlace(null, true);
-                        }
-                        AI.SelectCard(graveTarget);
-                        currentNegatingIdList.Add(code);
-                        CheckDeactiveFlag();
-                        return true;
-                    }
-                }
-                
-                // banish target
-                foreach (ClientCard cards in Enemy.Graveyard)
-                {
-                    if (Duel.ChainTargets.Contains(cards) && cards.IsMonster())
-                    {
-                        if (!(Card.Location == CardLocation.SpellZone))
-                        {
-                            SelectSTPlace(null, true);
-                        }
-                        int code = cards.Id;
-                        AI.SelectCard(cards);
-                        currentNegatingIdList.Add(code);
-                        return true;
-                    }
-                }
-
-                // become targets
-                if (Duel.ChainTargets.Contains(Card))
-                {
-                    List<ClientCard> enemyMonsters = Enemy.Graveyard.GetMatchingCards(card => card.IsMonster()).ToList();
-                    if (enemyMonsters.Count() > 0)
-                    {
-                        enemyMonsters.Sort(CardContainer.CompareCardAttack);
-                        enemyMonsters.Reverse();
-                        int code = enemyMonsters[0].Id;
-                        AI.SelectCard(code);
-                        currentNegatingIdList.Add(code);
-                        return true;
-                    }
-                }
-            }
-
-            // avoid danger monster in grave
-            if (Duel.LastChainPlayer == 1) return false;
-            List<ClientCard> targets = CheckDangerousCardinEnemyGrave(true);
-            if (targets.Count() > 0) {
-                int code = targets[0].Id;
-                if (!(Card.Location == CardLocation.SpellZone))
-                {
-                    SelectSTPlace(null, true);
-                }
-                AI.SelectCard(code);
-                currentNegatingIdList.Add(code);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool CrossoutDesignatorActivate()
-        {
-            if (CheckWhetherNegated() || !CheckLastChainShouldNegated()) return false;
-            // negate 
-            if (Duel.LastChainPlayer == 1 && Util.GetLastChainCard() != null)
-            {
-                int code = Util.GetLastChainCard().Id;
-                int alias = Util.GetLastChainCard().Alias;
-                if (alias != 0 && alias - code < 10) code = alias;
-                if (code == 0) return false;
-                if (DefaultCheckWhetherCardIdIsNegated(code)) return false;
-                if (CheckRemainInDeck(code) > 0)
-                {
-                    if (!(Card.Location == CardLocation.SpellZone))
-                    {
-                        SelectSTPlace(null, true);
-                    }
-                    AI.SelectAnnounceID(code);
-                    currentNegatingIdList.Add(code);
-                    CheckDeactiveFlag();
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool InfiniteImpermanenceActivate()
-        {
-            if (CheckWhetherNegated()) return false;
-
-            ClientCard LastChainCard = Util.GetLastChainCard();
-
-            // negate spells
-            if (Card.Location == CardLocation.SpellZone)
-            {
-                int this_seq = -1;
-                int that_seq = -1;
-                for (int i = 0; i < 5; ++i)
-                {
-                    if (Bot.SpellZone[i] == Card) this_seq = i;
-                    if (LastChainCard != null
-                        && LastChainCard.Controller == 1 && LastChainCard.Location == CardLocation.SpellZone && Enemy.SpellZone[i] == LastChainCard) that_seq = i;
-                    else if (Duel.Player == 0 && Util.GetProblematicEnemySpell() != null
-                        && Enemy.SpellZone[i] != null && Enemy.SpellZone[i].IsFloodgate()) that_seq = i;
-                }
-                if ( (this_seq * that_seq >= 0 && this_seq + that_seq == 4)
-                    || Util.IsChainTarget(Card)
-                    || (LastChainCard != null && LastChainCard.Controller == 1 && LastChainCard.IsCode(_CardId.HarpiesFeatherDuster)))
-                {
-                    CheckDeactiveFlag();
-                    ClientCard target = GetProblematicEnemyMonster(canBeTarget: true);
-                    if (target != null)
-                    {
-                        AI.SelectCard(target);
-                    } else {
-                        AI.SelectCard(Enemy.GetMonsters());
-                    }
-                    infiniteImpermanenceList.Add(this_seq);
-                    return true;
-                }
-            }
-            
-            // negate monster
-            List<ClientCard> shouldNegateList = GetMonsterListForTargetNegate(false, true);
-            if (shouldNegateList.Count() > 0)
-            {
-                ClientCard negateTarget = shouldNegateList[0];
-                currentNegateMonsterList.Add(negateTarget);
-
-                if (Card.Location == CardLocation.SpellZone)
-                {
-                    for (int i = 0; i < 5; ++ i)
-                    {
-                        if (Bot.SpellZone[i] == Card)
-                        {
-                            infiniteImpermanenceList.Add(i);
-                            break;
-                        }
-                    }
-                }
-                if (Card.Location == CardLocation.Hand)
-                {
-                    SelectSTPlace(Card, true);
-                }
-                AI.SelectCard(negateTarget);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulBlackoutActivate()
-        {
-            // sp summon token
-            if (Card.Location == CardLocation.Removed)
-            {
-                AI.SelectPosition(CardPosition.FaceUpDefence);
-                activatedCardIdList.Add(Card.Id);
-                return true;
-            }
-
-            // self destroy targer
-            List<ClientCard> selfDestroyList = Bot.GetMonsters().Where(card => card.IsFaceup() && card.HasRace(CardRace.Wyrm)).ToList();
-            selfDestroyList.Sort(CardContainer.CompareCardAttack);
-            ClientCard selfDestroyTarget = selfDestroyList[0];
-            bool selfTargetIsImportant = selfDestroyTarget.HasType(CardType.Synchro);
-
-            // choose Chengying
-            List<ClientCard> chengyingList = Bot.GetMonsters().Where(card =>
-                card.IsCode(CardId.SwordsoulSupremeSovereign_Chengying) && card.IsFaceup() && !card.IsDisabled()).ToList();
-            if (chengyingList.Count() > 0 && Bot.Graveyard.Count() > 0)
-            {
-                selfDestroyTarget = chengyingList[0];
-                selfTargetIsImportant = false;
-            }
-            foreach (ClientCard selfCard in selfDestroyList)
-            {
-                if (Duel.LastChainTargets.Contains(selfCard))
-                {
-                    selfDestroyTarget = selfCard;
-                    selfTargetIsImportant = false;
-                }
-            }
-
-            // destroy problem card
-            List<ClientCard> problemCardList = GetProblematicEnemyCardList(true);
-            if (problemCardList.Count() >= 2 && Duel.Player == 1)
-            {
-                AI.SelectCard(selfDestroyTarget);
-                AI.SelectNextCard(problemCardList);
-                return true;
-            }
-            
-            List<ClientCard> faceUpEnemyMonsterList = Enemy.GetMonsters().Where(card => card.IsFaceup()).ToList();
-            faceUpEnemyMonsterList.Sort(CardContainer.CompareCardAttack);
-            faceUpEnemyMonsterList.Reverse();
-            if (!selfTargetIsImportant && Duel.Player == 1)
-            {
-                // destroy multi monster
-                if (faceUpEnemyMonsterList.Count() >= 2)
-                {
-                    AI.SelectCard(selfDestroyTarget);
-                    AI.SelectNextCard(GetNormalEnemyTargetList());
-                    return true;
-                }
-
-                // destroy card in EP
-                if (Duel.Phase == DuelPhase.End)
-                {
-                    AI.SelectCard(selfDestroyTarget);
-                    AI.SelectNextCard(GetNormalEnemyTargetList());
-                    return true;
-                }
-            }
-
-            // destroy attack monster
-            if (Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2 && faceUpEnemyMonsterList.Count() > 0)
-            {
-                int botBestAttack = Util.GetBestAttack(Bot);
-                int enemyBestAttack = faceUpEnemyMonsterList[0].GetDefensePower();
-                if (enemyBestAttack >= botBestAttack)
-                {
-                    AI.SelectCard(selfDestroyTarget);
-                    AI.SelectNextCard(GetNormalEnemyTargetList());
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-
-        public bool GeomathmechFinalSigmaSpSummon()
-        {
-            if (Bot.GetMonstersExtraZoneCount() > 0) return false;
-            bool hasFloowandereeze = Enemy.GetMonsters().Any(card => card.HasSetcode(SetcodeFloowandereeze));
-            hasFloowandereeze |= Enemy.GetSpells().Any(card => card.HasSetcode(SetcodeFloowandereeze));
-            hasFloowandereeze |= Enemy.Graveyard.Any(card => card.HasSetcode(SetcodeFloowandereeze));
-            hasFloowandereeze |= Enemy.Banished.Any(card => card.HasSetcode(SetcodeFloowandereeze));
-            if (hasFloowandereeze)
-            {
-                AI.SelectMaterials(GetSynchroMaterial(12));
-                AI.SelectPosition(CardPosition.FaceUpAttack);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool PsychicEndPunisherSpSummon()
-        {
-            List<ClientCard> materialList = GetSynchroMaterial(11);
-            if (materialList.Count() > 1)
-            {
-                AI.SelectMaterials(materialList);
-                AI.SelectPosition(CardPosition.FaceUpAttack);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// remove level10 summon filter
-        /// </summary>
-        public bool Level10SpSummonCheckInit()
-        {
-            canSpSummonLevel10IdList.Clear();
-            return false;
-        }
-
-        /// <summary>
-        /// check which level10 monster can be summoned
-        /// </summary>
-        public bool Level10SpSummonCheckCount()
-        {
-            List<int> checkIdList = new List<int>{
-                CardId.SwordsoulSupremeSovereign_Chengying, CardId.SwordsoulSinisterSovereign_QixingLongyuan, CardId.BaronneDeFleur
-            };
-            foreach (int checkId in checkIdList)
-            {
-                if (Card.IsCode(checkId))
-                {
-                    canSpSummonLevel10IdList.Add(checkId);
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// decide which level10 monster to summon
-        /// </summary>
-        public bool Level10SpSummonCheckDecide()
-        {
-            if (canSpSummonLevel10IdList.Count <= 1)
-            {
-                return false;
-            }
-            List<int> decideIdList = new List<int>();
-
-            // BaronneDeFleur
-            if (canSpSummonLevel10IdList.Contains(CardId.BaronneDeFleur))
-            {
-                // protect maxxc
-                if (Bot.HasInHand(_CardId.MaxxC))
-                {
-                    canSpSummonLevel10IdList.Clear();
-                    canSpSummonLevel10IdList.Add(CardId.BaronneDeFleur);
-                    return false;
-                }
-
-                // continue to use taia for synchro
-                ClientCard taia = Bot.Graveyard.FirstOrDefault(card => card.IsCode(CardId.SwordsoulOfTaia));
-                if (taia != null && SwordsoulOfTaiaEffectCheck(taia) && Bot.HasInHand(CardId.SwordsoulSacredSummit))
-                {
-                    canSpSummonLevel10IdList.Clear();
-                    canSpSummonLevel10IdList.Add(CardId.BaronneDeFleur);
-                    return false;
-                }
-
-                decideIdList.Add(CardId.BaronneDeFleur);
-            }
-
-            // QixingLongyuan
-            if (canSpSummonLevel10IdList.Contains(CardId.SwordsoulSinisterSovereign_QixingLongyuan))
-            {
-                if (CheckAtAdvantage())
-                {
-                    decideIdList.Add(CardId.SwordsoulSinisterSovereign_QixingLongyuan);
-                }
-            }
-
-            // Chengying
-            if (canSpSummonLevel10IdList.Contains(CardId.SwordsoulSupremeSovereign_Chengying))
-            {
-                int banishCount = Bot.Banished.Count() + Enemy.Banished.Count();
-                // use blackout or chixiao to trigger
-                bool decideFlag = Bot.HasInHandOrInSpellZone(CardId.SwordsoulBlackout)
-                    || Bot.HasInMonstersZone(CardId.SwordsoulGrandmaster_Chixiao, true, false, true);
-                if (CheckAtAdvantage())
-                {
-                    // overkill
-                    if (3000 + banishCount * 100 >= Enemy.LifePoints)
-                    {
-                        decideFlag = true;
-                    }
-                } else {
-                    ClientCard enemyMonster = GetBestEnemyMonster(true);
-                    if (enemyMonster != null && decideIdList.Count() == 0)
-                    {
-                        // for high-power monster
-                        if (3000 + banishCount * 200 >= enemyMonster.GetDefensePower())
-                        {
-                            decideFlag = true;
-                        }
-                    }
-                }
-
-                if (decideFlag)
-                {
-                    decideIdList.Add(CardId.SwordsoulSupremeSovereign_Chengying);
-                }
-            }
-
-            if (decideIdList.Count() > 0)
-            {
-                // if multi selections, select randomly
-                canSpSummonLevel10IdList.Clear();
-                int index = Program.Rand.Next(decideIdList.Count());
-                int lastDecide = decideIdList[index];
-                canSpSummonLevel10IdList.Add(lastDecide);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// perform level10 monster's synchro summon
-        /// </summary>
-        public bool Level10SpSummonCheckFinal()
-        {
-            if (canSpSummonLevel10IdList.Count() == 1)
-            {
-                int finalDecideId = canSpSummonLevel10IdList[0];
-                if (Card.IsCode(finalDecideId))
-                {
-                    List<ClientCard> materialList = GetSynchroMaterial(10, Card.IsCode(CardId.SwordsoulSinisterSovereign_QixingLongyuan));
-                    if (materialList.Count() > 1)
-                    {
-                        AI.SelectMaterials(materialList);
-                        return true;
-                    }
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool AdamancipatorRisen_DragiteSpSummon()
-        {
-            if (!Bot.HasInMonstersZone(CardId.SwordsoulGrandmaster_Chixiao, true))
-            {
-                return false;
-            }
-            bool containWaterMonsterInGY = Bot.Graveyard.Any(card => card.IsMonster() && card.HasAttribute(CardAttribute.Water));
-            bool canContainWaterInGY = containWaterMonsterInGY;
-            canContainWaterInGY |= Bot.GetMonsters().Any(card => card.HasAttribute(CardAttribute.Water) && card.IsFaceup());
-            if (!canContainWaterInGY)
-            {
-                return false;
-            }
-
-            SelectLevel8SynchroMaterial(false, !containWaterMonsterInGY);
-            return true;
-        }
-
-        public bool DracoBerserkerOfTheTenyiSpSummon()
-        {
-            if (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2())
-            {
-                return false;
-            }
-
-            SelectLevel8SynchroMaterial(true);
-            return true;
-        }
-
-        public bool SwordsoulGrandmaster_ChixiaoSpSummon()
-        {
-            if (CheckAtAdvantage() && enemyActivateLockBird)
-            {
-                return false;
-            }
-            if (!activatedCardIdList.Contains(CardId.SwordsoulGrandmaster_Chixiao))
-            {
-                SelectLevel8SynchroMaterial(true);
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool BaxiaBrightnessOfTheYangZingSpSummon()
-        {
-            if (CheckAtAdvantage())
-            {
-                return false;
-            }
-
-            List<ClientCard> problemList = GetProblematicEnemyCardList(true);
-            if (problemList.Count() > 1 && !activatedCardIdList.Contains(CardId.BaxiaBrightnessOfTheYangZing + 1))
-            {
-                SelectLevel8SynchroMaterial(true);
-                return true;
-            }
-            if (problemList.Count() == 1 && Bot.GetSpellCount() > 0 && !activatedCardIdList.Contains(CardId.BaxiaBrightnessOfTheYangZing + 2))
-            {
-                bool checkFlag = false;
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && SwordsoulOfMoYeEffectCheck() && Bot.HasInGraveyard(CardId.SwordsoulOfMoYe))
-                {
-                    checkFlag = true;
-                }
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && Bot.HasInGraveyard(CardId.SwordsoulOfTaia))
-                {
-                    checkFlag = true;
-                }
-                if (checkFlag)
-                {
-                    SelectLevel8SynchroMaterial(true);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public void SelectLevel8SynchroMaterial(bool needWyrmNonTuner = false, bool needWaterNonTuner = false)
-        {
-            List<ClientCard> tunerList = Bot.GetMonsters().Where(card => card.IsFaceup() && card.IsTuner() && card.Level < 8).ToList();
-            List<ClientCard> nonTunerList = Bot.GetMonsters().Where(card => card.IsFaceup() && !card.IsTuner() && card.Level < 8
-                && (!needWyrmNonTuner || card.HasRace(CardRace.Wyrm) && (!needWaterNonTuner || card.HasAttribute(CardAttribute.Water)))).ToList();
-            tunerList.Sort(CardContainer.CompareCardAttack);
-            nonTunerList.Sort(CardContainer.CompareCardAttack);
-
-            List<ClientCard> materialList = new List<ClientCard>();
-            foreach (ClientCard tuner in tunerList)
-            {
-                materialList.Clear();
-                materialList.Add(tuner);
-                if (tuner.Level == 4)
-                {
-                    // use moye first
-                    if (activatedCardIdList.Contains(CardId.SwordsoulOfMoYe))
-                    {
-                        ClientCard moye = nonTunerList.GetFirstMatchingCard(card => card.IsCode(CardId.SwordsoulOfMoYe));
-                        if (moye != null)
-                        {
-                            materialList.Add(moye);
-                            AI.SelectMaterials(materialList);
-                            return;
-                        }
-                    }
-
-                    // use taia
-                    if (activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && !needWaterNonTuner)
-                    {
-                        ClientCard taia = nonTunerList.GetFirstMatchingCard(card => card.IsCode(CardId.SwordsoulOfTaia));
-                        if (taia != null)
-                        {
-                            materialList.Add(taia);
-                            AI.SelectMaterials(materialList);
-                            return;
-                        }
-                    }
-                }
-
-                foreach (ClientCard nonTuner in nonTunerList)
-                {
-                    if (tuner.Level + nonTuner.Level == 8)
-                    {
-                        materialList.Add(nonTuner);
-                        AI.SelectMaterials(materialList);
-                        return;
-                    }
-                }
-            }
-        }
-
-        public bool YaziEvilOfTheYangZingSpSummon()
-        {
-            if (Enemy.GetMonsterCount() + Enemy.GetSpellCount() == 0)
-            {
-                return false;
-            }
-            bool shouldSummon = GetProblematicEnemyCardList(true, true).Count() > 0;
-            shouldSummon |= !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0
-                && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0 && SwordsoulOfMoYeEffectCheck();
-            shouldSummon |= !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0
-                && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0;
-            
-            if (shouldSummon)
-            {
-                List<ClientCard> materialList = GetSynchroMaterial(7);
-                if (materialList.Count() > 1)
-                {
-                    AI.SelectMaterials(materialList);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public List<ClientCard> GetSynchroMaterial(int level, bool needWyrmNonTuner = false)
-        {
-            List<ClientCard> tunerList = Bot.GetMonsters().Where(card =>
-                card.IsFaceup() && card.IsTuner() && !card.HasType(CardType.Xyz | CardType.Link)).ToList();
-            List<ClientCard> nonTunerList = Bot.GetMonsters().Where(card =>
-                card.IsFaceup() && !card.IsTuner() && !card.HasType(CardType.Xyz | CardType.Link) && (!needWyrmNonTuner || card.HasRace(CardRace.Wyrm))).ToList();
-            tunerList.Sort(CardContainer.CompareCardAttack);
-            nonTunerList.Sort(CardContainer.CompareCardAttack);
-            List<ClientCard> selectList = new List<ClientCard>();
-            foreach (ClientCard tuner in tunerList)
-            {
-                selectList.Clear();
-                selectList.Add(tuner);
-                foreach (ClientCard nonTuner in nonTunerList)
-                {
-                    if (tuner.Level + nonTuner.Level == level && (nonTuner.IsDisabled() || !nonTuner.HasType(CardType.Synchro)))
-                    {
-                        selectList.Add(nonTuner);
-                        return selectList;
-                    }
-                }
-            }
-            selectList.Clear();
-            return selectList;
-        }
-
-        public bool ShamanOfTheTenyiSpSummon()
-        {
-            if (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2())
-            {
-                Logger.DebugWriteLine("[Shaman] advantage & maxxc, skip");
-                return false;
-            }
-            // check extra summon
-            List<ClientCard> extraZoneMonsters = Bot.GetMonstersInExtraZone();
-            if (extraZoneMonsters.Count() > 0 && extraZoneMonsters.Any(card => card.IsFacedown() || !card.HasType(CardType.Link) || !card.HasRace(CardRace.Wyrm)))
-            {
-                Logger.DebugWriteLine("[Shaman] extra zone occupied, skip");
-                return false;
-            }
-            // check spsummon target
-            bool hasSpSummonTaret = !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0
-                && Bot.HasInHandOrInGraveyard(CardId.SwordsoulOfTaia);
-            hasSpSummonTaret |= !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0
-                && Bot.HasInGraveyard(CardId.SwordsoulOfMoYe) && SwordsoulOfMoYeEffectCheck();
-            hasSpSummonTaret |= Bot.GetGraveyardMonsters().Any(card => card.HasType(CardType.Synchro) && card.IsCanRevive() && card.HasRace(CardRace.Wyrm));
-            if (!hasSpSummonTaret)
-            {
-                Logger.DebugWriteLine("[Shaman] no target, skip");
-                return false;
-            }
-
-            // select material
-            List<ClientCard> materialList = new List<ClientCard>(extraZoneMonsters);
-            List<ClientCard> mainMonsterZoneMonsters = Bot.GetMonstersInMainZone().Where(card =>
-                card.IsFaceup() && !card.HasType(CardType.Synchro) && card.HasRace(CardRace.Wyrm)).ToList();
-            mainMonsterZoneMonsters.Sort(CardContainer.CompareCardAttack);
-            materialList.AddRange(mainMonsterZoneMonsters);
-            if (materialList.Count() >= 2)
-            {
-                AI.SelectMaterials(materialList.GetRange(0, 2));
-                return true;
-            }
-            
-            return false;
-        }
-
-        public bool MonkOfTheTenyiSpSummon()
-        {
-            List<ClientCard> materialList = Bot.GetMonsters().Where(card => 
-                card.IsFaceup() && !card.HasType(CardType.Synchro | CardType.Link) && card.HasSetcode(SetcodeTenyi)).ToList();
-            if (materialList.Count() > 0)
-            {
-                materialList.Sort(CardContainer.CompareCardAttack);
-                AI.SelectMaterials(materialList);
-                return true;
-            }
-            return false;
-        }
-
-
-        public bool PsychicEndPunisherActivate()
-        {
-            if (Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2)
-            {
-                return true;
-            }
-            if (Bot.LifePoints <= 1500 || CheckWhetherNegated())
-            {
-                return false;
-            }
-            List<ClientCard> selfBanishTarget = Bot.GetMonsters().Where(card => card != Card && (card.IsFacedown() || card.GetDefensePower() <= 1000)).ToList();
-            if (selfBanishTarget.Count() == 0)
-            {
-                return false;
-            }
-            selfBanishTarget.Sort(CardContainer.CompareCardAttack);
-            AI.SelectCard(selfBanishTarget);
-            AI.SelectNextCard(GetNormalEnemyTargetList(true));
-            return true;
-        }
-
-        public bool SwordsoulSupremeSovereign_ChengyingActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.SwordsoulSupremeSovereign_Chengying, 0) || ActivateDescription == -1)
-            {
-                activatedCardIdList.Add(Card.Id);
-                List<ClientCard> banishTargetList = Duel.CurrentChain.Where(card => card.Controller == 1 && card.Location == CardLocation.Grave).ToList();
-                banishTargetList.AddRange(CheckDangerousCardinEnemyGrave(false));
-                if (banishTargetList.Count() > 0)
-                {
-                    ClientCard graveTarget = banishTargetList[0];
-                    Logger.DebugWriteLine("Chengying banish grave: " + graveTarget?.Name);
-                }
-                List<ClientCard> fieldTargetList = GetNormalEnemyTargetList();
-                if (fieldTargetList.Count() > 0)
-                {
-                    ClientCard fieldTarget = fieldTargetList[0];
-                    Logger.DebugWriteLine("Chengying banish field: " + fieldTarget?.Name);
-                }
-                banishTargetList.AddRange(fieldTargetList);
-                AI.SelectCard(banishTargetList);
-
-            } else if (ActivateDescription == hintReplaceDestroy)
-            {
-                List<int> removeCardIdList = new List<int>{
-                    _CardId.CalledByTheGrave, CardId.CrossoutDesignator, _CardId.InfiniteImpermanence, _CardId.AshBlossom,
-                    _CardId.MaxxC, _CardId.EffectVeiler, CardId.MonkOfTheTenyi, CardId.ShamanOfTheTenyi, CardId.SwordsoulGrandmaster_Chixiao,
-                    CardId.SwordsoulOfTaia, CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulOfMoYe
-                };
-                AI.SelectCard(removeCardIdList);
-            } else 
-            {
-                Logger.DebugWriteLine("Chengying desc: " + ActivateDescription.ToString());
-            }
-
-            return true;
-        }
-
-        public bool BaronneDeFleurActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.BaronneDeFleur, 1))
-            {
-                // negate
-                if (CheckWhetherNegated() || !CheckLastChainShouldNegated()) return false;
-                if (Duel.LastChainPlayer == 1)
-                {
-                    ClientCard lastChainCard = Util.GetLastChainCard();
-                    if (CheckAtAdvantage() && lastChainCard.IsCode(_CardId.MaxxC))
-                    {
-                        return false;
-                    }
-                    if (Duel.LastChainTargets.Contains(Card) && lastChainCard.IsCode(_CardId.EffectVeiler, _CardId.InfiniteImpermanence, _CardId.BreakthroughSkill))
-                    {
-                        return false;
-                    }
-                }
-                CheckDeactiveFlag();
-                effectUsedBaronneDeFleurList.Add(Card);
-                return true;
-            } else if (Duel.Phase == DuelPhase.Standby)
-            {
-                // special summon after effect used
-                if (effectUsedBaronneDeFleurList.Contains(Card) && !CheckWhetherNegated())
-                {
-                    if (Duel.Player == 1)
-                    {
-                        if (!Bot.HasInMonstersZone(CardId.SwordsoulGrandmaster_Chixiao) && Bot.HasInGraveyard(CardId.SwordsoulGrandmaster_Chixiao))
-                        {
-                            AI.SelectCard(CardId.SwordsoulGrandmaster_Chixiao);
-                            return true;
-                        }
-                    } else if (GetProblematicEnemyCardList(true, true).Count() > 0)
-                    {
-                        return false;
-                    } else if (CheckAtAdvantage()) {
-                        if (Bot.ExtraDeck.Any(card => card.IsFacedown() && card.HasType(CardType.Synchro) && card.Level == 8))
-                        {
-                            if (Bot.HasInGraveyard(CardId.SwordsoulOfMoYe) && SwordsoulOfMoYeEffectCheck() && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0)
-                            {
-                                AI.SelectCard(CardId.SwordsoulOfMoYe);
-                                return true;
-                            }
-                            if (CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-                            {
-                                ClientCard taia = Bot.Graveyard.FirstOrDefault(card => card.IsCode(CardId.SwordsoulOfTaia));
-                                if (taia != null && SwordsoulOfTaiaEffectCheck(taia))
-                                {
-                                    AI.SelectCard(CardId.SwordsoulOfTaia);
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                // destroy
-                List<ClientCard> targetList = GetNormalEnemyTargetList();
-                if (targetList.Count() > 0)
-                {
-                    AI.SelectCard(targetList);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool SwordsoulSinisterSovereign_QixingLongyuanActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.SwordsoulSinisterSovereign_QixingLongyuan, 0))
-            {
-                // draw
-                return true;
-            } else if (ActivateDescription == -1 || ActivateDescription == Util.GetStringId(CardId.SwordsoulSinisterSovereign_QixingLongyuan, 1))
-            {
-                // remove monster
-                return true;
-            } else if (ActivateDescription == Util.GetStringId(CardId.SwordsoulSinisterSovereign_QixingLongyuan, 2))
-            {
-                // remove spell/trap
-                ClientCard lastChainCard = Util.GetLastChainCard();
-                if (lastChainCard != null && lastChainCard.Controller == 1)
-                {
-                    bool activateFlag = DefaultOnBecomeTarget();
-                    activateFlag |= Enemy.LifePoints <= 1200;
-                    activateFlag |= lastChainCard.HasType(CardType.Continuous | CardType.Equip | CardType.Field | CardType.Pendulum);
-                    if (activateFlag)
-                    {
-                        return true;
-                    }
-                }
-            } else
-            {
-                Logger.DebugWriteLine("qixinglongyuan desc: " + ActivateDescription);
-            }
-
-            return false;
-        }
-
-        public bool AdamancipatorRisen_DragiteActivate()
-        {
-            // bounce
-            if (ActivateDescription == -1 || ActivateDescription == Util.GetStringId(CardId.AdamancipatorRisen_Dragite, 0))
-            {
-                if (CheckWhetherNegated())
-                {
-                    return false;
-                }
-                if (CheckRemainInDeck(CardId.NibiruThePrimalBeing) > 0 && (Enemy.GetMonsterCount() + Enemy.GetSpellCount() > 0))
-                {
-                    AI.SelectCard(GetNormalEnemyTargetList(false));
-                    return true;
-                }
-                return false;
-            }
-            
-            // negate
-            if (CheckWhetherNegated())
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool DracoBerserkerOfTheTenyiActivate()
-        {
-            // do not banish Nibiru
-            ClientCard lastChainCard = Util.GetLastChainCard();
-            if (lastChainCard != null && lastChainCard.IsCode(CardId.NibiruThePrimalBeing) && lastChainCard.Controller == 1)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        public bool SwordsoulGrandmaster_ChixiaoActivate()
-        {
-            if (ActivateDescription == Util.GetStringId(CardId.SwordsoulGrandmaster_Chixiao, 1))
-            {
-                // negate
-                if (CheckWhetherNegated()) return false;
-
-                List<ClientCard> negateTargetList = new List<ClientCard>();
-
-                List<ClientCard> shouldNegateList = GetMonsterListForTargetNegate(true);
-                if (shouldNegateList.Count() > 0)
-                {
-                    ClientCard target = shouldNegateList[0];
-                    currentNegateMonsterList.Add(target);
-                    negateTargetList.AddRange(shouldNegateList);
-                }
-
-                // negate unbreakable monster
-                if (Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2)
-                {
-                    bool botCanAttack = Bot.GetMonsters().Any(card => card.IsAttack());
-                    if (Duel.Player == 0 && botCanAttack)
-                    {
-                        negateTargetList.AddRange(Enemy.GetMonsters().Where(card => card.IsFaceup() && card.IsMonsterDangerous()).ToList());
-                    }
-                    if (Duel.Player == 1)
-                    {
-                        ClientCard enemyMonster = Enemy.BattlingMonster;
-                        if (enemyMonster != null && enemyMonster.IsMonsterInvincible())
-                        {
-                            negateTargetList.Add(enemyMonster);
-                        }
-                    }
-                }
-
-                // trigger Chengying
-                if (Bot.HasInMonstersZone(CardId.SwordsoulSupremeSovereign_Chengying, true, false, true)
-                && !activatedCardIdList.Contains(CardId.SwordsoulSupremeSovereign_Chengying) && Enemy.Graveyard.Count() > 0)
-                {
-                    if (GetProblematicEnemyMonster() != null || (Duel.Phase == DuelPhase.End && Duel.Player == 1))
-                    {
-                        bool triggerFlag = true;
-                        List<ClientCard> enemyTargetList = Enemy.GetMonsters().Where(card =>
-                            card.IsFaceup() && card.HasType(CardType.Effect) && !card.IsShouldNotBeMonsterTarget() && card.IsShouldNotBeTarget()).ToList();
-                        if (enemyTargetList.Count() == 0)
-                        {
-                            List<ClientCard> botTargetList = Bot.GetMonsters().Where(card => card.IsFaceup() && card.HasType(CardType.Effect)
-                                && !card.IsDisabled() && card != Card && !card.IsCode(CardId.SwordsoulSupremeSovereign_Chengying)).ToList();
-                            if (botTargetList.Count() == 0)
-                            {
-                                triggerFlag = false;
-                            } else {
-                                botTargetList.Sort(CardContainer.CompareCardAttack);
-                                enemyTargetList.AddRange(botTargetList);
-                            }
-                        } else {
-                            enemyTargetList.Sort(CardContainer.CompareCardAttack);
-                            enemyTargetList.Reverse();
-                        }
-                        if (triggerFlag)
-                        {
-                            negateTargetList.AddRange(enemyTargetList);
-                        }
-                    }
-                }
-
-                if (negateTargetList.Count() > 0)
-                {
-                    // select banish card
-                    List<ClientCard> graveBanishList = Bot.Graveyard.Where(card => card.HasSetcode(SetcodeSwordsoul) || card.HasRace(CardRace.Wyrm)).ToList();
-
-                    if (graveBanishList.Count() > 0)
-                    {
-                        bool selectFlag = false;
-                        // trigger blackout
-                        ClientCard blackOut = graveBanishList.FirstOrDefault(card => card.IsCode(CardId.SwordsoulBlackout));
-                        if (Duel.Player == 0 && !activatedCardIdList.Contains(CardId.SwordsoulBlackout) && blackOut != null)
-                        {
-                            AI.SelectCard(blackOut);
-                            selectFlag = true;
-                        } 
-                        if (!selectFlag)
-                        {
-                            // banish dump card
-                            List<int> checkIdList = new List<int>{
-                                CardId.SwordsoulEmergence, CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe, CardId.SwordsoulStrategistLongyuan, CardId.MonkOfTheTenyi,
-                                CardId.TenyiSpirit_Adhara, CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna
-                            };
-                            foreach (int checkId in checkIdList)
-                            {
-                                List<ClientCard> checkCardList = graveBanishList.Where(card => card.IsCode(checkId)).ToList();
-                                if (checkCardList.Count() > 1)
-                                {
-                                    AI.SelectCard(checkCardList);
-                                    selectFlag = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!selectFlag)
-                        {
-                            // banish exists card
-                            List<int> checkIdList = new List<int>{
-                                CardId.SwordsoulEmergence, CardId.MonkOfTheTenyi, CardId.ShamanOfTheTenyi, CardId.SwordsoulOfTaia,
-                                CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulOfMoYe, CardId.TenyiSpirit_Adhara, CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna
-                            };
-                            foreach (int checkId in checkIdList)
-                            {
-                                List<ClientCard> checkCardList = graveBanishList.Where(card => card.IsCode(checkId)).ToList();
-                                if (checkCardList.Count() > 0)
-                                {
-                                    AI.SelectCard(checkCardList);
-                                    selectFlag = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!selectFlag)
-                        {
-                            AI.SelectCard(ShuffleCardList(graveBanishList));
-                        }
-                    }
-                    AI.SelectNextCard(negateTargetList);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-
-            } else {
-                // search
-                if (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2())
-                {
-                    if (CheckRemainInDeck(CardId.SwordsoulBlackout) > 0)
-                    {
-                        AI.SelectCard(CardId.SwordsoulBlackout);
-                        activatedCardIdList.Add(Card.Id);
-                        return true;
-                    }
-
-                    List<int> searchIdList = new List<int>{
-                        CardId.SwordsoulBlackout, CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia, CardId.SwordsoulEmergence,
-                        CardId.SwordsoulStrategistLongyuan
-                    };
-                    foreach (int checkId in searchIdList)
-                    {
-                        if (CheckRemainInDeck(checkId) > 0 && !Bot.HasInHand(checkId))
-                        {
-                            AI.SelectCard(checkId);
-                            activatedCardIdList.Add(Card.Id);
-                            return true;
-                        }
-                    }
-                }
-
-                if (CheckAtAdvantage())
-                {
-                    if (!activatedCardIdList.Contains(CardId.SwordsoulStrategistLongyuan) && !Bot.HasInHand(CardId.SwordsoulStrategistLongyuan)
-                    && SwordsoulOfMoYeEffectCheck() && CheckRemainInDeck(CardId.SwordsoulStrategistLongyuan) > 0)
-                    {
-                        AI.SelectCard(CardId.SwordsoulStrategistLongyuan);
-                        activatedCardIdList.Add(Card.Id);
-                        return true;
-                    }
-
-                    if (!activatedCardIdList.Contains(CardId.SwordsoulStrategistLongyuan) && Bot.HasInHand(CardId.SwordsoulStrategistLongyuan)
-                    && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && !activatedCardIdList.Contains(CardId.SwordsoulSacredSummit))
-                    {
-                        // ready for another level 8 synchro
-                        if (Bot.HasInHandOrInGraveyard(CardId.SwordsoulOfTaia) && !Bot.HasInHand(CardId.SwordsoulSacredSummit))
-                        {
-                            if (CheckRemainInDeck(CardId.SwordsoulSacredSummit) > 0)
-                            {
-                                AI.SelectCard(CardId.SwordsoulSacredSummit);
-                                activatedCardIdList.Add(Card.Id);
-                                return true;
-                            }
-                        }
-                        if (!Bot.HasInHandOrInGraveyard(CardId.SwordsoulOfTaia) && Bot.HasInHand(CardId.SwordsoulSacredSummit))
-                        {
-                            if (CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0)
-                            {
-                                AI.SelectCard(CardId.SwordsoulOfTaia);
-                                activatedCardIdList.Add(Card.Id);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            
-                if (!Bot.HasInMonstersZone(CardId.SwordsoulToken) && Bot.HasInMonstersZone(CardId.SwordsoulStrategistLongyuan)
-                    && Bot.HasInMonstersZone(CardId.SwordsoulStrategistLongyuan) && CheckRemainInDeck(CardId.SwordsoulBlackout) > 0
-                    && !activatedCardIdList.Contains(CardId.SwordsoulBlackout))
-                {
-                    Logger.DebugWriteLine("Chixiao banish blackout");
-                    AI.SelectCard(CardId.SwordsoulBlackout);
-                    AI.SelectOption(1);
-                    activatedCardIdList.Add(Card.Id);
-                    return true;
-                }
-
-                if (CheckAtAdvantage())
-                {
-                    List<int> searchIdList = new List<int>{
-                        CardId.SwordsoulBlackout, CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia, CardId.SwordsoulEmergence,
-                        CardId.SwordsoulStrategistLongyuan
-                    };
-                    foreach (int checkId in searchIdList)
-                    {
-                        if (CheckRemainInDeck(checkId) > 0 && !Bot.HasInHand(checkId))
-                        {
-                            AI.SelectCard(checkId);
-                            activatedCardIdList.Add(Card.Id);
-                            return true;
-                        }
-                    }
-                }
-            
-                List<int> checkIdList = new List<int>{
-                    CardId.SwordsoulBlackout, CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia, CardId.SwordsoulEmergence,
-                    CardId.SwordsoulStrategistLongyuan
-                };
-                foreach (int checkId in checkIdList)
-                {
-                    if (CheckRemainInDeck(checkId) > 0 && !Bot.HasInHand(checkId))
-                    {
-                        AI.SelectCard(checkId);
-                        activatedCardIdList.Add(Card.Id);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public bool BaxiaBrightnessOfTheYangZingActivate()
-        {
-            Logger.DebugWriteLine("Baxia desc: " + ActivateDescription.ToString());
-
-            if (ActivateDescription == Util.GetStringId(CardId.BaxiaBrightnessOfTheYangZing, 0))
-            {
-                List<ClientCard> enemyTargetList = GetNormalEnemyTargetList(true);
-                if (enemyTargetList.Count() > 0)
-                {
-                    AI.SelectCard(enemyTargetList);
-                    activatedCardIdList.Add(Card.Id + 1);
-                    return true;
-                }
-            } else 
-            {
-                List<ClientCard> destroyTarget = Bot.GetSpells();
-                destroyTarget.AddRange(Bot.GetMonsters().Where(card => card.IsFacedown() || card.Attack <= 1000).ToList());
-                if (destroyTarget.Count() == 0)
-                {
-                    return false;
-                }
-
-                bool canUseMoye = !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe)
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0 && SwordsoulOfMoYeEffectCheck();
-                bool canUseTaia = !activatedCardIdList.Contains(CardId.SwordsoulOfTaia)
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0 && SwordsoulOfTaiaEffectCheck();
-
-                if (canUseMoye && Bot.HasInGraveyard(CardId.SwordsoulOfMoYe))
-                {
-                    AI.SelectCard(destroyTarget);
-                    AI.SelectNextCard(CardId.SwordsoulOfMoYe);
-                    activatedCardIdList.Add(Card.Id + 2);
-                    return true;
-                }
-                if (canUseTaia && Bot.HasInGraveyard(CardId.SwordsoulOfTaia))
-                {
-                    AI.SelectCard(destroyTarget);
-                    AI.SelectNextCard(CardId.SwordsoulOfTaia);
-                    activatedCardIdList.Add(Card.Id + 2);
-                    return true;
-                }
-                if (Bot.HasInGraveyard(CardId.IncredibleEcclesiaTheVirtuous))
-                {
-                    // sp summon ecclesia for moye/taia
-                    if (!activatedCardIdList.Contains(CardId.IncredibleEcclesiaTheVirtuous))
-                    {
-                        if ((canUseMoye && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0)
-                        || (canUseTaia && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0))
-                        {
-                            AI.SelectCard(destroyTarget);
-                            AI.SelectNextCard(CardId.IncredibleEcclesiaTheVirtuous);
-                            activatedCardIdList.Add(Card.Id + 2);
-                            return true;
-                        }
-                    }
-                    // sp summon ecclesia as tuner
-                    if (Bot.GetMonsters().Any(card => card.IsFaceup() && !card.IsTuner() && card.Level == 4))
-                    {
-                        AI.SelectCard(destroyTarget);
-                        AI.SelectNextCard(CardId.IncredibleEcclesiaTheVirtuous);
-                        activatedCardIdList.Add(Card.Id + 2);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public bool YaziEvilOfTheYangZingActivate()
-        {
-            if (Card.Location == CardLocation.Grave)
-            {
-                // special summon
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0 && SwordsoulOfMoYeEffectCheck())
-                {
-                    AI.SelectCard(CardId.SwordsoulOfMoYe);
-                    return true;
-                }
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-                {
-                    AI.SelectCard(CardId.SwordsoulOfTaia);
-                    return true;
-                }
-                if (Bot.HasInMonstersZone(CardId.SwordsoulToken))
-                {
-                    List<int> specialSummonIdListForSynchro = new List<int>{CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia};
-                    foreach (int checkId in specialSummonIdListForSynchro)
-                    {
-                        if (CheckRemainInDeck(checkId) > 0)
-                        {
-                            AI.SelectCard(checkId);
-                            return true;
-                        }
-                    }
-                }
-                List<int> specialSummonIdList = new List<int>{
-                    CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Adhara,
-                    CardId.SwordsoulStrategistLongyuan, CardId.SwordsoulOfMoYe, CardId.SwordsoulOfTaia
-                };
-                foreach (int checkId in specialSummonIdList)
-                {
-                    if (CheckRemainInDeck(checkId) > 0)
-                    {
-                        AI.SelectCard(checkId);
-                        return true;
-                    }
-                }
-            } else 
-            {
-                // destroy
-                if (CheckWhetherNegated())
-                {
-                    return false;
-                }
-                bool selfDestroy = false;
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfMoYe) && CheckRemainInDeck(CardId.SwordsoulOfMoYe) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0 && SwordsoulOfMoYeEffectCheck())
-                {
-                    selfDestroy = true;
-                }
-                if (!activatedCardIdList.Contains(CardId.SwordsoulOfTaia) && CheckRemainInDeck(CardId.SwordsoulOfTaia) > 0
-                    && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0)
-                {
-                    selfDestroy = true;
-                }
-                if (selfDestroy)
-                {
-                    AI.SelectCard(Card);
-                } else
-                {
-                    List<ClientCard> YangZingList = Bot.GetMonsters().Where(card => card.IsFaceup() && card.HasSetcode(SetcodeYangZing)).ToList();
-                    YangZingList.Sort(CardContainer.CompareCardAttack);
-                    AI.SelectCard(YangZingList);
-                }
-                AI.SelectNextCard(GetNormalEnemyTargetList(true));
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool ShamanOfTheTenyiActivate()
-        {
-            if (Duel.Phase > DuelPhase.Main1 && Duel.Phase < DuelPhase.Main2)
-            {
-                // destroy
-                AI.SelectCard(GetNormalEnemyTargetList());
-                return true;
-            } else 
-            {
-                // special summon
-                if (CheckAtAdvantage() && enemyActivateMaxxC && Util.IsTurn1OrMain2())
-                {
-                    return false;
-                }
-
-                bool canUseMoye = Bot.HasInGraveyard(CardId.SwordsoulOfMoYe) && CheckCalledbytheGrave(CardId.SwordsoulOfMoYe) == 0
-                    && !activatedCardIdList.Contains(CardId.SwordsoulOfMoYe);
-                bool canUseTaia = Bot.HasInHandOrInGraveyard(CardId.SwordsoulOfTaia) && CheckCalledbytheGrave(CardId.SwordsoulOfTaia) == 0
-                    && !activatedCardIdList.Contains(CardId.SwordsoulOfTaia);
-                bool shouldDiscardTaia = !Bot.HasInGraveyard(CardId.SwordsoulOfTaia) && Bot.HasInHand(CardId.SwordsoulOfTaia);
-                List<ClientCard> sortedReviveTargetList = Bot.GetGraveyardMonsters().Where(card =>
-                    card.IsCanRevive() && card.HasRace(CardRace.Wyrm)).ToList();
-                sortedReviveTargetList.Sort(CardContainer.CompareCardAttack);
-                sortedReviveTargetList.Reverse();
-
-                if (CheckAtAdvantage())
-                {
-                    // try to kill
-                    if (Duel.Turn > 1 && Enemy.GetMonsterCount() == 0)
-                    {
-                        int currentAttack = Util.GetTotalAttackingMonsterAttack(0);
-                        if (currentAttack < Enemy.LifePoints)
-                        {
-                            List<ClientCard> overkillList = sortedReviveTargetList.Where(card =>
-                                 card.Attack + currentAttack >= Enemy.LifePoints).ToList();
-                            if (overkillList.Count() > 0)
-                            {
-                                SelectDiscardForShamanOfTheTenyi(shouldDiscardTaia);
-                                AI.SelectNextCard(overkillList);
-                                return true;
-                            }
-                        }
-                    }
-
-                    // for next synchro
-                    if (canUseMoye)
-                    {
-                        SelectDiscardForShamanOfTheTenyi();
-                        AI.SelectNextCard(CardId.SwordsoulOfMoYe);
-                        return true;
-                    }
-                    if (canUseTaia)
-                    {
-                        SelectDiscardForShamanOfTheTenyi(shouldDiscardTaia);
-                        AI.SelectNextCard(CardId.SwordsoulOfTaia);
-                        return true;
-                    }
-
-                    // choose max attack
-                    SelectDiscardForShamanOfTheTenyi();
-                    AI.SelectNextCard(sortedReviveTargetList);
-                    return true;
-
-                } else {
-                    // reborn synchro monster
-                    List<ClientCard> synchroMonsterList = sortedReviveTargetList.Where(card => card.HasType(CardType.Synchro)).ToList();
-                    if (synchroMonsterList.Count() > 0)
-                    {
-                        SelectDiscardForShamanOfTheTenyi();
-                        AI.SelectNextCard(synchroMonsterList);
-                        return true;
-                    }
-
-                    // for next synchro
-                    if (canUseMoye)
-                    {
-                        SelectDiscardForShamanOfTheTenyi();
-                        AI.SelectNextCard(CardId.SwordsoulOfMoYe);
-                        return true;
-                    }
-                    if (canUseTaia)
-                    {
-                        SelectDiscardForShamanOfTheTenyi(shouldDiscardTaia);
-                        AI.SelectNextCard(CardId.SwordsoulOfTaia);
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        public void SelectDiscardForShamanOfTheTenyi(bool useTaia = false)
-        {
-            if (useTaia)
-            {
-                AI.SelectCard(CardId.SwordsoulOfTaia);
-            } else {
-                // drop tenyi
-                List<int> tenyiList = new List<int>{CardId.TenyiSpirit_Vishuda, CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Adhara};
-                foreach (int tenyiId in tenyiList)
-                {
-                    if (Bot.HasInHand(tenyiId))
-                    {
-                        AI.SelectCard(tenyiId);
-                        return;
-                    }
-                }
-
-                // drop dump card
-                foreach (ClientCard hand in Bot.Hand)
-                {
-                    if (Bot.Hand.Where(card => card.IsCode(hand.Id)).Count() > 1)
-                    {
-                        AI.SelectCard(hand);
-                        return;
-                    }
-                }
-
-                // check discard list
-                List<int> discardList = new List<int>{
-                    CardId.CrossoutDesignator, _CardId.PotOfDesires, CardId.TenyiSpirit_Ashuna, CardId.TenyiSpirit_Vishuda,
-                    CardId.TenyiSpirit_Adhara, CardId.NibiruThePrimalBeing, CardId.SwordsoulSacredSummit, CardId.IncredibleEcclesiaTheVirtuous,
-                    _CardId.InfiniteImpermanence, _CardId.CalledByTheGrave, CardId.SwordsoulOfTaia, CardId.SwordsoulOfMoYe,
-                    CardId.SwordsoulStrategistLongyuan, _CardId.AshBlossom, _CardId.MaxxC, _CardId.EffectVeiler, 
-                    CardId.SwordsoulEmergence,  CardId.SwordsoulBlackout
-                };
-                foreach (int discardCheck in discardList)
-                {
-                    if (Bot.HasInHand(discardCheck))
-                    {
-                        AI.SelectCard(discardCheck);
-                        return;
-                    }
-                }
-
-            }
-        }
-
-        public bool SpellSetCheck()
-        {
-            if (Duel.Phase == DuelPhase.Main1 && Bot.HasAttackingMonster() && Duel.Turn > 1) return false;
-            List<int> onlyOneSetList = new List<int>{
-                CardId.SwordsoulBlackout
-            };
-            if (onlyOneSetList.Contains(Card.Id) && Bot.HasInSpellZone(Card.Id))
-            {
-                return false;
-            }
-
-            // select place
-            if ((Card.IsTrap() || Card.HasType(CardType.QuickPlay)))
-            {
-                List<int> avoid_list = new List<int>();
-                int setFornfiniteImpermanence = 0;
-                for (int i = 0; i < 5; ++i)
-                {
-                    if (Enemy.SpellZone[i] != null && Enemy.SpellZone[i].IsFaceup() && Bot.SpellZone[4 - i] == null)
-                    {
-                        avoid_list.Add(4 - i);
-                        setFornfiniteImpermanence += (int)System.Math.Pow(2, 4 - i);
-                    }
-                }
-                if (Bot.HasInHand(_CardId.InfiniteImpermanence))
-                {
-                    if (Card.IsCode(_CardId.InfiniteImpermanence))
-                    {
-                        AI.SelectPlace(setFornfiniteImpermanence);
-                        return true;
-                    } else
-                    {
-                        SelectSTPlace(Card, false, avoid_list);
-                        return true;
-                    }
-                } else
-                {
-                    SelectSTPlace();
-                }
-                return true;
-            }
-
-            else if (Enemy.HasInSpellZone(_CardId.AntiSpellFragrance, true) || Bot.HasInSpellZone(_CardId.AntiSpellFragrance, true))
-            {
-                if (Card.IsSpell() && !Bot.HasInSpellZone(Card.Id))
-                {
-                    SelectSTPlace();
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        protected override bool DefaultSetForDiabellze()
-        {
-            if (base.DefaultSetForDiabellze())
-            {
-                SelectSTPlace(null, true);
-                return true;
-            }
-            return false;
-        }
-    }
+	public class CardId
+	{
+		public const int NibiruThePrimalBeing = 27204311;
+
+		public const int TenyiSpirit_Ashuna = 87052196;
+
+		public const int TenyiSpirit_Vishuda = 23431858;
+
+		public const int SwordsoulStrategistLongyuan = 93490856;
+
+		public const int SwordsoulOfTaia = 56495147;
+
+		public const int SwordsoulOfMoYe = 20001443;
+
+		public const int IncredibleEcclesiaTheVirtuous = 55273560;
+
+		public const int TenyiSpirit_Adhara = 98159737;
+
+		public const int SwordsoulEmergence = 56465981;
+
+		public const int SwordsoulSacredSummit = 93850690;
+
+		public const int CrossoutDesignator = 65681983;
+
+		public const int SwordsoulBlackout = 14821890;
+
+		public const int GeomathmechFinalSigma = 42632209;
+
+		public const int PsychicEndPunisher = 60465049;
+
+		public const int SwordsoulSupremeSovereign_Chengying = 96633955;
+
+		public const int BaronneDeFleur = 84815190;
+
+		public const int SwordsoulSinisterSovereign_QixingLongyuan = 47710198;
+
+		public const int AdamancipatorRisen_Dragite = 9464441;
+
+		public const int DracoBerserkerOfTheTenyi = 5041348;
+
+		public const int SwordsoulGrandmaster_Chixiao = 69248256;
+
+		public const int BaxiaBrightnessOfTheYangZing = 83755611;
+
+		public const int YaziEvilOfTheYangZing = 43202238;
+
+		public const int ShamanOfTheTenyi = 78917791;
+
+		public const int MonkOfTheTenyi = 32519092;
+
+		public const int SwordsoulToken = 20001444;
+
+		public const int NaturalExterio = 99916754;
+
+		public const int NaturalBeast = 33198837;
+
+		public const int ImperialOrder = 61740673;
+
+		public const int SwordsmanLV7 = 37267041;
+
+		public const int RoyalDecree = 51452091;
+
+		public const int Number41BagooskatheTerriblyTiredTapir = 90590303;
+
+		public const int InspectorBoarder = 15397015;
+	}
+
+	private const int SetcodeTimeLord = 74;
+
+	private const int SetcodeYangZing = 158;
+
+	private const int SetcodePhantom = 219;
+
+	private const int SetcodeOrcust = 283;
+
+	private const int SetcodeTenyi = 300;
+
+	private const int SetcodeSwordsoul = 363;
+
+	private const int SetcodeFloowandereeze = 365;
+
+	private List<int> normalCounterList = new List<int> { 14558127, 84815190, 27548199, 4280258, 53262004 };
+
+	private List<int> notToNegateIdList = new List<int> { 58699500 };
+
+	private const int hintTimingMainEnd = 4;
+
+	private const int hintReplaceDestroy = 96;
+
+	private Dictionary<int, List<int>> DeckCountTable = new Dictionary<int, List<int>>
+	{
+		{
+			3,
+			new List<int> { 93490856, 56495147, 20001443, 55273560, 14558127, 23434538, 97268402, 56465981, 10045474 }
+		},
+		{
+			2,
+			new List<int> { 87052196, 35261759, 24224830, 14821890 }
+		},
+		{
+			1,
+			new List<int> { 27204311, 23431858, 98159737, 93850690, 65681983 }
+		}
+	};
+
+	private List<int> currentNegatingIdList = new List<int>();
+
+	private bool enemyActivateMaxxC;
+
+	private bool enemyActivateLockBird;
+
+	private bool enemyActivateInfiniteImpermanenceFromHand;
+
+	private List<int> infiniteImpermanenceList = new List<int>();
+
+	private bool summoned;
+
+	private bool onlyWyrmSpSummon;
+
+	private List<int> activatedCardIdList = new List<int>();
+
+	private List<int> canSpSummonLevel10IdList = new List<int>();
+
+	private List<ClientCard> effectUsedBaronneDeFleurList = new List<ClientCard>();
+
+	private List<ClientCard> currentNegateMonsterList = new List<ClientCard>();
+
+	public SwordsoulExecutor(GameAI ai, Duel duel)
+		: base(ai, duel)
+	{
+		AddExecutor(ExecutorType.Activate, 83755611, BaxiaBrightnessOfTheYangZingActivate);
+		AddExecutor(ExecutorType.Activate, 43202238, YaziEvilOfTheYangZingActivate);
+		AddExecutor(ExecutorType.Activate, 55273560, IncredibleEcclesiaTheVirtuousActivate);
+		AddExecutor(ExecutorType.Activate, 24224830, CalledbytheGraveActivate);
+		AddExecutor(ExecutorType.Activate, 65681983, CrossoutDesignatorActivate);
+		AddExecutor(ExecutorType.Activate, 14558127, AshBlossomActivate);
+		AddExecutor(ExecutorType.Activate, 69248256, SwordsoulGrandmaster_ChixiaoActivate);
+		AddExecutor(ExecutorType.Activate, 97268402, EffectVeilerActivate);
+		AddExecutor(ExecutorType.Activate, 10045474, InfiniteImpermanenceActivate);
+		AddExecutor(ExecutorType.Activate, 47710198, SwordsoulSinisterSovereign_QixingLongyuanActivate);
+		AddExecutor(ExecutorType.Activate, 5041348, DracoBerserkerOfTheTenyiActivate);
+		AddExecutor(ExecutorType.Activate, 9464441, AdamancipatorRisen_DragiteActivate);
+		AddExecutor(ExecutorType.Activate, 84815190, BaronneDeFleurActivate);
+		AddExecutor(ExecutorType.Activate, 96633955, SwordsoulSupremeSovereign_ChengyingActivate);
+		AddExecutor(ExecutorType.Activate, 23434538, MaxxCActivate);
+		AddExecutor(ExecutorType.Activate, 27204311, NibiruThePrimalBeingActivate);
+		AddExecutor(ExecutorType.Activate, 56465981, SwordsoulEmergenceActivate);
+		AddExecutor(ExecutorType.Activate, 14821890, SwordsoulBlackoutActivate);
+		AddExecutor(ExecutorType.SpSummon, 43202238, YaziEvilOfTheYangZingSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 83755611, BaxiaBrightnessOfTheYangZingSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 69248256, SwordsoulGrandmaster_ChixiaoSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 9464441, AdamancipatorRisen_DragiteSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 5041348, DracoBerserkerOfTheTenyiSpSummon);
+		AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckInit);
+		AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckCount);
+		AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckDecide);
+		AddExecutor(ExecutorType.SpSummon, Level10SpSummonCheckFinal);
+		AddExecutor(ExecutorType.Activate, 20001443, SwordsoulOfMoYeActivate);
+		AddExecutor(ExecutorType.Activate, 56495147, SwordsoulOfTaiaActivate);
+		AddExecutor(ExecutorType.Activate, TenyiForShamanSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 55273560, IncredibleEcclesiaTheVirtuousSpSummon);
+		AddExecutor(ExecutorType.Summon, 20001443, SwordsoulOfMoYeSummon);
+		AddExecutor(ExecutorType.Summon, 55273560, IncredibleEcclesiaTheVirtuousSummon);
+		AddExecutor(ExecutorType.Summon, 56495147, SwordsoulOfTaiaSummon);
+		AddExecutor(ExecutorType.Activate, 93490856, SwordsoulStrategistLongyuanActivate);
+		AddExecutor(ExecutorType.Activate, 35261759, PotOfDesiresActivate);
+		AddExecutor(ExecutorType.Activate, 78917791, ShamanOfTheTenyiActivate);
+		AddExecutor(ExecutorType.Activate, 93850690, SwordsoulSacredSummitActivate);
+		AddExecutor(ExecutorType.Activate, 23431858, TenyiSpirit_VishudaActivate);
+		AddExecutor(ExecutorType.Activate, 87052196, TenyiSpirit_AshunaActivate);
+		AddExecutor(ExecutorType.Activate, 98159737, TenyiSpirit_AdharaActivate);
+		AddExecutor(ExecutorType.Activate, TenyiForBlackoutSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 42632209, GeomathmechFinalSigmaSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 60465049, PsychicEndPunisherSpSummon);
+		AddExecutor(ExecutorType.Summon, TunerForSynchroSummon);
+		AddExecutor(ExecutorType.Summon, WyrmForBlackoutSummon);
+		AddExecutor(ExecutorType.SpSummon, 78917791, ShamanOfTheTenyiSpSummon);
+		AddExecutor(ExecutorType.SpSummon, 32519092, MonkOfTheTenyiSpSummon);
+		AddExecutor(ExecutorType.Repos, base.DefaultMonsterRepos);
+		AddExecutor(ExecutorType.Activate, 60465049, PsychicEndPunisherActivate);
+		AddExecutor(ExecutorType.SpellSet, SpellSetCheck);
+	}
+
+	public List<ClientCard> ShuffleCardList(List<ClientCard> list)
+	{
+		int count = list.Count;
+		while (count-- > 1)
+		{
+			int num = Program.Rand.Next(list.Count);
+			int index = (num + Program.Rand.Next(list.Count - 1)) % list.Count;
+			ClientCard value = list[num];
+			list[num] = list[index];
+			list[index] = value;
+		}
+		return list;
+	}
+
+	public ClientCard GetProblematicEnemyMonster(int attack = 0, bool canBeTarget = false)
+	{
+		List<ClientCard> list = (from c in base.Enemy.GetMonsters()
+			where c?.Data != null && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())
+			select c).ToList();
+		if (list.Count() > 0)
+		{
+			list.Sort(CardContainer.CompareCardAttack);
+			list.Reverse();
+			return list[0];
+		}
+		List<ClientCard> list2 = base.Enemy.MonsterZone.Where((ClientCard c) => c?.Data != null && c.IsMonsterDangerous() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list2.Count() > 0)
+		{
+			list2.Sort(CardContainer.CompareCardAttack);
+			list2.Reverse();
+			return list2[0];
+		}
+		List<ClientCard> list3 = base.Enemy.MonsterZone.Where((ClientCard c) => c?.Data != null && c.IsMonsterInvincible() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list3.Count() > 0)
+		{
+			list3.Sort(CardContainer.CompareCardAttack);
+			list3.Reverse();
+			return list3[0];
+		}
+		if (attack == 0)
+		{
+			attack = base.Util.GetBestAttack(base.Bot);
+		}
+		List<ClientCard> list4 = (from card in base.Enemy.MonsterZone.GetMonsters()
+			where card.GetDefensePower() >= attack && card.IsAttack() && (!canBeTarget || !card.IsShouldNotBeTarget())
+			select card).ToList();
+		if (list4.Count() > 0)
+		{
+			list4.Sort(CardContainer.CompareCardAttack);
+			list4.Reverse();
+			return list4[0];
+		}
+		return null;
+	}
+
+	public List<ClientCard> GetProblematicEnemyCardList(bool canBeTarget = false, bool ignoreNormalSpell = false)
+	{
+		List<ClientCard> resultList = new List<ClientCard>();
+		List<ClientCard> list = base.Enemy.MonsterZone.Where((ClientCard c) => c?.Data != null && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list.Count() > 0)
+		{
+			list.Sort(CardContainer.CompareCardAttack);
+			list.Reverse();
+			resultList.AddRange(list);
+		}
+		List<ClientCard> list2 = base.Enemy.SpellZone.Where((ClientCard c) => c?.Data != null && !resultList.Contains(c) && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list2.Count() > 0)
+		{
+			resultList.AddRange(ShuffleCardList(list2));
+		}
+		List<ClientCard> list3 = base.Enemy.MonsterZone.Where((ClientCard c) => c?.Data != null && !resultList.Contains(c) && c.IsMonsterDangerous() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list3.Count() > 0 && (base.Duel.Player == 0 || (base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2)))
+		{
+			list3.Sort(CardContainer.CompareCardAttack);
+			list3.Reverse();
+			resultList.AddRange(list3);
+		}
+		List<ClientCard> list4 = base.Enemy.MonsterZone.Where((ClientCard c) => c?.Data != null && !resultList.Contains(c) && c.IsMonsterInvincible() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list4.Count() > 0)
+		{
+			list4.Sort(CardContainer.CompareCardAttack);
+			list4.Reverse();
+			resultList.AddRange(list4);
+		}
+		List<ClientCard> list5 = base.Enemy.GetMonsters().ToList();
+		if (list5.Count() > 0)
+		{
+			list5.Sort(CardContainer.CompareCardAttack);
+			list5.Reverse();
+			foreach (ClientCard item in list5)
+			{
+				if ((item.HasType((CardType)8396992) || (item.HasType(CardType.Link) && item.LinkCount >= 2)) && (!canBeTarget || (!item.IsShouldNotBeTarget() && !item.IsShouldNotBeMonsterTarget())) && !resultList.Contains(item))
+				{
+					resultList.Add(item);
+				}
+			}
+		}
+		List<ClientCard> list6 = (from c in base.Enemy.GetSpells()
+			where c.IsFaceup() && c.HasType((CardType)17694720)
+			select c).ToList();
+		if (list6.Count() > 0 && !ignoreNormalSpell)
+		{
+			resultList.AddRange(ShuffleCardList(list6));
+		}
+		return resultList;
+	}
+
+	public ClientCard GetBestEnemyMonster(bool onlyFaceup = false, bool canBeTarget = false)
+	{
+		ClientCard problematicEnemyMonster = GetProblematicEnemyMonster(0, canBeTarget);
+		if (problematicEnemyMonster != null)
+		{
+			return problematicEnemyMonster;
+		}
+		problematicEnemyMonster = base.Enemy.MonsterZone.GetHighestAttackMonster(canBeTarget);
+		if (problematicEnemyMonster != null)
+		{
+			return problematicEnemyMonster;
+		}
+		List<ClientCard> monsters = base.Enemy.GetMonsters();
+		if (monsters.Count() > 0 && !onlyFaceup)
+		{
+			return ShuffleCardList(monsters)[0];
+		}
+		return null;
+	}
+
+	public ClientCard GetBestEnemySpell(bool onlyFaceup = false, bool canBeTarget = false)
+	{
+		List<ClientCard> list = base.Enemy.SpellZone.Where((ClientCard c) => c?.Data != null && c.IsFloodgate() && c.IsFaceup() && (!canBeTarget || !c.IsShouldNotBeTarget())).ToList();
+		if (list.Count() > 0)
+		{
+			return ShuffleCardList(list)[0];
+		}
+		List<ClientCard> list2 = (from card in base.Enemy.GetSpells()
+			where !card.IsFaceup() || !card.IsCode(15693423)
+			select card).ToList();
+		List<ClientCard> list3 = list2.Where((ClientCard ecard) => ecard.IsFaceup() && ecard.HasType((CardType)17694720)).ToList();
+		if (list3.Count() > 0)
+		{
+			return ShuffleCardList(list3)[0];
+		}
+		if (list2.Count() > 0 && !onlyFaceup)
+		{
+			return ShuffleCardList(list2)[0];
+		}
+		return null;
+	}
+
+	public ClientCard GetBestEnemyCard(bool onlyFaceup = false, bool canBeTarget = false, bool checkGrave = false)
+	{
+		ClientCard bestEnemyMonster = GetBestEnemyMonster(onlyFaceup, canBeTarget);
+		if (bestEnemyMonster != null)
+		{
+			return bestEnemyMonster;
+		}
+		bestEnemyMonster = GetBestEnemySpell(onlyFaceup, canBeTarget);
+		if (bestEnemyMonster != null)
+		{
+			return bestEnemyMonster;
+		}
+		if (checkGrave && base.Enemy.Graveyard.Count() > 0)
+		{
+			List<ClientCard> list = base.Enemy.Graveyard.GetMatchingCards((ClientCard c) => c.IsMonster()).ToList();
+			if (list.Count() > 0)
+			{
+				list.Sort(CardContainer.CompareCardAttack);
+				list.Reverse();
+				return list[0];
+			}
+			return ShuffleCardList(base.Enemy.Graveyard.ToList())[0];
+		}
+		return null;
+	}
+
+	public List<ClientCard> GetNormalEnemyTargetList(bool canBeTarget = true)
+	{
+		List<ClientCard> targetList = GetProblematicEnemyCardList(canBeTarget);
+		List<ClientCard> list = (from card in base.Enemy.GetMonsters()
+			where card.IsFaceup() && !targetList.Contains(card)
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		list.Reverse();
+		targetList.AddRange(list);
+		targetList.AddRange(ShuffleCardList(base.Enemy.GetSpells()));
+		targetList.AddRange(ShuffleCardList((from card in base.Enemy.GetMonsters()
+			where card.IsFacedown()
+			select card).ToList()));
+		return targetList;
+	}
+
+	public List<ClientCard> GetMonsterListForTargetNegate(bool canBeMonsterTarget = false, bool canBeTrapTarget = false)
+	{
+		List<ClientCard> list = new List<ClientCard>();
+		if (CheckWhetherNegated())
+		{
+			return list;
+		}
+		ClientCard clientCard = base.Enemy.MonsterZone.FirstOrDefault((ClientCard card) => card?.Data != null && card.IsMonsterShouldBeDisabledBeforeItUseEffect() && card.IsFaceup() && !card.IsShouldNotBeTarget() && (!canBeMonsterTarget || !card.IsShouldNotBeMonsterTarget()) && (!canBeTrapTarget || !card.IsShouldNotBeSpellTrapTarget()) && !currentNegateMonsterList.Contains(card));
+		if (clientCard != null)
+		{
+			list.Add(clientCard);
+		}
+		foreach (ClientCard item in base.Duel.CurrentChain)
+		{
+			if (item.Location == CardLocation.MonsterZone && item.Controller == 1 && !item.IsDisabled() && (!canBeMonsterTarget || !item.IsShouldNotBeMonsterTarget()) && (!canBeTrapTarget || !item.IsShouldNotBeSpellTrapTarget()) && !item.IsShouldNotBeTarget() && !currentNegateMonsterList.Contains(item))
+			{
+				list.Add(item);
+			}
+		}
+		return list;
+	}
+
+	public void CheckDeactiveFlag()
+	{
+		ClientCard lastChainCard = base.Util.GetLastChainCard();
+		if (lastChainCard != null && base.Duel.LastChainPlayer == 1 && lastChainCard.Controller == 1 && lastChainCard.Location == CardLocation.MonsterZone)
+		{
+			currentNegateMonsterList.Add(lastChainCard);
+		}
+	}
+
+	public int CheckCalledbytheGrave(int id)
+	{
+		if (currentNegatingIdList.Contains(id))
+		{
+			return 1;
+		}
+		if (DefaultCheckWhetherCardIdIsNegated(id))
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	public int CheckRemainInDeck(int id)
+	{
+		for (int i = 1; i < 4; i++)
+		{
+			if (DeckCountTable[i].Contains(id))
+			{
+				return base.Bot.GetRemainingCount(id, i);
+			}
+		}
+		return 0;
+	}
+
+	public bool CheckSpellWillBeNegate(bool isCounter = false, ClientCard target = null)
+	{
+		if (target == null)
+		{
+			target = base.Card;
+		}
+		if (target.Location != CardLocation.SpellZone && target.Location != CardLocation.Hand)
+		{
+			return false;
+		}
+		if (base.Enemy.HasInMonstersZone(99916754, notDisabled: true) && !isCounter)
+		{
+			return true;
+		}
+		if (target.IsSpell())
+		{
+			if (base.Enemy.HasInMonstersZone(33198837, notDisabled: true))
+			{
+				return true;
+			}
+			if (base.Enemy.HasInSpellZone(61740673, notDisabled: true) || base.Bot.HasInSpellZone(61740673, notDisabled: true))
+			{
+				return true;
+			}
+			if (base.Enemy.HasInMonstersZone(37267041, notDisabled: true) || base.Bot.HasInMonstersZone(37267041, notDisabled: true))
+			{
+				return true;
+			}
+		}
+		if (target.IsTrap() && (base.Enemy.HasInSpellZone(51452091, notDisabled: true) || base.Bot.HasInSpellZone(51452091, notDisabled: true)))
+		{
+			return true;
+		}
+		if (target.Location == CardLocation.SpellZone && (target.IsSpell() || target.IsTrap()))
+		{
+			int item = -1;
+			for (int i = 0; i < 5; i++)
+			{
+				if (base.Bot.SpellZone[i] == base.Card)
+				{
+					item = i;
+				}
+			}
+			if (infiniteImpermanenceList.Contains(item))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool CheckWhetherNegated()
+	{
+		if ((base.Card.IsSpell() || base.Card.IsTrap()) && CheckSpellWillBeNegate())
+		{
+			return true;
+		}
+		if (DefaultCheckWhetherCardIsNegated(base.Card))
+		{
+			return true;
+		}
+		if (base.Card.IsMonster() && base.Card.Location == CardLocation.MonsterZone && base.Card.IsDefense() && (base.Enemy.MonsterZone.Any((ClientCard card) => CheckNumber41(card)) || base.Bot.MonsterZone.Any((ClientCard card) => CheckNumber41(card))))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool CheckNumber41(ClientCard card)
+	{
+		if (card != null && card.IsFaceup() && card.IsCode(90590303) && card.IsDefense())
+		{
+			return !card.IsDisabled();
+		}
+		return false;
+	}
+
+	public bool CheckAtAdvantage()
+	{
+		if (GetProblematicEnemyMonster() == null && (base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup()) || (base.Duel.Player == 0 && base.Duel.Turn == 1)))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool CheckLastChainShouldNegated()
+	{
+		ClientCard lastChainCard = base.Util.GetLastChainCard();
+		if (lastChainCard == null || lastChainCard.Controller != 1)
+		{
+			return false;
+		}
+		if (lastChainCard.IsMonster() && lastChainCard.HasSetcode(74) && base.Duel.Phase == DuelPhase.Standby)
+		{
+			return false;
+		}
+		if (notToNegateIdList.Contains(lastChainCard.Id))
+		{
+			return false;
+		}
+		if (DefaultCheckWhetherCardIsNegated(lastChainCard))
+		{
+			return false;
+		}
+		if (base.Duel.CurrentChain.Count >= 2)
+		{
+			ClientCard clientCard = base.Duel.CurrentChain[base.Duel.CurrentChain.Count - 2];
+			ClientCard clientCard2 = base.Duel.CurrentChain[base.Duel.CurrentChain.Count - 1];
+			if (clientCard != null && clientCard.Controller == 0 && clientCard2 != null && clientCard2.Controller == 1 && clientCard2.IsCode(normalCounterList) && ((clientCard.Location == CardLocation.Grave && (clientCard.IsCode(56495147) || clientCard.IsCode(20001443) || clientCard.IsCode(93490856))) | (clientCard.IsCode(60465049) && base.Bot.LifePoints < base.Enemy.LifePoints)))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public List<ClientCard> CheckDangerousCardinEnemyGrave(bool onlyMonster = false)
+	{
+		List<ClientCard> result = base.Enemy.Graveyard.GetMatchingCards((ClientCard card) => (!onlyMonster || card.IsMonster()) && (card.HasSetcode(283) || card.HasSetcode(219))).ToList();
+		new List<int> { 99937011, 63542003, 98159737, 87052196, 23431858, 9411399, 28954097, 30680659 };
+		return result;
+	}
+
+	public override bool OnSelectHand()
+	{
+		return true;
+	}
+
+	public override int OnSelectPlace(int cardId, int player, CardLocation location, int available)
+	{
+		if (cardId == 42632209 && location == CardLocation.MonsterZone)
+		{
+			if ((0x20 & available) > 0)
+			{
+				return 32;
+			}
+			if ((0x40 & available) > 0)
+			{
+				return 64;
+			}
+		}
+		return base.OnSelectPlace(cardId, player, location, available);
+	}
+
+	public override CardPosition OnSelectPosition(int cardId, IList<CardPosition> positions)
+	{
+		NamedCard namedCard = NamedCard.Get(cardId);
+		if (namedCard != null)
+		{
+			if (namedCard.Id == 60465049)
+			{
+				return CardPosition.FaceUpAttack;
+			}
+			if (base.Util.IsTurn1OrMain2())
+			{
+				bool flag = false;
+				if (!namedCard.HasType(CardType.Synchro) || namedCard.Attack <= namedCard.Defense)
+				{
+					flag = true;
+				}
+				if (flag)
+				{
+					return CardPosition.FaceUpDefence;
+				}
+			}
+			if (base.Duel.Player == 1)
+			{
+				if (!namedCard.HasType(CardType.Synchro) || namedCard.Defense >= namedCard.Attack || base.Util.IsOneEnemyBetterThanValue(namedCard.Attack, onlyATK: true))
+				{
+					return CardPosition.FaceUpDefence;
+				}
+			}
+			else if (namedCard.HasType(CardType.Synchro))
+			{
+				return CardPosition.FaceUpAttack;
+			}
+			int value = Math.Max(base.Util.GetBestAttack(base.Bot), namedCard.Attack);
+			if (base.Util.IsAllEnemyBetterThanValue(value, onlyATK: true))
+			{
+				return CardPosition.FaceUpDefence;
+			}
+		}
+		return base.OnSelectPosition(cardId, positions);
+	}
+
+	public override IList<ClientCard> OnSelectCard(IList<ClientCard> cards, int min, int max, int hint, bool cancelable)
+	{
+		if (base.Util.ChainContainPlayer(1) && hint == 503 && base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2)
+		{
+			int num = base.Bot.GetMonsterCount() + base.Bot.GetSpellCount();
+			int num2 = base.Enemy.GetMonsterCount() + base.Enemy.GetSpellCount();
+			if (num - num2 == min && min == max)
+			{
+				Logger.DebugWriteLine("=== Evenly Matched activated.");
+				List<ClientCard> banishList = new List<ClientCard>();
+				List<ClientCard> source = (from card in base.Bot.GetMonsters()
+					where !card.HasType(CardType.Token)
+					select card).ToList();
+				List<ClientCard> collection = source.Where((ClientCard card) => card.IsFacedown()).ToList();
+				banishList.AddRange(collection);
+				List<ClientCard> list = source.Where((ClientCard card) => !card.HasType(CardType.Synchro) && !banishList.Contains(card)).ToList();
+				list.Sort(CardContainer.CompareCardAttack);
+				banishList.AddRange(list);
+				List<ClientCard> spells = base.Bot.GetSpells();
+				banishList.AddRange(ShuffleCardList(spells));
+				List<ClientCard> list2 = source.Where((ClientCard card) => card.HasType(CardType.Synchro) && !banishList.Contains(card)).ToList();
+				list2.Sort(CardContainer.CompareCardAttack);
+				banishList.AddRange(list2);
+				return base.Util.CheckSelectCount(banishList, cards, min, max);
+			}
+		}
+		return base.OnSelectCard(cards, min, max, hint, cancelable);
+	}
+
+	public override void OnNewTurn()
+	{
+		enemyActivateMaxxC = false;
+		enemyActivateLockBird = false;
+		infiniteImpermanenceList.Clear();
+		summoned = false;
+		onlyWyrmSpSummon = false;
+		enemyActivateInfiniteImpermanenceFromHand = false;
+		activatedCardIdList.Clear();
+		currentNegateMonsterList.Clear();
+		currentNegatingIdList.Clear();
+		base.OnNewTurn();
+	}
+
+	public override void OnChainSolved(int chainIndex)
+	{
+		ChainInfo currentSolvingChainInfo = base.Duel.GetCurrentSolvingChainInfo();
+		if (currentSolvingChainInfo == null || base.Duel.IsCurrentSolvingChainNegated() || currentSolvingChainInfo.ActivatePlayer != 1)
+		{
+			return;
+		}
+		if (currentSolvingChainInfo.IsCode(23434538))
+		{
+			enemyActivateMaxxC = true;
+		}
+		if (currentSolvingChainInfo.IsCode(94145021))
+		{
+			enemyActivateLockBird = true;
+		}
+		if (!currentSolvingChainInfo.IsCode(10045474) || enemyActivateInfiniteImpermanenceFromHand)
+		{
+			return;
+		}
+		for (int i = 0; i < 5; i++)
+		{
+			if (base.Enemy.SpellZone[i] == currentSolvingChainInfo.RelatedCard)
+			{
+				infiniteImpermanenceList.Add(4 - i);
+				break;
+			}
+		}
+	}
+
+	public override void OnChainEnd()
+	{
+		currentNegateMonsterList.Clear();
+		currentNegatingIdList.Clear();
+		for (int num = effectUsedBaronneDeFleurList.Count() - 1; num >= 0; num--)
+		{
+			ClientCard clientCard = effectUsedBaronneDeFleurList[num];
+			if (clientCard == null || clientCard.IsFacedown() || clientCard.Location != CardLocation.MonsterZone)
+			{
+				effectUsedBaronneDeFleurList.RemoveAt(num);
+			}
+		}
+		enemyActivateInfiniteImpermanenceFromHand = false;
+		base.OnChainEnd();
+	}
+
+	public override void OnMove(ClientCard card, int previousControler, int previousLocation, int currentControler, int currentLocation)
+	{
+		if (previousControler == 1 && card != null && card.IsCode(10045474) && previousLocation == 2 && currentLocation == 8)
+		{
+			enemyActivateInfiniteImpermanenceFromHand = true;
+		}
+		base.OnMove(card, previousControler, previousLocation, currentControler, currentLocation);
+	}
+
+	public void SelectSTPlace(ClientCard card = null, bool avoidImpermanence = false, List<int> avoidList = null)
+	{
+		if (card == null)
+		{
+			card = base.Card;
+		}
+		List<int> list = new List<int>();
+		for (int i = 0; i < 5; i++)
+		{
+			if (base.Bot.SpellZone[i] == null && (!(card != null && card.Location == CardLocation.Hand && avoidImpermanence) || !infiniteImpermanenceList.Contains(i)) && (avoidList == null || !avoidList.Contains(i)))
+			{
+				list.Add(i);
+			}
+		}
+		int count = list.Count;
+		while (count-- > 1)
+		{
+			int num = Program.Rand.Next(list.Count);
+			int index = (num + Program.Rand.Next(list.Count - 1)) % list.Count;
+			int value = list[num];
+			list[num] = list[index];
+			list[index] = value;
+		}
+		if (avoidImpermanence && base.Bot.GetMonsters().Any((ClientCard c) => c.IsFaceup() && !c.IsDisabled()))
+		{
+			foreach (int item in list)
+			{
+				ClientCard clientCard = base.Enemy.SpellZone[4 - item];
+				if (clientCard == null || !clientCard.IsFacedown())
+				{
+					int zones = (int)Math.Pow(2.0, item);
+					base.AI.SelectPlace(zones);
+					return;
+				}
+			}
+		}
+		using (List<int>.Enumerator enumerator = list.GetEnumerator())
+		{
+			if (enumerator.MoveNext())
+			{
+				int current2 = enumerator.Current;
+				int zones2 = (int)Math.Pow(2.0, current2);
+				base.AI.SelectPlace(zones2);
+				return;
+			}
+		}
+		base.AI.SelectPlace(0);
+	}
+
+	public bool NibiruThePrimalBeingActivate()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (base.Duel.Player == 0 || base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.HasType(CardType.Synchro)))
+		{
+			return false;
+		}
+		if (base.Util.GetBestAttack(base.Enemy) > base.Util.GetBestAttack(base.Bot))
+		{
+			if ((base.CurrentTiming & 4) != 0)
+			{
+				SelectNibiruPosition();
+				return true;
+			}
+			List<ClientCard> list = (from card in base.Enemy.GetMonsters()
+				where card.IsFaceup() && card.IsTuner() && !card.HasType((CardType)75497472)
+				select card).ToList();
+			List<ClientCard> list2 = (from card in base.Enemy.GetMonsters()
+				where card.IsFaceup() && !card.IsTuner() && !card.HasType((CardType)75497472)
+				select card).ToList();
+			foreach (ClientCard item in list)
+			{
+				foreach (ClientCard item2 in list2)
+				{
+					if (item.Level + item2.Level == 10)
+					{
+						SelectNibiruPosition();
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void SelectNibiruPosition()
+	{
+		int valueOrDefault = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup()
+			select card).Sum((Func<ClientCard, int?>)((ClientCard m) => m.Attack)).GetValueOrDefault();
+		valueOrDefault += (from card in base.Enemy.GetMonsters()
+			where card.IsFaceup()
+			select card).Sum((Func<ClientCard, int?>)((ClientCard m) => m.Attack)).GetValueOrDefault();
+		Logger.DebugWriteLine("Nibiru token attack: " + valueOrDefault);
+		if (valueOrDefault >= 3000)
+		{
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+		}
+		else
+		{
+			base.AI.SelectPosition(CardPosition.FaceUpAttack);
+			base.AI.SelectPosition(CardPosition.FaceUpAttack);
+		}
+	}
+
+	public bool TenyiSpirit_AshunaActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(87052196, 0))
+		{
+			if (TenyiSpSummonForTaiaCheck() || Level7TenyiSpSummonCheck())
+			{
+				return true;
+			}
+		}
+		else if (base.ActivateDescription == base.Util.GetStringId(87052196, 1) && base.Card.Location == CardLocation.Grave && CheckCalledbytheGrave(base.Card.Id) == 0)
+		{
+			if (base.Bot.HasInHandOrInSpellZone(14821890) && (from card in base.Bot.GetMonsters()
+				where card.IsFaceup() && !card.HasType(CardType.Synchro) && card.HasRace(CardRace.Wyrm)
+				select card).ToList().Count() == 0)
+			{
+				base.AI.SelectCard(98159737, 23431858);
+				onlyWyrmSpSummon = true;
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			List<int> tunerIdList = new List<int> { 14558127, 97268402, 98159737 };
+			if ((base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.IsCode(tunerIdList)) | (!summoned && base.Bot.HasInHand(tunerIdList))) && CheckRemainInDeck(23431858) > 0)
+			{
+				base.AI.SelectCard(87052196);
+				onlyWyrmSpSummon = true;
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			if (base.Bot.HasInMonstersZone(87052196, notDisabled: false, hasXyzMaterial: false, faceUp: true) && CheckRemainInDeck(98159737) > 0)
+			{
+				base.AI.SelectCard(98159737);
+				onlyWyrmSpSummon = true;
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool TenyiSpirit_VishudaActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(23431858, 0))
+		{
+			if (TenyiSpSummonForTaiaCheck() || Level7TenyiSpSummonCheck())
+			{
+				return true;
+			}
+		}
+		else if (base.ActivateDescription == base.Util.GetStringId(23431858, 1) && base.Card.Location == CardLocation.Grave && CheckCalledbytheGrave(base.Card.Id) == 0)
+		{
+			List<ClientCard> problematicEnemyCardList = GetProblematicEnemyCardList(canBeTarget: true, ignoreNormalSpell: true);
+			if (problematicEnemyCardList.Count() > 0)
+			{
+				base.AI.SelectCard(problematicEnemyCardList);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool Level7TenyiSpSummonCheck()
+	{
+		List<int> cardId = new List<int> { 20001443, 56495147, 55273560 };
+		List<int> cardId2 = new List<int> { 98159737, 97268402, 14558127 };
+		if (!summoned && !base.Bot.HasInHand(cardId) && base.Bot.HasInHand(cardId2))
+		{
+			return true;
+		}
+		if (base.Bot.HasInExtra(60465049) && base.Bot.HasInMonstersZone(20001444) && !onlyWyrmSpSummon)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulStrategistLongyuanActivate()
+	{
+		if (base.Card.Location != CardLocation.Hand)
+		{
+			return true;
+		}
+		if (CheckWhetherNegated() || (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2()))
+		{
+			return false;
+		}
+		List<int> list = new List<int>();
+		if (CheckAtAdvantage() && base.Bot.HasInHand(93850690) && base.Bot.HasInHand(56495147) && !activatedCardIdList.Contains(56495147) && !activatedCardIdList.Contains(93850690))
+		{
+			list.Add(56495147);
+		}
+		if (list.Count() == 0)
+		{
+			foreach (int item in new List<int> { 23431858, 87052196, 98159737 })
+			{
+				if (base.Bot.HasInHand(item))
+				{
+					list.Add(item);
+				}
+			}
+		}
+		if (list.Count() == 0)
+		{
+			List<int> checkIdList = new List<int> { 56495147, 20001443, 14821890, 93490856, 56465981 };
+			foreach (int item2 in checkIdList)
+			{
+				if (base.Bot.Hand.Count((ClientCard card) => card != base.Card && card.IsCode(checkIdList)) > 1)
+				{
+					list.Add(item2);
+				}
+			}
+		}
+		if (list.Count() == 0)
+		{
+			List<int> checkIdList2 = new List<int> { 56495147, 20001443, 14821890, 93490856, 93850690, 56465981 };
+			foreach (int item3 in checkIdList2)
+			{
+				if (base.Bot.Hand.Count((ClientCard card) => card != base.Card && card.IsCode(checkIdList2)) >= 1)
+				{
+					list.Add(item3);
+				}
+			}
+		}
+		if (list.Count() > 0)
+		{
+			base.AI.SelectCard(list);
+			base.AI.SelectPosition(CardPosition.FaceUpAttack);
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			activatedCardIdList.Add(base.Card.Id);
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulOfTaiaActivate()
+	{
+		if (base.Card.Location != CardLocation.MonsterZone)
+		{
+			List<int> list = new List<int>();
+			if (!base.Bot.HasInGraveyard(20001443) && CheckRemainInDeck(20001443) > 0)
+			{
+				bool flag = false;
+				if (base.Bot.HasInMonstersZone(83755611, notDisabled: true, hasXyzMaterial: false, !activatedCardIdList.Contains(83755611)))
+				{
+					flag = true;
+				}
+				if (base.Bot.HasInHand(93850690) && !activatedCardIdList.Contains(93850690) && base.Bot.Hand.Any((ClientCard card) => card.Id != 93850690 && (card.HasSetcode(363) || card.HasRace(CardRace.Wyrm))))
+				{
+					flag = true;
+				}
+				if (flag)
+				{
+					list.Add(20001443);
+				}
+			}
+			foreach (int item in new List<int> { 98159737, 23431858, 87052196 })
+			{
+				if (CheckRemainInDeck(item) > 0)
+				{
+					list.Add(item);
+				}
+			}
+			if (list.Count() > 0)
+			{
+				base.AI.SelectCard(list);
+				return true;
+			}
+			return false;
+		}
+		if (base.Bot.HasInGraveyard(14821890) && !activatedCardIdList.Contains(14821890))
+		{
+			base.AI.SelectCard(14821890);
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			activatedCardIdList.Add(base.Card.Id);
+			return true;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		List<int> list2 = new List<int>();
+		List<int> list3 = new List<int>
+		{
+			93490856, 56465981, 56495147, 20001443, 32519092, 78917791, 93850690, 69248256, 87052196, 23431858,
+			47710198, 96633955, 5041348, 98159737
+		};
+		foreach (int checkId in list3)
+		{
+			if (base.Bot.Graveyard.Count((ClientCard card) => card.IsCode(checkId)) > 1)
+			{
+				list2.Add(checkId);
+			}
+		}
+		if (list2.Count() == 0)
+		{
+			foreach (int item2 in list3)
+			{
+				if (base.Bot.HasInGraveyard(item2))
+				{
+					list2.Add(item2);
+				}
+			}
+		}
+		if (list2.Count() > 0)
+		{
+			base.AI.SelectCard(list2);
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			activatedCardIdList.Add(base.Card.Id);
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulOfTaiaSummon()
+	{
+		if (base.Bot.HasInGraveyard(14821890) && !activatedCardIdList.Contains(56495147) && !activatedCardIdList.Contains(14821890))
+		{
+			summoned = true;
+			return true;
+		}
+		if (SummonLevel4ForSynchro())
+		{
+			summoned = true;
+			return true;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (SwordsoulOfTaiaEffectCheck() && !activatedCardIdList.Contains(56495147))
+		{
+			summoned = true;
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulOfTaiaEffectCheck(ClientCard exceptTarget = null)
+	{
+		if (exceptTarget == null)
+		{
+			exceptTarget = base.Card;
+		}
+		return base.Bot.Graveyard.Count((ClientCard card) => card != exceptTarget && (card.HasSetcode(363) || card.HasRace(CardRace.Wyrm))) > 0;
+	}
+
+	public bool SwordsoulOfMoYeActivate()
+	{
+		if (base.Card.Location != CardLocation.MonsterZone)
+		{
+			return true;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		List<ClientCard> list = base.Bot.Hand.Where((ClientCard card) => card.HasSetcode(363) || card.HasRace(CardRace.Wyrm)).ToList();
+		if (list.Count() > 0)
+		{
+			list = ShuffleCardList(list);
+			base.AI.SelectCard(list);
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			activatedCardIdList.Add(base.Card.Id);
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulOfMoYeSummon()
+	{
+		if (SummonLevel4ForSynchro())
+		{
+			summoned = true;
+			return true;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (SwordsoulOfMoYeEffectCheck() && !activatedCardIdList.Contains(20001443))
+		{
+			summoned = true;
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulOfMoYeEffectCheck(List<ClientCard> exceptList = null)
+	{
+		if (exceptList == null)
+		{
+			exceptList = new List<ClientCard> { base.Card };
+		}
+		return base.Bot.Hand.Count((ClientCard card) => !exceptList.Contains(card) && (card.HasSetcode(363) || card.HasRace(CardRace.Wyrm))) > 0;
+	}
+
+	public bool SummonLevel4ForSynchro()
+	{
+		if (base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && !card.HasType((CardType)75497472) && !card.IsTuner()))
+		{
+			return false;
+		}
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && !card.HasType((CardType)75497472) && card.IsTuner()
+			select card).ToList();
+		if (list.Count() > 0)
+		{
+			foreach (ClientCard item in list)
+			{
+				int checkLevel = item.Level + 4;
+				if (base.Bot.ExtraDeck.Any((ClientCard card) => card.HasType(CardType.Synchro) && card.Level == checkLevel))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool IncredibleEcclesiaTheVirtuousActivate()
+	{
+		if (base.Card.Location == CardLocation.Grave)
+		{
+			return true;
+		}
+		if (base.Duel.Player == 0 && !CheckWhetherNegated())
+		{
+			bool flag = !activatedCardIdList.Contains(20001443) && CheckRemainInDeck(20001443) > 0 && CheckCalledbytheGrave(20001443) == 0 && SwordsoulOfMoYeEffectCheck();
+			bool flag2 = !activatedCardIdList.Contains(56495147) && CheckRemainInDeck(56495147) > 0 && CheckCalledbytheGrave(56495147) == 0 && SwordsoulOfTaiaEffectCheck();
+			if (flag && !summoned && !base.Bot.HasInHand(20001443))
+			{
+				base.AI.SelectCard(20001443);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			if (flag2 && !summoned && !base.Bot.HasInHand(56495147))
+			{
+				base.AI.SelectCard(56495147);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			if (flag)
+			{
+				base.AI.SelectCard(20001443);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			if (flag2)
+			{
+				base.AI.SelectCard(56495147);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool IncredibleEcclesiaTheVirtuousSummon()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (SwordsoulOfMoYeSummon() && CheckRemainInDeck(20001443) > 0)
+		{
+			summoned = true;
+			return true;
+		}
+		if (SwordsoulOfTaiaSummon() && CheckRemainInDeck(56495147) > 0)
+		{
+			summoned = true;
+			return true;
+		}
+		return false;
+	}
+
+	public bool IncredibleEcclesiaTheVirtuousSpSummon()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool AshBlossomActivate()
+	{
+		if (CheckWhetherNegated() || !CheckLastChainShouldNegated())
+		{
+			return false;
+		}
+		if (CheckAtAdvantage() && base.Duel.LastChainPlayer == 1 && base.Util.GetLastChainCard().IsCode(23434538))
+		{
+			return false;
+		}
+		if (DefaultAshBlossomAndJoyousSpring())
+		{
+			CheckDeactiveFlag();
+			return true;
+		}
+		return false;
+	}
+
+	public bool MaxxCActivate()
+	{
+		if (CheckWhetherNegated() || base.Duel.LastChainPlayer == 0)
+		{
+			return false;
+		}
+		return DefaultMaxxC();
+	}
+
+	public bool EffectVeilerActivate()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		List<ClientCard> monsterListForTargetNegate = GetMonsterListForTargetNegate(canBeMonsterTarget: true);
+		if (monsterListForTargetNegate.Count() > 0)
+		{
+			ClientCard clientCard = monsterListForTargetNegate[0];
+			currentNegateMonsterList.Add(clientCard);
+			base.AI.SelectCard(clientCard);
+			return true;
+		}
+		return false;
+	}
+
+	public bool TunerForSynchroSummon()
+	{
+		if (!base.Card.IsCode(14558127) && !base.Card.IsCode(98159737) && !base.Card.IsCode(97268402))
+		{
+			return false;
+		}
+		if (base.Bot.HasInExtra(32519092) && base.Bot.HasInHand(56495147) && !activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0)
+		{
+			return false;
+		}
+		if (base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.IsTuner()))
+		{
+			return false;
+		}
+		List<int> checkOnField = new List<int> { 23431858, 87052196 };
+		if (base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && checkOnField.Contains(card.Id) && !card.IsTuner()))
+		{
+			int totalLevel = base.Card.Level + 7;
+			if (base.Bot.ExtraDeck.Any((ClientCard card) => card.HasType(CardType.Synchro) && card.Level == totalLevel && (!onlyWyrmSpSummon || card.HasRace(CardRace.Wyrm))))
+			{
+				summoned = true;
+				return true;
+			}
+		}
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && !card.IsTuner()
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		if (base.Bot.HasInExtra(43202238) && GetProblematicEnemyCardList(canBeTarget: true, ignoreNormalSpell: true).Count() > 0)
+		{
+			foreach (ClientCard item in list)
+			{
+				if (base.Card.Level + item.Level == 7)
+				{
+					summoned = true;
+					return true;
+				}
+			}
+		}
+		if (base.Bot.HasInExtra(60465049))
+		{
+			foreach (ClientCard item2 in list)
+			{
+				if ((item2.IsDisabled() || !item2.HasType(CardType.Synchro)) && base.Card.Level + item2.Level == 11)
+				{
+					summoned = true;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool WyrmForBlackoutSummon()
+	{
+		if (base.Card.Level > 4 || !base.Card.HasRace(CardRace.Wyrm))
+		{
+			return false;
+		}
+		if (base.Bot.HasInHandOrInSpellZone(14821890) && !base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.HasRace(CardRace.Wyrm)))
+		{
+			summoned = true;
+			return true;
+		}
+		return false;
+	}
+
+	public bool TenyiSpirit_AdharaActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(98159737, 0))
+		{
+			if (TenyiSpSummonForTaiaCheck())
+			{
+				return true;
+			}
+		}
+		else if (base.ActivateDescription == base.Util.GetStringId(98159737, 1) && base.Card.Location == CardLocation.Grave && CheckCalledbytheGrave(base.Card.Id) == 0)
+		{
+			if (!activatedCardIdList.Contains(93490856) && SwordsoulOfMoYeEffectCheck() && base.Bot.HasInBanished(93490856))
+			{
+				base.AI.SelectCard(93490856);
+				return true;
+			}
+			if (!summoned)
+			{
+				if (!activatedCardIdList.Contains(20001443) && SwordsoulOfMoYeEffectCheck() && base.Bot.HasInBanished(20001443))
+				{
+					base.AI.SelectCard(20001443);
+					return true;
+				}
+				if (!activatedCardIdList.Contains(56495147) && SwordsoulOfTaiaEffectCheck() && base.Bot.HasInBanished(56495147))
+				{
+					base.AI.SelectCard(56495147);
+					return true;
+				}
+			}
+			foreach (int item in new List<int> { 23431858, 87052196 })
+			{
+				if (base.Bot.HasInBanished(item))
+				{
+					base.AI.SelectCard(item);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool TenyiSpSummonForTaiaCheck()
+	{
+		if (!activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0)
+		{
+			bool num = (!summoned && base.Bot.HasInHand(56495147)) || base.Bot.HasInMonstersZone(56495147);
+			bool flag = !base.Bot.Graveyard.Any((ClientCard card) => card.HasRace(CardRace.Wyrm) || card.HasSetcode(363));
+			bool flag2 = base.Bot.HasInExtra(32519092);
+			bool flag3 = activatedCardIdList.Contains(93490856) || !base.Bot.HasInHand(93490856);
+			if (num && flag && flag2 && flag3)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool TenyiForShamanSpSummon()
+	{
+		if (!new List<int>
+		{
+			base.Util.GetStringId(98159737, 0),
+			base.Util.GetStringId(23431858, 0),
+			base.Util.GetStringId(87052196, 0)
+		}.Contains(base.ActivateDescription) || summoned || !base.Bot.HasInExtra(78917791) || (CheckAtAdvantage() && enemyActivateMaxxC))
+		{
+			return false;
+		}
+		ClientCard clientCard = base.Bot.Hand.FirstOrDefault((ClientCard card) => card.IsCode(20001443));
+		if (clientCard == null)
+		{
+			return false;
+		}
+		List<ClientCard> exceptList = new List<ClientCard> { base.Card, clientCard };
+		if (!SwordsoulOfMoYeEffectCheck(exceptList) || activatedCardIdList.Contains(20001443))
+		{
+			return false;
+		}
+		if (activatedCardIdList.Contains(56495147) || !base.Bot.HasInHandOrInGraveyard(56495147))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool TenyiForBlackoutSpSummon()
+	{
+		if (!new List<int>
+		{
+			base.Util.GetStringId(98159737, 0),
+			base.Util.GetStringId(23431858, 0),
+			base.Util.GetStringId(87052196, 0)
+		}.Contains(base.ActivateDescription))
+		{
+			return false;
+		}
+		if (CheckAtAdvantage() && enemyActivateMaxxC)
+		{
+			return false;
+		}
+		if (base.Bot.HasInHandOrInSpellZone(14821890) && !base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.HasRace(CardRace.Wyrm)))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool PotOfDesiresActivate()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		if (CheckAtAdvantage())
+		{
+			bool num = base.Bot.Deck.Count() >= 15;
+			if (num)
+			{
+				SelectSTPlace(null, avoidImpermanence: true);
+			}
+			return num;
+		}
+		SelectSTPlace(null, avoidImpermanence: true);
+		return true;
+	}
+
+	public bool SwordsoulEmergenceActivate()
+	{
+		if (base.Card.Location == CardLocation.Removed)
+		{
+			return SwordsoulSpellBanishedEffect();
+		}
+		if (!base.Bot.HasInHand(20001443) && !activatedCardIdList.Contains(20001443) && CheckRemainInDeck(20001443) > 0 && SwordsoulOfMoYeEffectCheck())
+		{
+			base.AI.SelectCard(20001443);
+			activatedCardIdList.Add(base.Card.Id);
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		if (!base.Bot.HasInHand(56495147) && !activatedCardIdList.Contains(56495147) && CheckRemainInDeck(56495147) > 0 && SwordsoulOfTaiaEffectCheck())
+		{
+			base.AI.SelectCard(56495147);
+			activatedCardIdList.Add(base.Card.Id);
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		if (!base.Bot.HasInHand(93490856) && !activatedCardIdList.Contains(93490856) && CheckRemainInDeck(93490856) > 0 && SwordsoulOfMoYeEffectCheck())
+		{
+			base.AI.SelectCard(93490856);
+			activatedCardIdList.Add(base.Card.Id);
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		if (!base.Bot.HasInHand(20001443) && CheckRemainInDeck(20001443) > 0 && SwordsoulOfMoYeEffectCheck())
+		{
+			base.AI.SelectCard(20001443);
+			activatedCardIdList.Add(base.Card.Id);
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		foreach (int item in new List<int> { 56495147, 20001443, 93490856 })
+		{
+			if (CheckRemainInDeck(item) > 0)
+			{
+				base.AI.SelectCard(item);
+				activatedCardIdList.Add(base.Card.Id);
+				SelectSTPlace(null, avoidImpermanence: true);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool SwordsoulSacredSummitActivate()
+	{
+		if (base.Card.Location == CardLocation.Removed)
+		{
+			return SwordsoulSpellBanishedEffect();
+		}
+		if (CheckAtAdvantage())
+		{
+			if (enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+			{
+				return false;
+			}
+			if (!activatedCardIdList.Contains(20001443) && base.Bot.HasInGraveyard(20001443) && CheckCalledbytheGrave(20001443) == 0 && SwordsoulOfMoYeEffectCheck())
+			{
+				base.AI.SelectCard(20001443);
+				activatedCardIdList.Add(base.Card.Id);
+				SelectSTPlace(null, avoidImpermanence: true);
+				return true;
+			}
+			if (!activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0)
+			{
+				ClientCard clientCard = base.Bot.Graveyard.FirstOrDefault((ClientCard card) => card.IsCode(56495147));
+				if (clientCard != null && SwordsoulOfTaiaEffectCheck(clientCard))
+				{
+					base.AI.SelectCard(56495147);
+					activatedCardIdList.Add(base.Card.Id);
+					SelectSTPlace(null, avoidImpermanence: true);
+					return true;
+				}
+			}
+		}
+		bool controlSynchro = base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && card.HasType(CardType.Synchro));
+		List<ClientCard> list = base.Bot.Graveyard.Where((ClientCard card) => card.IsMonster() && (card.HasSetcode(363) || (controlSynchro && card.HasRace(CardRace.Wyrm)))).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		list.Reverse();
+		if (list.Count() > 0)
+		{
+			ClientCard clientCard2 = list[0];
+			if (clientCard2.IsCode(20001443) && (activatedCardIdList.Contains(20001443) || !SwordsoulOfMoYeEffectCheck()))
+			{
+				return false;
+			}
+			if (clientCard2.IsCode(56495147) && activatedCardIdList.Contains(56495147))
+			{
+				return false;
+			}
+			base.AI.SelectCard(list);
+			activatedCardIdList.Add(base.Card.Id);
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulSpellBanishedEffect()
+	{
+		return false;
+	}
+
+	public bool CalledbytheGraveActivate()
+	{
+		if (CheckWhetherNegated() || !CheckLastChainShouldNegated())
+		{
+			return false;
+		}
+		if (CheckAtAdvantage() && base.Duel.LastChainPlayer == 1 && base.Util.GetLastChainCard().IsCode(23434538))
+		{
+			return false;
+		}
+		if (base.Duel.LastChainPlayer == 1)
+		{
+			if (base.Util.GetLastChainCard().IsMonster())
+			{
+				int code = base.Util.GetLastChainCard().GetOriginCode();
+				if (code == 0)
+				{
+					return false;
+				}
+				if (CheckCalledbytheGrave(code) > 0)
+				{
+					return false;
+				}
+				if (base.Util.GetLastChainCard().IsCode(23434538) && CheckAtAdvantage())
+				{
+					return false;
+				}
+				ClientCard firstMatchingCard = base.Enemy.Graveyard.GetFirstMatchingCard((ClientCard card) => card.IsMonster() && card.GetOriginCode() == code);
+				if (firstMatchingCard != null)
+				{
+					if (base.Card.Location != CardLocation.SpellZone)
+					{
+						SelectSTPlace(null, avoidImpermanence: true);
+					}
+					base.AI.SelectCard(firstMatchingCard);
+					currentNegatingIdList.Add(code);
+					CheckDeactiveFlag();
+					return true;
+				}
+			}
+			foreach (ClientCard item in base.Enemy.Graveyard)
+			{
+				if (base.Duel.ChainTargets.Contains(item) && item.IsMonster())
+				{
+					if (base.Card.Location != CardLocation.SpellZone)
+					{
+						SelectSTPlace(null, avoidImpermanence: true);
+					}
+					int id = item.Id;
+					base.AI.SelectCard(item);
+					currentNegatingIdList.Add(id);
+					return true;
+				}
+			}
+			if (base.Duel.ChainTargets.Contains(base.Card))
+			{
+				List<ClientCard> list = base.Enemy.Graveyard.GetMatchingCards((ClientCard card) => card.IsMonster()).ToList();
+				if (list.Count() > 0)
+				{
+					list.Sort(CardContainer.CompareCardAttack);
+					list.Reverse();
+					int id2 = list[0].Id;
+					base.AI.SelectCard(id2);
+					currentNegatingIdList.Add(id2);
+					return true;
+				}
+			}
+		}
+		if (base.Duel.LastChainPlayer == 1)
+		{
+			return false;
+		}
+		List<ClientCard> list2 = CheckDangerousCardinEnemyGrave(onlyMonster: true);
+		if (list2.Count() > 0)
+		{
+			int id3 = list2[0].Id;
+			if (base.Card.Location != CardLocation.SpellZone)
+			{
+				SelectSTPlace(null, avoidImpermanence: true);
+			}
+			base.AI.SelectCard(id3);
+			currentNegatingIdList.Add(id3);
+			return true;
+		}
+		return false;
+	}
+
+	public bool CrossoutDesignatorActivate()
+	{
+		if (CheckWhetherNegated() || !CheckLastChainShouldNegated())
+		{
+			return false;
+		}
+		if (base.Duel.LastChainPlayer == 1 && base.Util.GetLastChainCard() != null)
+		{
+			int num = base.Util.GetLastChainCard().Id;
+			int alias = base.Util.GetLastChainCard().Alias;
+			if (alias != 0 && alias - num < 10)
+			{
+				num = alias;
+			}
+			if (num == 0)
+			{
+				return false;
+			}
+			if (DefaultCheckWhetherCardIdIsNegated(num))
+			{
+				return false;
+			}
+			if (CheckRemainInDeck(num) > 0)
+			{
+				if (base.Card.Location != CardLocation.SpellZone)
+				{
+					SelectSTPlace(null, avoidImpermanence: true);
+				}
+				base.AI.SelectAnnounceID(num);
+				currentNegatingIdList.Add(num);
+				CheckDeactiveFlag();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool InfiniteImpermanenceActivate()
+	{
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		ClientCard lastChainCard = base.Util.GetLastChainCard();
+		if (base.Card.Location == CardLocation.SpellZone)
+		{
+			int num = -1;
+			int num2 = -1;
+			for (int i = 0; i < 5; i++)
+			{
+				if (base.Bot.SpellZone[i] == base.Card)
+				{
+					num = i;
+				}
+				if (lastChainCard != null && lastChainCard.Controller == 1 && lastChainCard.Location == CardLocation.SpellZone && base.Enemy.SpellZone[i] == lastChainCard)
+				{
+					num2 = i;
+				}
+				else if (base.Duel.Player == 0 && base.Util.GetProblematicEnemySpell() != null && base.Enemy.SpellZone[i] != null && base.Enemy.SpellZone[i].IsFloodgate())
+				{
+					num2 = i;
+				}
+			}
+			if ((num * num2 >= 0 && num + num2 == 4) || base.Util.IsChainTarget(base.Card) || (lastChainCard != null && lastChainCard.Controller == 1 && lastChainCard.IsCode(18144506)))
+			{
+				CheckDeactiveFlag();
+				ClientCard problematicEnemyMonster = GetProblematicEnemyMonster(0, canBeTarget: true);
+				if (problematicEnemyMonster != null)
+				{
+					base.AI.SelectCard(problematicEnemyMonster);
+				}
+				else
+				{
+					base.AI.SelectCard(base.Enemy.GetMonsters());
+				}
+				infiniteImpermanenceList.Add(num);
+				return true;
+			}
+		}
+		List<ClientCard> monsterListForTargetNegate = GetMonsterListForTargetNegate(canBeMonsterTarget: false, canBeTrapTarget: true);
+		if (monsterListForTargetNegate.Count() > 0)
+		{
+			ClientCard clientCard = monsterListForTargetNegate[0];
+			currentNegateMonsterList.Add(clientCard);
+			if (base.Card.Location == CardLocation.SpellZone)
+			{
+				for (int j = 0; j < 5; j++)
+				{
+					if (base.Bot.SpellZone[j] == base.Card)
+					{
+						infiniteImpermanenceList.Add(j);
+						break;
+					}
+				}
+			}
+			if (base.Card.Location == CardLocation.Hand)
+			{
+				SelectSTPlace(base.Card, avoidImpermanence: true);
+			}
+			base.AI.SelectCard(clientCard);
+			return true;
+		}
+		return false;
+	}
+
+	public bool SwordsoulBlackoutActivate()
+	{
+		if (base.Card.Location == CardLocation.Removed)
+		{
+			base.AI.SelectPosition(CardPosition.FaceUpDefence);
+			activatedCardIdList.Add(base.Card.Id);
+			return true;
+		}
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && card.HasRace(CardRace.Wyrm)
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		ClientCard clientCard = list[0];
+		bool flag = clientCard.HasType(CardType.Synchro);
+		List<ClientCard> list2 = (from card in base.Bot.GetMonsters()
+			where card.IsCode(96633955) && card.IsFaceup() && !card.IsDisabled()
+			select card).ToList();
+		if (list2.Count() > 0 && base.Bot.Graveyard.Count() > 0)
+		{
+			clientCard = list2[0];
+			flag = false;
+		}
+		foreach (ClientCard item in list)
+		{
+			if (base.Duel.LastChainTargets.Contains(item))
+			{
+				clientCard = item;
+				flag = false;
+			}
+		}
+		List<ClientCard> problematicEnemyCardList = GetProblematicEnemyCardList(canBeTarget: true);
+		if (problematicEnemyCardList.Count() >= 2 && base.Duel.Player == 1)
+		{
+			base.AI.SelectCard(clientCard);
+			base.AI.SelectNextCard(problematicEnemyCardList);
+			return true;
+		}
+		List<ClientCard> list3 = (from card in base.Enemy.GetMonsters()
+			where card.IsFaceup()
+			select card).ToList();
+		list3.Sort(CardContainer.CompareCardAttack);
+		list3.Reverse();
+		if (!flag && base.Duel.Player == 1)
+		{
+			if (list3.Count() >= 2)
+			{
+				base.AI.SelectCard(clientCard);
+				base.AI.SelectNextCard(GetNormalEnemyTargetList());
+				return true;
+			}
+			if (base.Duel.Phase == DuelPhase.End)
+			{
+				base.AI.SelectCard(clientCard);
+				base.AI.SelectNextCard(GetNormalEnemyTargetList());
+				return true;
+			}
+		}
+		if (base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2 && list3.Count() > 0)
+		{
+			int bestAttack = base.Util.GetBestAttack(base.Bot);
+			if (list3[0].GetDefensePower() >= bestAttack)
+			{
+				base.AI.SelectCard(clientCard);
+				base.AI.SelectNextCard(GetNormalEnemyTargetList());
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool GeomathmechFinalSigmaSpSummon()
+	{
+		if (base.Bot.GetMonstersExtraZoneCount() > 0)
+		{
+			return false;
+		}
+		if (base.Enemy.GetMonsters().Any((ClientCard card) => card.HasSetcode(365)) | base.Enemy.GetSpells().Any((ClientCard card) => card.HasSetcode(365)) | base.Enemy.Graveyard.Any((ClientCard card) => card.HasSetcode(365)) | base.Enemy.Banished.Any((ClientCard card) => card.HasSetcode(365)))
+		{
+			base.AI.SelectMaterials(GetSynchroMaterial(12));
+			base.AI.SelectPosition(CardPosition.FaceUpAttack);
+			return true;
+		}
+		return false;
+	}
+
+	public bool PsychicEndPunisherSpSummon()
+	{
+		List<ClientCard> synchroMaterial = GetSynchroMaterial(11);
+		if (synchroMaterial.Count() > 1)
+		{
+			base.AI.SelectMaterials(synchroMaterial);
+			base.AI.SelectPosition(CardPosition.FaceUpAttack);
+			return true;
+		}
+		return false;
+	}
+
+	public bool Level10SpSummonCheckInit()
+	{
+		canSpSummonLevel10IdList.Clear();
+		return false;
+	}
+
+	public bool Level10SpSummonCheckCount()
+	{
+		foreach (int item in new List<int> { 96633955, 47710198, 84815190 })
+		{
+			if (base.Card.IsCode(item))
+			{
+				canSpSummonLevel10IdList.Add(item);
+			}
+		}
+		return false;
+	}
+
+	public bool Level10SpSummonCheckDecide()
+	{
+		if (canSpSummonLevel10IdList.Count <= 1)
+		{
+			return false;
+		}
+		List<int> list = new List<int>();
+		if (canSpSummonLevel10IdList.Contains(84815190))
+		{
+			if (base.Bot.HasInHand(23434538))
+			{
+				canSpSummonLevel10IdList.Clear();
+				canSpSummonLevel10IdList.Add(84815190);
+				return false;
+			}
+			ClientCard clientCard = base.Bot.Graveyard.FirstOrDefault((ClientCard card) => card.IsCode(56495147));
+			if (clientCard != null && SwordsoulOfTaiaEffectCheck(clientCard) && base.Bot.HasInHand(93850690))
+			{
+				canSpSummonLevel10IdList.Clear();
+				canSpSummonLevel10IdList.Add(84815190);
+				return false;
+			}
+			list.Add(84815190);
+		}
+		if (canSpSummonLevel10IdList.Contains(47710198) && CheckAtAdvantage())
+		{
+			list.Add(47710198);
+		}
+		if (canSpSummonLevel10IdList.Contains(96633955))
+		{
+			int num = base.Bot.Banished.Count() + base.Enemy.Banished.Count();
+			bool flag = base.Bot.HasInHandOrInSpellZone(14821890) || base.Bot.HasInMonstersZone(69248256, notDisabled: true, hasXyzMaterial: false, faceUp: true);
+			if (CheckAtAdvantage())
+			{
+				if (3000 + num * 100 >= base.Enemy.LifePoints)
+				{
+					flag = true;
+				}
+			}
+			else
+			{
+				ClientCard bestEnemyMonster = GetBestEnemyMonster(onlyFaceup: true);
+				if (bestEnemyMonster != null && list.Count() == 0 && 3000 + num * 200 >= bestEnemyMonster.GetDefensePower())
+				{
+					flag = true;
+				}
+			}
+			if (flag)
+			{
+				list.Add(96633955);
+			}
+		}
+		if (list.Count() > 0)
+		{
+			canSpSummonLevel10IdList.Clear();
+			int index = Program.Rand.Next(list.Count());
+			int item = list[index];
+			canSpSummonLevel10IdList.Add(item);
+		}
+		return false;
+	}
+
+	public bool Level10SpSummonCheckFinal()
+	{
+		if (canSpSummonLevel10IdList.Count() == 1)
+		{
+			int id = canSpSummonLevel10IdList[0];
+			if (base.Card.IsCode(id))
+			{
+				List<ClientCard> synchroMaterial = GetSynchroMaterial(10, base.Card.IsCode(47710198));
+				if (synchroMaterial.Count() > 1)
+				{
+					base.AI.SelectMaterials(synchroMaterial);
+					return true;
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool AdamancipatorRisen_DragiteSpSummon()
+	{
+		if (!base.Bot.HasInMonstersZone(69248256, notDisabled: true))
+		{
+			return false;
+		}
+		bool flag = base.Bot.Graveyard.Any((ClientCard card) => card.IsMonster() && card.HasAttribute(CardAttribute.Water));
+		if (!(flag | base.Bot.GetMonsters().Any((ClientCard card) => card.HasAttribute(CardAttribute.Water) && card.IsFaceup())))
+		{
+			return false;
+		}
+		SelectLevel8SynchroMaterial(needWyrmNonTuner: false, !flag);
+		return true;
+	}
+
+	public bool DracoBerserkerOfTheTenyiSpSummon()
+	{
+		if (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+		{
+			return false;
+		}
+		SelectLevel8SynchroMaterial(needWyrmNonTuner: true);
+		return true;
+	}
+
+	public bool SwordsoulGrandmaster_ChixiaoSpSummon()
+	{
+		if (CheckAtAdvantage() && enemyActivateLockBird)
+		{
+			return false;
+		}
+		if (!activatedCardIdList.Contains(69248256))
+		{
+			SelectLevel8SynchroMaterial(needWyrmNonTuner: true);
+			return true;
+		}
+		return false;
+	}
+
+	public bool BaxiaBrightnessOfTheYangZingSpSummon()
+	{
+		if (CheckAtAdvantage())
+		{
+			return false;
+		}
+		List<ClientCard> problematicEnemyCardList = GetProblematicEnemyCardList(canBeTarget: true);
+		if (problematicEnemyCardList.Count() > 1 && !activatedCardIdList.Contains(83755612))
+		{
+			SelectLevel8SynchroMaterial(needWyrmNonTuner: true);
+			return true;
+		}
+		if (problematicEnemyCardList.Count() == 1 && base.Bot.GetSpellCount() > 0 && !activatedCardIdList.Contains(83755613))
+		{
+			bool flag = false;
+			if (!activatedCardIdList.Contains(20001443) && SwordsoulOfMoYeEffectCheck() && base.Bot.HasInGraveyard(20001443))
+			{
+				flag = true;
+			}
+			if (!activatedCardIdList.Contains(56495147) && base.Bot.HasInGraveyard(56495147))
+			{
+				flag = true;
+			}
+			if (flag)
+			{
+				SelectLevel8SynchroMaterial(needWyrmNonTuner: true);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void SelectLevel8SynchroMaterial(bool needWyrmNonTuner = false, bool needWaterNonTuner = false)
+	{
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && card.IsTuner() && card.Level < 8
+			select card).ToList();
+		List<ClientCard> list2 = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && !card.IsTuner() && card.Level < 8 && (!needWyrmNonTuner || (card.HasRace(CardRace.Wyrm) && (!needWaterNonTuner || card.HasAttribute(CardAttribute.Water))))
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		list2.Sort(CardContainer.CompareCardAttack);
+		List<ClientCard> list3 = new List<ClientCard>();
+		foreach (ClientCard item in list)
+		{
+			list3.Clear();
+			list3.Add(item);
+			if (item.Level == 4)
+			{
+				if (activatedCardIdList.Contains(20001443))
+				{
+					ClientCard firstMatchingCard = list2.GetFirstMatchingCard((ClientCard card) => card.IsCode(20001443));
+					if (firstMatchingCard != null)
+					{
+						list3.Add(firstMatchingCard);
+						base.AI.SelectMaterials(list3);
+						break;
+					}
+				}
+				if (activatedCardIdList.Contains(56495147) && !needWaterNonTuner)
+				{
+					ClientCard firstMatchingCard2 = list2.GetFirstMatchingCard((ClientCard card) => card.IsCode(56495147));
+					if (firstMatchingCard2 != null)
+					{
+						list3.Add(firstMatchingCard2);
+						base.AI.SelectMaterials(list3);
+						break;
+					}
+				}
+			}
+			foreach (ClientCard item2 in list2)
+			{
+				if (item.Level + item2.Level == 8)
+				{
+					list3.Add(item2);
+					base.AI.SelectMaterials(list3);
+					return;
+				}
+			}
+		}
+	}
+
+	public bool YaziEvilOfTheYangZingSpSummon()
+	{
+		if (base.Enemy.GetMonsterCount() + base.Enemy.GetSpellCount() == 0)
+		{
+			return false;
+		}
+		if ((GetProblematicEnemyCardList(canBeTarget: true, ignoreNormalSpell: true).Count() > 0) | (!activatedCardIdList.Contains(20001443) && CheckCalledbytheGrave(20001443) == 0 && CheckRemainInDeck(20001443) > 0 && SwordsoulOfMoYeEffectCheck()) | (!activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0 && CheckRemainInDeck(56495147) > 0))
+		{
+			List<ClientCard> synchroMaterial = GetSynchroMaterial(7);
+			if (synchroMaterial.Count() > 1)
+			{
+				base.AI.SelectMaterials(synchroMaterial);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public List<ClientCard> GetSynchroMaterial(int level, bool needWyrmNonTuner = false)
+	{
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && card.IsTuner() && !card.HasType((CardType)75497472)
+			select card).ToList();
+		List<ClientCard> list2 = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && !card.IsTuner() && !card.HasType((CardType)75497472) && (!needWyrmNonTuner || card.HasRace(CardRace.Wyrm))
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		list2.Sort(CardContainer.CompareCardAttack);
+		List<ClientCard> list3 = new List<ClientCard>();
+		foreach (ClientCard item in list)
+		{
+			list3.Clear();
+			list3.Add(item);
+			foreach (ClientCard item2 in list2)
+			{
+				if (item.Level + item2.Level == level && (item2.IsDisabled() || !item2.HasType(CardType.Synchro)))
+				{
+					list3.Add(item2);
+					return list3;
+				}
+			}
+		}
+		list3.Clear();
+		return list3;
+	}
+
+	public bool ShamanOfTheTenyiSpSummon()
+	{
+		if (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+		{
+			Logger.DebugWriteLine("[Shaman] advantage & maxxc, skip");
+			return false;
+		}
+		List<ClientCard> monstersInExtraZone = base.Bot.GetMonstersInExtraZone();
+		if (monstersInExtraZone.Count() > 0 && monstersInExtraZone.Any((ClientCard card) => card.IsFacedown() || !card.HasType(CardType.Link) || !card.HasRace(CardRace.Wyrm)))
+		{
+			Logger.DebugWriteLine("[Shaman] extra zone occupied, skip");
+			return false;
+		}
+		if (!((!activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0 && base.Bot.HasInHandOrInGraveyard(56495147)) | (!activatedCardIdList.Contains(20001443) && CheckCalledbytheGrave(20001443) == 0 && base.Bot.HasInGraveyard(20001443) && SwordsoulOfMoYeEffectCheck()) | base.Bot.GetGraveyardMonsters().Any((ClientCard card) => card.HasType(CardType.Synchro) && card.IsCanRevive() && card.HasRace(CardRace.Wyrm))))
+		{
+			Logger.DebugWriteLine("[Shaman] no target, skip");
+			return false;
+		}
+		List<ClientCard> list = new List<ClientCard>(monstersInExtraZone);
+		List<ClientCard> list2 = (from card in base.Bot.GetMonstersInMainZone()
+			where card.IsFaceup() && !card.HasType(CardType.Synchro) && card.HasRace(CardRace.Wyrm)
+			select card).ToList();
+		list2.Sort(CardContainer.CompareCardAttack);
+		list.AddRange(list2);
+		if (list.Count() >= 2)
+		{
+			base.AI.SelectMaterials(list.GetRange(0, 2));
+			return true;
+		}
+		return false;
+	}
+
+	public bool MonkOfTheTenyiSpSummon()
+	{
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card.IsFaceup() && !card.HasType((CardType)67117056) && card.HasSetcode(300)
+			select card).ToList();
+		if (list.Count() > 0)
+		{
+			list.Sort(CardContainer.CompareCardAttack);
+			base.AI.SelectMaterials(list);
+			return true;
+		}
+		return false;
+	}
+
+	public bool PsychicEndPunisherActivate()
+	{
+		if (base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2)
+		{
+			return true;
+		}
+		if (base.Bot.LifePoints <= 1500 || CheckWhetherNegated())
+		{
+			return false;
+		}
+		List<ClientCard> list = (from card in base.Bot.GetMonsters()
+			where card != base.Card && (card.IsFacedown() || card.GetDefensePower() <= 1000)
+			select card).ToList();
+		if (list.Count() == 0)
+		{
+			return false;
+		}
+		list.Sort(CardContainer.CompareCardAttack);
+		base.AI.SelectCard(list);
+		base.AI.SelectNextCard(GetNormalEnemyTargetList());
+		return true;
+	}
+
+	public bool SwordsoulSupremeSovereign_ChengyingActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(96633955, 0) || base.ActivateDescription == -1)
+		{
+			activatedCardIdList.Add(base.Card.Id);
+			List<ClientCard> list = base.Duel.CurrentChain.Where((ClientCard card) => card.Controller == 1 && card.Location == CardLocation.Grave).ToList();
+			list.AddRange(CheckDangerousCardinEnemyGrave());
+			if (list.Count() > 0)
+			{
+				Logger.DebugWriteLine("Chengying banish grave: " + list[0]?.Name);
+			}
+			List<ClientCard> normalEnemyTargetList = GetNormalEnemyTargetList();
+			if (normalEnemyTargetList.Count() > 0)
+			{
+				Logger.DebugWriteLine("Chengying banish field: " + normalEnemyTargetList[0]?.Name);
+			}
+			list.AddRange(normalEnemyTargetList);
+			base.AI.SelectCard(list);
+		}
+		else if (base.ActivateDescription == 96)
+		{
+			List<int> ids = new List<int>
+			{
+				24224830, 65681983, 10045474, 14558127, 23434538, 97268402, 32519092, 78917791, 69248256, 56495147,
+				93490856, 20001443
+			};
+			base.AI.SelectCard(ids);
+		}
+		else
+		{
+			Logger.DebugWriteLine("Chengying desc: " + base.ActivateDescription);
+		}
+		return true;
+	}
+
+	public bool BaronneDeFleurActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(84815190, 1))
+		{
+			if (CheckWhetherNegated() || !CheckLastChainShouldNegated())
+			{
+				return false;
+			}
+			if (base.Duel.LastChainPlayer == 1)
+			{
+				ClientCard lastChainCard = base.Util.GetLastChainCard();
+				if (CheckAtAdvantage() && lastChainCard.IsCode(23434538))
+				{
+					return false;
+				}
+				if (base.Duel.LastChainTargets.Contains(base.Card) && lastChainCard.IsCode(97268402, 10045474, 78474168))
+				{
+					return false;
+				}
+			}
+			CheckDeactiveFlag();
+			effectUsedBaronneDeFleurList.Add(base.Card);
+			return true;
+		}
+		if (base.Duel.Phase == DuelPhase.Standby)
+		{
+			if (effectUsedBaronneDeFleurList.Contains(base.Card) && !CheckWhetherNegated())
+			{
+				if (base.Duel.Player == 1)
+				{
+					if (!base.Bot.HasInMonstersZone(69248256) && base.Bot.HasInGraveyard(69248256))
+					{
+						base.AI.SelectCard(69248256);
+						return true;
+					}
+				}
+				else
+				{
+					if (GetProblematicEnemyCardList(canBeTarget: true, ignoreNormalSpell: true).Count() > 0)
+					{
+						return false;
+					}
+					if (CheckAtAdvantage() && base.Bot.ExtraDeck.Any((ClientCard card) => card.IsFacedown() && card.HasType(CardType.Synchro) && card.Level == 8))
+					{
+						if (base.Bot.HasInGraveyard(20001443) && SwordsoulOfMoYeEffectCheck() && CheckCalledbytheGrave(20001443) == 0)
+						{
+							base.AI.SelectCard(20001443);
+							return true;
+						}
+						if (CheckCalledbytheGrave(56495147) == 0)
+						{
+							ClientCard clientCard = base.Bot.Graveyard.FirstOrDefault((ClientCard card) => card.IsCode(56495147));
+							if (clientCard != null && SwordsoulOfTaiaEffectCheck(clientCard))
+							{
+								base.AI.SelectCard(56495147);
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			List<ClientCard> normalEnemyTargetList = GetNormalEnemyTargetList();
+			if (normalEnemyTargetList.Count() > 0)
+			{
+				base.AI.SelectCard(normalEnemyTargetList);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool SwordsoulSinisterSovereign_QixingLongyuanActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(47710198, 0))
+		{
+			return true;
+		}
+		if (base.ActivateDescription == -1 || base.ActivateDescription == base.Util.GetStringId(47710198, 1))
+		{
+			return true;
+		}
+		if (base.ActivateDescription == base.Util.GetStringId(47710198, 2))
+		{
+			ClientCard lastChainCard = base.Util.GetLastChainCard();
+			if (lastChainCard != null && lastChainCard.Controller == 1 && (DefaultOnBecomeTarget() | (base.Enemy.LifePoints <= 1200) | lastChainCard.HasType((CardType)17694720)))
+			{
+				return true;
+			}
+		}
+		else
+		{
+			Logger.DebugWriteLine("qixinglongyuan desc: " + base.ActivateDescription);
+		}
+		return false;
+	}
+
+	public bool AdamancipatorRisen_DragiteActivate()
+	{
+		if (base.ActivateDescription == -1 || base.ActivateDescription == base.Util.GetStringId(9464441, 0))
+		{
+			if (CheckWhetherNegated())
+			{
+				return false;
+			}
+			if (CheckRemainInDeck(27204311) > 0 && base.Enemy.GetMonsterCount() + base.Enemy.GetSpellCount() > 0)
+			{
+				base.AI.SelectCard(GetNormalEnemyTargetList(canBeTarget: false));
+				return true;
+			}
+			return false;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool DracoBerserkerOfTheTenyiActivate()
+	{
+		ClientCard lastChainCard = base.Util.GetLastChainCard();
+		if (lastChainCard != null && lastChainCard.IsCode(27204311) && lastChainCard.Controller == 1)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool SwordsoulGrandmaster_ChixiaoActivate()
+	{
+		if (base.ActivateDescription == base.Util.GetStringId(69248256, 1))
+		{
+			if (CheckWhetherNegated())
+			{
+				return false;
+			}
+			List<ClientCard> list = new List<ClientCard>();
+			List<ClientCard> monsterListForTargetNegate = GetMonsterListForTargetNegate(canBeMonsterTarget: true);
+			if (monsterListForTargetNegate.Count() > 0)
+			{
+				ClientCard item = monsterListForTargetNegate[0];
+				currentNegateMonsterList.Add(item);
+				list.AddRange(monsterListForTargetNegate);
+			}
+			if (base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2)
+			{
+				bool flag = base.Bot.GetMonsters().Any((ClientCard card) => card.IsAttack());
+				if (base.Duel.Player == 0 && flag)
+				{
+					list.AddRange((from card in base.Enemy.GetMonsters()
+						where card.IsFaceup() && card.IsMonsterDangerous()
+						select card).ToList());
+				}
+				if (base.Duel.Player == 1)
+				{
+					ClientCard battlingMonster = base.Enemy.BattlingMonster;
+					if (battlingMonster != null && battlingMonster.IsMonsterInvincible())
+					{
+						list.Add(battlingMonster);
+					}
+				}
+			}
+			if (base.Bot.HasInMonstersZone(96633955, notDisabled: true, hasXyzMaterial: false, faceUp: true) && !activatedCardIdList.Contains(96633955) && base.Enemy.Graveyard.Count() > 0 && (GetProblematicEnemyMonster() != null || (base.Duel.Phase == DuelPhase.End && base.Duel.Player == 1)))
+			{
+				bool flag2 = true;
+				List<ClientCard> list2 = (from card in base.Enemy.GetMonsters()
+					where card.IsFaceup() && card.HasType(CardType.Effect) && !card.IsShouldNotBeMonsterTarget() && card.IsShouldNotBeTarget()
+					select card).ToList();
+				if (list2.Count() == 0)
+				{
+					List<ClientCard> list3 = (from card in base.Bot.GetMonsters()
+						where card.IsFaceup() && card.HasType(CardType.Effect) && !card.IsDisabled() && card != base.Card && !card.IsCode(96633955)
+						select card).ToList();
+					if (list3.Count() == 0)
+					{
+						flag2 = false;
+					}
+					else
+					{
+						list3.Sort(CardContainer.CompareCardAttack);
+						list2.AddRange(list3);
+					}
+				}
+				else
+				{
+					list2.Sort(CardContainer.CompareCardAttack);
+					list2.Reverse();
+				}
+				if (flag2)
+				{
+					list.AddRange(list2);
+				}
+			}
+			if (list.Count() > 0)
+			{
+				List<ClientCard> list4 = base.Bot.Graveyard.Where((ClientCard card) => card.HasSetcode(363) || card.HasRace(CardRace.Wyrm)).ToList();
+				if (list4.Count() > 0)
+				{
+					bool flag3 = false;
+					ClientCard clientCard = list4.FirstOrDefault((ClientCard card) => card.IsCode(14821890));
+					if (base.Duel.Player == 0 && !activatedCardIdList.Contains(14821890) && clientCard != null)
+					{
+						base.AI.SelectCard(clientCard);
+						flag3 = true;
+					}
+					if (!flag3)
+					{
+						foreach (int checkId in new List<int> { 56465981, 56495147, 20001443, 93490856, 32519092, 98159737, 23431858, 87052196 })
+						{
+							List<ClientCard> list5 = list4.Where((ClientCard card) => card.IsCode(checkId)).ToList();
+							if (list5.Count() > 1)
+							{
+								base.AI.SelectCard(list5);
+								flag3 = true;
+								break;
+							}
+						}
+					}
+					if (!flag3)
+					{
+						foreach (int checkId2 in new List<int> { 56465981, 32519092, 78917791, 56495147, 93490856, 20001443, 98159737, 23431858, 87052196 })
+						{
+							List<ClientCard> list6 = list4.Where((ClientCard card) => card.IsCode(checkId2)).ToList();
+							if (list6.Count() > 0)
+							{
+								base.AI.SelectCard(list6);
+								flag3 = true;
+								break;
+							}
+						}
+					}
+					if (!flag3)
+					{
+						base.AI.SelectCard(ShuffleCardList(list4));
+					}
+				}
+				base.AI.SelectNextCard(list);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+		}
+		else
+		{
+			if (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+			{
+				if (CheckRemainInDeck(14821890) > 0)
+				{
+					base.AI.SelectCard(14821890);
+					activatedCardIdList.Add(base.Card.Id);
+					return true;
+				}
+				foreach (int item2 in new List<int> { 14821890, 20001443, 56495147, 56465981, 93490856 })
+				{
+					if (CheckRemainInDeck(item2) > 0 && !base.Bot.HasInHand(item2))
+					{
+						base.AI.SelectCard(item2);
+						activatedCardIdList.Add(base.Card.Id);
+						return true;
+					}
+				}
+			}
+			if (CheckAtAdvantage())
+			{
+				if (!activatedCardIdList.Contains(93490856) && !base.Bot.HasInHand(93490856) && SwordsoulOfMoYeEffectCheck() && CheckRemainInDeck(93490856) > 0)
+				{
+					base.AI.SelectCard(93490856);
+					activatedCardIdList.Add(base.Card.Id);
+					return true;
+				}
+				if (!activatedCardIdList.Contains(93490856) && base.Bot.HasInHand(93490856) && !activatedCardIdList.Contains(56495147) && !activatedCardIdList.Contains(93850690))
+				{
+					if (base.Bot.HasInHandOrInGraveyard(56495147) && !base.Bot.HasInHand(93850690) && CheckRemainInDeck(93850690) > 0)
+					{
+						base.AI.SelectCard(93850690);
+						activatedCardIdList.Add(base.Card.Id);
+						return true;
+					}
+					if (!base.Bot.HasInHandOrInGraveyard(56495147) && base.Bot.HasInHand(93850690) && CheckRemainInDeck(56495147) > 0)
+					{
+						base.AI.SelectCard(56495147);
+						activatedCardIdList.Add(base.Card.Id);
+						return true;
+					}
+				}
+			}
+			if (!base.Bot.HasInMonstersZone(20001444) && base.Bot.HasInMonstersZone(93490856) && base.Bot.HasInMonstersZone(93490856) && CheckRemainInDeck(14821890) > 0 && !activatedCardIdList.Contains(14821890))
+			{
+				Logger.DebugWriteLine("Chixiao banish blackout");
+				base.AI.SelectCard(14821890);
+				base.AI.SelectOption(1);
+				activatedCardIdList.Add(base.Card.Id);
+				return true;
+			}
+			if (CheckAtAdvantage())
+			{
+				foreach (int item3 in new List<int> { 14821890, 20001443, 56495147, 56465981, 93490856 })
+				{
+					if (CheckRemainInDeck(item3) > 0 && !base.Bot.HasInHand(item3))
+					{
+						base.AI.SelectCard(item3);
+						activatedCardIdList.Add(base.Card.Id);
+						return true;
+					}
+				}
+			}
+			foreach (int item4 in new List<int> { 14821890, 20001443, 56495147, 56465981, 93490856 })
+			{
+				if (CheckRemainInDeck(item4) > 0 && !base.Bot.HasInHand(item4))
+				{
+					base.AI.SelectCard(item4);
+					activatedCardIdList.Add(base.Card.Id);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool BaxiaBrightnessOfTheYangZingActivate()
+	{
+		Logger.DebugWriteLine("Baxia desc: " + base.ActivateDescription);
+		if (base.ActivateDescription == base.Util.GetStringId(83755611, 0))
+		{
+			List<ClientCard> normalEnemyTargetList = GetNormalEnemyTargetList();
+			if (normalEnemyTargetList.Count() > 0)
+			{
+				base.AI.SelectCard(normalEnemyTargetList);
+				activatedCardIdList.Add(base.Card.Id + 1);
+				return true;
+			}
+		}
+		else
+		{
+			List<ClientCard> spells = base.Bot.GetSpells();
+			spells.AddRange((from card in base.Bot.GetMonsters()
+				where card.IsFacedown() || card.Attack <= 1000
+				select card).ToList());
+			if (spells.Count() == 0)
+			{
+				return false;
+			}
+			bool flag = !activatedCardIdList.Contains(20001443) && CheckCalledbytheGrave(20001443) == 0 && SwordsoulOfMoYeEffectCheck();
+			bool flag2 = !activatedCardIdList.Contains(56495147) && CheckCalledbytheGrave(56495147) == 0 && SwordsoulOfTaiaEffectCheck();
+			if (flag && base.Bot.HasInGraveyard(20001443))
+			{
+				base.AI.SelectCard(spells);
+				base.AI.SelectNextCard(20001443);
+				activatedCardIdList.Add(base.Card.Id + 2);
+				return true;
+			}
+			if (flag2 && base.Bot.HasInGraveyard(56495147))
+			{
+				base.AI.SelectCard(spells);
+				base.AI.SelectNextCard(56495147);
+				activatedCardIdList.Add(base.Card.Id + 2);
+				return true;
+			}
+			if (base.Bot.HasInGraveyard(55273560))
+			{
+				if (!activatedCardIdList.Contains(55273560) && ((flag && CheckRemainInDeck(20001443) > 0) || (flag2 && CheckRemainInDeck(56495147) > 0)))
+				{
+					base.AI.SelectCard(spells);
+					base.AI.SelectNextCard(55273560);
+					activatedCardIdList.Add(base.Card.Id + 2);
+					return true;
+				}
+				if (base.Bot.GetMonsters().Any((ClientCard card) => card.IsFaceup() && !card.IsTuner() && card.Level == 4))
+				{
+					base.AI.SelectCard(spells);
+					base.AI.SelectNextCard(55273560);
+					activatedCardIdList.Add(base.Card.Id + 2);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool YaziEvilOfTheYangZingActivate()
+	{
+		if (base.Card.Location == CardLocation.Grave)
+		{
+			if (!activatedCardIdList.Contains(20001443) && CheckRemainInDeck(20001443) > 0 && CheckCalledbytheGrave(20001443) == 0 && SwordsoulOfMoYeEffectCheck())
+			{
+				base.AI.SelectCard(20001443);
+				return true;
+			}
+			if (!activatedCardIdList.Contains(56495147) && CheckRemainInDeck(56495147) > 0 && CheckCalledbytheGrave(56495147) == 0)
+			{
+				base.AI.SelectCard(56495147);
+				return true;
+			}
+			if (base.Bot.HasInMonstersZone(20001444))
+			{
+				foreach (int item in new List<int> { 93490856, 20001443, 56495147 })
+				{
+					if (CheckRemainInDeck(item) > 0)
+					{
+						base.AI.SelectCard(item);
+						return true;
+					}
+				}
+			}
+			foreach (int item2 in new List<int> { 87052196, 23431858, 98159737, 93490856, 20001443, 56495147 })
+			{
+				if (CheckRemainInDeck(item2) > 0)
+				{
+					base.AI.SelectCard(item2);
+					return true;
+				}
+			}
+			return false;
+		}
+		if (CheckWhetherNegated())
+		{
+			return false;
+		}
+		bool flag = false;
+		if (!activatedCardIdList.Contains(20001443) && CheckRemainInDeck(20001443) > 0 && CheckCalledbytheGrave(20001443) == 0 && SwordsoulOfMoYeEffectCheck())
+		{
+			flag = true;
+		}
+		if (!activatedCardIdList.Contains(56495147) && CheckRemainInDeck(56495147) > 0 && CheckCalledbytheGrave(56495147) == 0)
+		{
+			flag = true;
+		}
+		if (flag)
+		{
+			base.AI.SelectCard(base.Card);
+		}
+		else
+		{
+			List<ClientCard> list = (from card in base.Bot.GetMonsters()
+				where card.IsFaceup() && card.HasSetcode(158)
+				select card).ToList();
+			list.Sort(CardContainer.CompareCardAttack);
+			base.AI.SelectCard(list);
+		}
+		base.AI.SelectNextCard(GetNormalEnemyTargetList());
+		return true;
+	}
+
+	public bool ShamanOfTheTenyiActivate()
+	{
+		if (base.Duel.Phase > DuelPhase.Main1 && base.Duel.Phase < DuelPhase.Main2)
+		{
+			base.AI.SelectCard(GetNormalEnemyTargetList());
+			return true;
+		}
+		if (CheckAtAdvantage() && enemyActivateMaxxC && base.Util.IsTurn1OrMain2())
+		{
+			return false;
+		}
+		bool flag = base.Bot.HasInGraveyard(20001443) && CheckCalledbytheGrave(20001443) == 0 && !activatedCardIdList.Contains(20001443);
+		bool flag2 = base.Bot.HasInHandOrInGraveyard(56495147) && CheckCalledbytheGrave(56495147) == 0 && !activatedCardIdList.Contains(56495147);
+		bool useTaia = !base.Bot.HasInGraveyard(56495147) && base.Bot.HasInHand(56495147);
+		List<ClientCard> list = (from card in base.Bot.GetGraveyardMonsters()
+			where card.IsCanRevive() && card.HasRace(CardRace.Wyrm)
+			select card).ToList();
+		list.Sort(CardContainer.CompareCardAttack);
+		list.Reverse();
+		if (CheckAtAdvantage())
+		{
+			if (base.Duel.Turn > 1 && base.Enemy.GetMonsterCount() == 0)
+			{
+				int currentAttack = base.Util.GetTotalAttackingMonsterAttack(0);
+				if (currentAttack < base.Enemy.LifePoints)
+				{
+					List<ClientCard> list2 = list.Where((ClientCard card) => card.Attack + currentAttack >= base.Enemy.LifePoints).ToList();
+					if (list2.Count() > 0)
+					{
+						SelectDiscardForShamanOfTheTenyi(useTaia);
+						base.AI.SelectNextCard(list2);
+						return true;
+					}
+				}
+			}
+			if (flag)
+			{
+				SelectDiscardForShamanOfTheTenyi();
+				base.AI.SelectNextCard(20001443);
+				return true;
+			}
+			if (flag2)
+			{
+				SelectDiscardForShamanOfTheTenyi(useTaia);
+				base.AI.SelectNextCard(56495147);
+				return true;
+			}
+			SelectDiscardForShamanOfTheTenyi();
+			base.AI.SelectNextCard(list);
+			return true;
+		}
+		List<ClientCard> list3 = list.Where((ClientCard card) => card.HasType(CardType.Synchro)).ToList();
+		if (list3.Count() > 0)
+		{
+			SelectDiscardForShamanOfTheTenyi();
+			base.AI.SelectNextCard(list3);
+			return true;
+		}
+		if (flag)
+		{
+			SelectDiscardForShamanOfTheTenyi();
+			base.AI.SelectNextCard(20001443);
+			return true;
+		}
+		if (flag2)
+		{
+			SelectDiscardForShamanOfTheTenyi(useTaia);
+			base.AI.SelectNextCard(56495147);
+			return true;
+		}
+		return false;
+	}
+
+	public void SelectDiscardForShamanOfTheTenyi(bool useTaia = false)
+	{
+		if (useTaia)
+		{
+			base.AI.SelectCard(56495147);
+			return;
+		}
+		foreach (int item in new List<int> { 23431858, 87052196, 98159737 })
+		{
+			if (base.Bot.HasInHand(item))
+			{
+				base.AI.SelectCard(item);
+				return;
+			}
+		}
+		foreach (ClientCard hand in base.Bot.Hand)
+		{
+			if (base.Bot.Hand.Where((ClientCard card) => card.IsCode(hand.Id)).Count() > 1)
+			{
+				base.AI.SelectCard(hand);
+				return;
+			}
+		}
+		foreach (int item2 in new List<int>
+		{
+			65681983, 35261759, 87052196, 23431858, 98159737, 27204311, 93850690, 55273560, 10045474, 24224830,
+			56495147, 20001443, 93490856, 14558127, 23434538, 97268402, 56465981, 14821890
+		})
+		{
+			if (base.Bot.HasInHand(item2))
+			{
+				base.AI.SelectCard(item2);
+				break;
+			}
+		}
+	}
+
+	public bool SpellSetCheck()
+	{
+		if (base.Duel.Phase == DuelPhase.Main1 && base.Bot.HasAttackingMonster() && base.Duel.Turn > 1)
+		{
+			return false;
+		}
+		if (new List<int> { 14821890 }.Contains(base.Card.Id) && base.Bot.HasInSpellZone(base.Card.Id))
+		{
+			return false;
+		}
+		if (base.Card.IsTrap() || base.Card.HasType(CardType.QuickPlay))
+		{
+			List<int> list = new List<int>();
+			int num = 0;
+			for (int i = 0; i < 5; i++)
+			{
+				if (base.Enemy.SpellZone[i] != null && base.Enemy.SpellZone[i].IsFaceup() && base.Bot.SpellZone[4 - i] == null)
+				{
+					list.Add(4 - i);
+					num += (int)Math.Pow(2.0, 4 - i);
+				}
+			}
+			if (base.Bot.HasInHand(10045474))
+			{
+				if (base.Card.IsCode(10045474))
+				{
+					base.AI.SelectPlace(num);
+					return true;
+				}
+				SelectSTPlace(base.Card, avoidImpermanence: false, list);
+				return true;
+			}
+			SelectSTPlace();
+			return true;
+		}
+		if ((base.Enemy.HasInSpellZone(58921041, notDisabled: true) || base.Bot.HasInSpellZone(58921041, notDisabled: true)) && base.Card.IsSpell() && !base.Bot.HasInSpellZone(base.Card.Id))
+		{
+			SelectSTPlace();
+			return true;
+		}
+		return false;
+	}
+
+	protected override bool DefaultSetForDiabellze()
+	{
+		if (base.DefaultSetForDiabellze())
+		{
+			SelectSTPlace(null, avoidImpermanence: true);
+			return true;
+		}
+		return false;
+	}
 }

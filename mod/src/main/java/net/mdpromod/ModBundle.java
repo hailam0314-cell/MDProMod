@@ -8,46 +8,25 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * 包内资源（卡图 / 立绘 / 召唤特效 / 决斗宿主运行时）的首次解包。
- *
- * <p>打包时这些文件被塞进 jar 的 {@code data/mdpromod/bundle/}（清单见同目录的
- * {@code manifest.txt}：每行 {@code 相对路径<TAB>字节数}）。启动时在后台线程把它们解到
- * {@code <游戏目录>/mdpromod/}，玩家就不需要另外装 MDPro3、也不需要外置资源目录。
- *
- * <p>解包是**幂等**的：目标文件已存在且字节数对得上就跳过，所以升级模组只会补差异，
- * 中断了再启动一次也会接着补齐。文件被误删也会自动补回来。
- *
- * <p>这里刻意不引用任何 Minecraft 类型：离线测试可以直接对着 jar 跑。
- */
 final class ModBundle {
-    /** jar 内的资源根目录。 */
     static final String RESOURCE_ROOT = "data/mdpromod/bundle";
-    private static final String MANIFEST = "/" + RESOURCE_ROOT + "/manifest.txt";
-    /** 只有客户端用得上的目录；其余（宿主运行时）单机和服务器都要。 */
+    private static final String MANIFEST = "/data/mdpromod/bundle/manifest.txt";
+    private static final String STAMP = ".bundle-stamp";
     private static final Set<String> CLIENT_ONLY = Set.of("art/", "closeup/", "summonfx/", "summonmesh/");
-
-    enum State {
-        /** 还没解包（或这个构建没带资源）。 */
-        IDLE,
-        RUNNING,
-        DONE,
-        FAILED
-    }
-
-    /** 清单里的一条：相对路径 + 字节数。 */
-    private record Entry(String path, long size) {
-    }
-
     private static final Object LOCK = new Object();
-    private static volatile State state = State.IDLE;
+    private static volatile ModBundle.State state = ModBundle.State.IDLE;
     private static volatile String detail = "";
     private static volatile long startedAt;
     private static volatile Boolean bundled;
@@ -59,17 +38,17 @@ final class ModBundle {
     private ModBundle() {
     }
 
-    /** 这个构建里有没有带资源包（开发环境跑 runClient 时没有，那时直接用外置目录）。 */
     static boolean bundled() {
         Boolean known = bundled;
         if (known == null) {
-            known = ModBundle.class.getResource(MANIFEST) != null;
+            known = ModBundle.class.getResource("/data/mdpromod/bundle/manifest.txt") != null;
             bundled = known;
         }
+
         return known;
     }
 
-    static State state() {
+    static ModBundle.State state() {
         return state;
     }
 
@@ -77,14 +56,15 @@ final class ModBundle {
         return detail;
     }
 
-    /** 宿主和卡图能不能用了：解包完成，或者这个构建根本没带资源（用外置目录）。 */
     static boolean ready() {
-        return state == State.DONE || state == State.IDLE && !bundled();
+        return state == ModBundle.State.DONE || state == ModBundle.State.IDLE && !bundled();
     }
 
-    /** 人话进度，给日志和界面用；没在解包时返回空串。 */
     static String progressText() {
-        if (state != State.RUNNING) return "";
+        if (state != ModBundle.State.RUNNING) {
+            return "";
+        }
+
         int files = doneFiles.get();
         int total = allFiles.get();
         double mb = doneBytes.get() / 1024.0 / 1024.0;
@@ -92,113 +72,286 @@ final class ModBundle {
         return String.format(Locale.ROOT, "%d/%d 个文件（%.0f/%.0f MB）", files, total, mb, totalMb);
     }
 
-    /**
-     * 开始解包（重复调用只生效一次）。
-     *
-     * @param client   客户端要多解一套卡图/立绘/特效；专用服务器只解宿主运行时
-     * @param dataRoot 目标目录（{@code <游戏目录>/mdpromod}）；null 表示不在游戏里，直接不管
-     */
     static void start(boolean client, Path dataRoot) {
-        if (dataRoot == null) return;
-        synchronized (LOCK) {
-            if (state != State.IDLE) return;
-            if (!bundled()) {
-                state = State.DONE;
-                detail = "这个构建没带包内资源";
-                return;
+        if (dataRoot != null) {
+            synchronized (LOCK) {
+                if (state != ModBundle.State.IDLE) {
+                    return;
+                }
+
+                if (!bundled()) {
+                    state = ModBundle.State.DONE;
+                    detail = "这个构建没带包内资源";
+                    return;
+                }
+
+                state = ModBundle.State.RUNNING;
             }
-            state = State.RUNNING;
+
+            Thread worker = new Thread(() -> run(client, dataRoot), "mdpromod-unpack");
+            worker.setDaemon(true);
+            worker.start();
         }
-        Thread worker = new Thread(() -> run(client, dataRoot), "mdpromod-unpack");
-        worker.setDaemon(true);
-        worker.start();
     }
 
-    /** 自检用：把状态清回 IDLE，好让同一个进程里再解一遍（生产代码不调用）。 */
     static synchronized void resetForTest() {
-        if (state == State.RUNNING) throw new IllegalStateException("还在解包，别重置");
-        state = State.IDLE;
+        if (state == ModBundle.State.RUNNING) {
+            throw new IllegalStateException("还在解包，别重置");
+        }
+
+        state = ModBundle.State.IDLE;
         detail = "";
         doneFiles.set(0);
-        doneBytes.set(0);
+        doneBytes.set(0L);
     }
 
     private static void run(boolean client, Path dataRoot) {
         startedAt = System.currentTimeMillis();
+
         try {
-            List<Entry> entries = readManifest(client);
-            long totalBytes = 0;
-            for (Entry entry : entries) totalBytes += entry.size;
+            List<ModBundle.Entry> entries = readManifest(client);
+            String digest = manifestDigest();
+            ModBundle.StampFile previous = readStamp(dataRoot);
+            boolean fast = !digest.isEmpty() && digest.equals(previous.digest());
+            long totalBytes = 0L;
+
+            for (ModBundle.Entry entry : entries) {
+                totalBytes += entry.size;
+            }
+
             allFiles.set(entries.size());
             allBytes.set(totalBytes);
-            ModLog.info("开始解包资源：{} 个文件 / {} MB → {}", entries.size(),
-                    Math.round(totalBytes / 1024.0 / 1024.0), dataRoot);
+            ModLog.info("开始校验资源：{} 个文件 / {} MB → {}（{}）", entries.size(), Math.round(totalBytes / 1024.0 / 1024.0), dataRoot, fast ? "清单未变，只查改动" : "清单变了，逐文件核对");
             Files.createDirectories(dataRoot);
-
             int copied = 0;
             int skipped = 0;
-            for (Entry entry : entries) {
+
+            for (ModBundle.Entry entry : entries) {
                 Path target = dataRoot.resolve(entry.path);
-                if (Files.isRegularFile(target) && Files.size(target) == entry.size) {
+                boolean unchanged = false;
+                if (fast) {
+                    ModBundle.Stamp stamp = previous.files().get(entry.path);
+                    if (stamp != null
+                        && stamp.size() == entry.size
+                        && Files.isRegularFile(target)
+                        && Files.size(target) == entry.size
+                        && Files.getLastModifiedTime(target).toMillis() == stamp.modified()) {
+                        unchanged = true;
+                    }
+                }
+
+                if (!unchanged && matches(target, entry.size, entry.sha256)) {
+                    unchanged = true;
+                }
+
+                if (unchanged) {
                     skipped++;
                 } else {
                     copy(entry, target);
                     copied++;
                 }
+
                 doneFiles.incrementAndGet();
                 doneBytes.addAndGet(entry.size);
             }
-            long seconds = (System.currentTimeMillis() - startedAt) / 1000;
+
+            writeStamp(dataRoot, digest, entries);
+            long seconds = (System.currentTimeMillis() - startedAt) / 1000L;
             detail = String.format(Locale.ROOT, "复制 %d 个、跳过 %d 个", copied, skipped);
-            state = State.DONE;
-            ModLog.info("资源解包完成：{}（用时 {} 秒）→ {}", detail, seconds, dataRoot);
+            state = ModBundle.State.DONE;
+            ModLog.info("资源校验完成：{}（用时 {} 秒）→ {}", detail, seconds, dataRoot);
         } catch (Throwable error) {
-            state = State.FAILED;
+            state = ModBundle.State.FAILED;
             detail = String.valueOf(error);
             ModLog.warn("资源解包失败：{}（目标目录 {}）", error, dataRoot);
         }
     }
 
-    private static void copy(Entry entry, Path target) throws IOException {
-        try (InputStream in = ModBundle.class.getResourceAsStream("/" + RESOURCE_ROOT + "/" + entry.path)) {
-            if (in == null) throw new IOException("包里没有 " + entry.path);
+    private static String manifestDigest() throws IOException {
+        try (InputStream in = ModBundle.class.getResourceAsStream("/data/mdpromod/bundle/manifest.txt")) {
+            if (in == null) {
+                return "";
+            }
+
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] buffer = new byte[65536];
+
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read);
+                }
+
+                return HexFormat.of().formatHex(digest.digest());
+            } catch (NoSuchAlgorithmException ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+    }
+
+    private static ModBundle.StampFile readStamp(Path dataRoot) {
+        Path path = dataRoot.resolve(".bundle-stamp");
+        if (!Files.isRegularFile(path)) {
+            return new ModBundle.StampFile("", Map.of());
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) {
+                return new ModBundle.StampFile("", Map.of());
+            }
+
+            Map<String, ModBundle.Stamp> files = new HashMap<>();
+
+            for (int i = 1; i < lines.size(); i++) {
+                String[] columns = lines.get(i).split("\t", -1);
+                if (columns.length >= 3) {
+                    try {
+                        files.put(columns[0], new ModBundle.Stamp(Long.parseLong(columns[1]), Long.parseLong(columns[2])));
+                    } catch (NumberFormatException var7) {
+                    }
+                }
+            }
+
+            return new ModBundle.StampFile(lines.get(0).trim(), files);
+        } catch (IOException ex) {
+            ModLog.warn("读资源快照失败，改为逐文件核对：{}", ex.toString());
+            return new ModBundle.StampFile("", Map.of());
+        }
+    }
+
+    private static void writeStamp(Path dataRoot, String digest, List<ModBundle.Entry> entries) {
+        if (!digest.isEmpty()) {
+            Path path = dataRoot.resolve(".bundle-stamp");
+            StringBuilder text = new StringBuilder(digest).append('\n');
+
+            for (ModBundle.Entry entry : entries) {
+                Path target = dataRoot.resolve(entry.path);
+
+                try {
+                    if (Files.isRegularFile(target) && Files.size(target) == entry.size) {
+                        text.append(entry.path).append('\t').append(entry.size).append('\t').append(Files.getLastModifiedTime(target).toMillis()).append('\n');
+                    }
+                } catch (IOException var10) {
+                }
+            }
+
+            try {
+                Path temporary = dataRoot.resolve(".bundle-stamp.part");
+                Files.writeString(temporary, text, StandardCharsets.UTF_8);
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                ModLog.warn("写资源快照失败（下次会重新核对）：{}", ex.toString());
+            }
+        }
+    }
+
+    private static void copy(ModBundle.Entry entry, Path target) throws IOException {
+        try (InputStream in = ModBundle.class.getResourceAsStream("/data/mdpromod/bundle/" + entry.path)) {
+            if (in == null) {
+                throw new IOException("包里没有 " + entry.path);
+            }
+
             Path parent = target.getParent();
-            if (parent != null) Files.createDirectories(parent);
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+
             Path temporary = parent == null ? target : parent.resolve(target.getFileName() + ".part");
             Files.copy(in, temporary, StandardCopyOption.REPLACE_EXISTING);
             Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
-    private static List<Entry> readManifest(boolean client) throws IOException {
-        List<Entry> entries = new ArrayList<>();
-        try (InputStream raw = ModBundle.class.getResourceAsStream(MANIFEST)) {
-            if (raw == null) throw new IOException("包里没有 " + MANIFEST);
+    private static List<ModBundle.Entry> readManifest(boolean client) throws IOException {
+        List<ModBundle.Entry> entries = new ArrayList<>();
+
+        try (InputStream raw = ModBundle.class.getResourceAsStream("/data/mdpromod/bundle/manifest.txt")) {
+            if (raw == null) {
+                throw new IOException("包里没有 /data/mdpromod/bundle/manifest.txt");
+            }
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(raw, StandardCharsets.UTF_8));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String text = line.trim();
-                if (text.isEmpty() || text.startsWith("#")) continue;
-                int tab = text.lastIndexOf('\t');
-                if (tab <= 0) continue;
-                String path = text.substring(0, tab).trim();
+
+            while (true) {
+                String[] columns;
+                String path;
                 long size;
-                try {
-                    size = Long.parseLong(text.substring(tab + 1).trim());
-                } catch (NumberFormatException ignored) {
-                    continue;
+                while (true) {
+                    String line;
+                    if ((line = reader.readLine()) == null) {
+                        return entries;
+                    }
+
+                    String text = line.trim();
+                    if (!text.isEmpty() && !text.startsWith("#")) {
+                        columns = text.split("\t", -1);
+                        if (columns.length >= 2) {
+                            path = columns[0].trim();
+
+                            try {
+                                size = Long.parseLong(columns[1].trim());
+                                break;
+                            } catch (NumberFormatException ignored) {
+                            }
+                        }
+                    }
                 }
-                if (!client && isClientOnly(path)) continue;
-                entries.add(new Entry(path, size));
+
+                if (client || !isClientOnly(path)) {
+                    entries.add(new ModBundle.Entry(path, size, columns.length >= 3 ? columns[2].trim() : ""));
+                }
             }
         }
-        return entries;
     }
 
     private static boolean isClientOnly(String path) {
         for (String prefix : CLIENT_ONLY) {
-            if (path.startsWith(prefix)) return true;
+            if (path.startsWith(prefix)) {
+                return true;
+            }
         }
+
         return false;
+    }
+
+    static boolean matches(Path file, long size, String sha256) throws IOException {
+        if (!Files.isRegularFile(file) || Files.size(file) != size) {
+            return false;
+        }
+
+        if (sha256 != null && !sha256.isEmpty()) {
+            try (InputStream in = Files.newInputStream(file)) {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] buffer = new byte[65536];
+
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, read);
+                }
+
+                return HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(sha256);
+            } catch (NoSuchAlgorithmException ex) {
+                throw new IllegalStateException(ex);
+            }
+        } else {
+            return true;
+        }
+    }
+
+    private record Entry(String path, long size, String sha256) {
+    }
+
+    private record Stamp(long size, long modified) {
+    }
+
+    private record StampFile(String digest, Map<String, ModBundle.Stamp> files) {
+    }
+
+    enum State {
+        IDLE,
+        RUNNING,
+        DONE,
+        FAILED;
     }
 }

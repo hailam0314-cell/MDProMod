@@ -1,38 +1,32 @@
 package net.mdpromod;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.IntStream;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 卡堆界面（MC 弹窗风格）：**所有卡都在一页里**，滚轮上下翻看；
- * 现在能特殊召唤 / 能发动的卡排在**最前面**，并描一圈金框；下面固定两个按钮：
- * 「特殊召唤」（或「发动」）和「关闭」。
- *
- * <p>操作：左键点一张卡选中它（白框，选中能召唤的卡时下面那个按钮才可按），再按「特殊召唤」；
- * 右键点卡看大图（卡面 + 效果文本）。以前是分页网格 + 一行最多三个动作按钮，
- * 第 4 张之后根本点不到，所以改成现在这样。
- */
 public class PileScreen extends Screen {
-    private static final int GAP = 4;
-    /** 标题条 / 提示行 / 底部工具条的高度。 */
+    private static final int GAP = 18;
+    private static final int CARD_MARGIN = 8;
+    private static final int ACTIVATE_FRAME = -10662;
+    private static final int SUMMON_FRAME = -7019521;
+    private static final int FRAME_SHADOW = -14405315;
     private static final int TITLE_H = 22;
-    private static final int HINT_H = 14;
+    private static final int HINT_H = 28;
     private static final int FOOTER_H = 30;
     private static final int BUTTON_H = 20;
-
     private final int location;
-    /** 能召唤/发动的卡：序号（= 在卡堆里的位置）与卡号。 */
-    private final int[] actionSeqs;
-    private final int[] actionCodes;
-    /** 排序后的全部卡（能召唤的在前）：序号与卡号一一对应。 */
+    private final int[] activateSeqs;
+    private final int[] summonSeqs;
     private final int[] codes;
     private final int[] seqs;
-
+    private final int hidden;
     private int selectedSeq = -1;
     private int scroll;
     private int cols = 6;
@@ -46,301 +40,394 @@ public class PileScreen extends Screen {
     private int listTop;
     private int listW;
     private int listH;
-    private Button actionButton;
+    private Button activateButton;
+    private Button summonButton;
+    private int actionsLeft;
+    private final UUID sourceField;
 
-    public PileScreen(int location, int[] actionSeqs, int[] actionCodes, int[] allCodes) {
+    public PileScreen(int location, int[] activateSeqs, int[] activateCodes, int[] summonSeqs, int[] summonCodes, int[] allCodes, int hidden) {
+        this(location, activateSeqs, activateCodes, summonSeqs, summonCodes, allCodes, hidden, null);
+    }
+
+    public PileScreen(int location, int[] activateSeqs, int[] activateCodes, int[] summonSeqs, int[] summonCodes, int[] allCodes, int hidden, UUID fieldId) {
         super(Component.literal(title(location)));
+        this.sourceField = fieldId;
         this.location = location;
-        this.actionSeqs = actionSeqs == null ? new int[0] : actionSeqs;
-        this.actionCodes = actionCodes == null ? new int[0] : actionCodes;
-        List<PileOrder.Entry> entries = PileOrder.sorted(this.actionSeqs, this.actionCodes, allCodes);
-        this.seqs = new int[entries.size()];
-        this.codes = new int[entries.size()];
+        this.activateSeqs = activateSeqs == null ? new int[0] : activateSeqs;
+        this.summonSeqs = summonSeqs == null ? new int[0] : summonSeqs;
+        int[] actionSeqs = IntStream.concat(Arrays.stream(this.activateSeqs), Arrays.stream(this.summonSeqs)).toArray();
+        int[] actionCodes = IntStream.concat(
+                Arrays.stream(activateCodes == null ? new int[0] : activateCodes), Arrays.stream(summonCodes == null ? new int[0] : summonCodes)
+            )
+            .toArray();
+        List<PileOrder.Entry> entries = PileOrder.sorted(actionSeqs, actionCodes, allCodes);
+        this.hidden = Math.max(0, hidden);
+        this.seqs = new int[entries.size() + this.hidden];
+        this.codes = new int[entries.size() + this.hidden];
+
         for (int i = 0; i < entries.size(); i++) {
             this.seqs[i] = entries.get(i).sequence();
             this.codes[i] = entries.get(i).code();
+        }
+
+        for (int i = 0; i < this.hidden; i++) {
+            this.seqs[entries.size() + i] = -1;
+            this.codes[entries.size() + i] = 0;
         }
     }
 
     private static String title(int location) {
         return switch (location) {
-            case 64 -> "额外卡组";
             case 16 -> "墓地";
+            case 64 -> "额外卡组";
             default -> "除外区";
         };
     }
 
-    /** 额外卡组是「特殊召唤」，墓地 / 除外是「发动」。 */
     private String verb() {
-        return location == 64 ? "特殊召唤" : "发动";
+        return this.location == 64 ? "特殊召唤" : "操作";
     }
 
     private static String name(int code) {
-        return McPanel.displayName(code);
+        return code <= 0 ? "里侧卡片" : McPanel.displayName(code);
     }
 
-    /** 第 index 张（排序后的下标）现在能不能动。 */
     private boolean actionable(int index) {
-        return actionSeq(index) >= 0;
+        return this.actionSeq(index) >= 0;
     }
 
-    /** 第 index 张对应的动作序号；不能动就返回 -1。 */
     private int actionSeq(int index) {
-        int sequence = seqs[index];
-        for (int i = 0; i < actionSeqs.length; i++) {
-            if (actionSeqs[i] == sequence) return sequence;
-        }
-        return -1;
+        int sequence = this.seqs[index];
+        return !this.actionAvailable(this.activateSeqs, sequence) && !this.actionAvailable(this.summonSeqs, sequence) ? -1 : sequence;
     }
 
     private int totalRows() {
-        return Math.max(1, (codes.length + cols - 1) / cols);
+        return Math.max(1, (this.codes.length + this.cols - 1) / this.cols);
     }
 
     private int maxScroll() {
-        return Math.max(0, totalRows() - Math.max(1, visibleRows));
+        return Math.max(0, this.totalRows() - Math.max(1, this.visibleRows));
     }
 
     private int cardX(int index) {
-        return listLeft + (index % cols) * (McPanel.CARD_W + GAP);
+        return this.listLeft + 8 + index % this.cols * 72;
     }
 
     private int cardY(int index) {
-        return listTop + (index / cols - scroll) * (McPanel.CARD_H + GAP);
+        return this.listTop + 8 + (index / this.cols - this.scroll) * 96;
     }
 
-    /** 鼠标下面是第几张（没落在卡上返回 -1）。 */
     private int cardAt(double mouseX, double mouseY) {
-        for (int i = 0; i < codes.length; i++) {
-            int y = cardY(i);
-            if (y < listTop || y + McPanel.CARD_H > listTop + listH) continue;
-            if (McPanel.inside(mouseX, mouseY, cardX(i), y, McPanel.CARD_W, McPanel.CARD_H)) return i;
+        for (int i = 0; i < this.codes.length; i++) {
+            int y = this.cardY(i);
+            if (y >= this.listTop && y + 78 <= this.listTop + this.listH && McPanel.inside(mouseX, mouseY, this.cardX(i), y, 54, 78)) {
+                return i;
+            }
         }
+
         return -1;
     }
 
-    /** 选中的那张能不能召唤：不能就禁用下面那个按钮。 */
     private void refreshActionButton() {
-        if (actionButton == null) return;
-        actionButton.active = selectedSeq >= 0 && actionAvailable(selectedSeq);
+        if (this.activateButton != null) {
+            this.activateButton.active = this.actionAvailable(this.activateSeqs, this.selectedSeq);
+        }
+
+        if (this.summonButton != null) {
+            this.summonButton.active = this.actionAvailable(this.summonSeqs, this.selectedSeq);
+        }
     }
 
-    private boolean actionAvailable(int sequence) {
-        for (int value : actionSeqs) {
-            if (value == sequence) return true;
+    private boolean actionAvailable(int[] candidates, int sequence) {
+        if (sequence < 0) {
+            return false;
         }
+
+        for (int value : candidates) {
+            if (value == sequence) {
+                return true;
+            }
+        }
+
         return false;
     }
 
-    private void summon() {
-        if (selectedSeq < 0 || !actionAvailable(selectedSeq)) return;
-        ClientDuelAudio.playUi("SE_DUEL_DECIDE");
-        ModNetwork.sendToServer(new ModNetwork.PileAct(location, selectedSeq));
-        onClose();
+    public boolean canReturnFromCard() {
+        if (this.minecraft != null && this.minecraft.level != null && this.minecraft.player != null && this.codes.length != 0) {
+            for (DuelFieldEntity field : this.minecraft.level.getEntitiesOfClass(DuelFieldEntity.class, this.minecraft.player.getBoundingBox().inflate(48.0))) {
+                if (field.getUUID().equals(this.sourceField) && field.isGameStarted() && !field.hasResult()) {
+                    return true;
+                }
+            }
+
+            return false;
+        } else {
+            return false;
+        }
     }
 
-    @Override
+    private void performAction(boolean summon) {
+        if (this.actionAvailable(summon ? this.summonSeqs : this.activateSeqs, this.selectedSeq)) {
+            ClientDuelAudio.playUi("SE_DUEL_DECIDE");
+            ModNetwork.sendToServer(new ModNetwork.PileAct(this.location, this.selectedSeq, summon));
+            this.onClose();
+        }
+    }
+
     protected void init() {
-        panelW = Math.min(Math.max(this.width - 24, 340), 640);
-        panelH = Math.min(Math.max(this.height - 24, 220), 430);
-        panelLeft = (this.width - panelW) / 2;
-        panelTop = (this.height - panelH) / 2;
-        hintTop = panelTop + TITLE_H;
-        listLeft = panelLeft + 10;
-        listW = panelW - 20 - 8;                 // 右边留一条滚动条
-        listTop = hintTop + HINT_H + 4;
-        listH = panelTop + panelH - FOOTER_H - listTop;
-        cols = Math.max(3, (listW + GAP) / (McPanel.CARD_W + GAP));
-        visibleRows = Math.max(1, (listH + GAP) / (McPanel.CARD_H + GAP));
-        scroll = Math.min(scroll, maxScroll());
+        this.panelW = Math.min(Math.max(this.width - 24, 340), 640);
+        this.panelH = Math.min(Math.max(this.height - 24, 220), 430);
+        this.panelLeft = (this.width - this.panelW) / 2;
+        this.panelTop = (this.height - this.panelH) / 2;
+        this.hintTop = this.panelTop + 22;
+        this.listLeft = this.panelLeft + 10;
+        this.listW = this.panelW - 20 - 8;
+        this.listTop = this.hintTop + 28 + 4;
+        this.listH = this.panelTop + this.panelH - 30 - this.listTop;
+        this.cols = Math.max(3, (this.listW - 16 + 18) / 72);
+        this.visibleRows = Math.max(1, (this.listH - 16 + 18) / 96);
+        this.scroll = Math.min(this.scroll, this.maxScroll());
+        int bottom = this.panelTop + this.panelH - 20 - 6;
+        int right = this.panelLeft + this.panelW - 10;
+        this.addRenderableWidget(Button.builder(Component.literal("关闭"), button -> this.onClose()).bounds(right - 70, bottom, 70, 20).build());
+        this.actionsLeft = right - 70 - 8 - 80;
+        this.summonButton = (Button)this.addRenderableWidget(
+            Button.builder(Component.literal(this.location == 64 ? "特殊召唤" : "召唤"), button -> this.performAction(true))
+                .bounds(this.actionsLeft, bottom, 80, 20)
+                .build()
+        );
+        this.activateButton = null;
+        if (this.location != 64) {
+            this.actionsLeft -= 88;
+            this.activateButton = (Button)this.addRenderableWidget(
+                Button.builder(Component.literal("发动"), button -> this.performAction(false)).bounds(this.actionsLeft, bottom, 80, 20).build()
+            );
+        }
 
-        // 工具条在底部右侧：主按钮在左、关闭在最右
-        int bottom = panelTop + panelH - BUTTON_H - 6;
-        int right = panelLeft + panelW - 10;
-        addRenderableWidget(Button.builder(Component.literal("关闭"), button -> onClose())
-                .bounds(right - 70, bottom, 70, BUTTON_H).build());
-        actionButton = addRenderableWidget(Button.builder(
-                        Component.literal(verb()), button -> summon())
-                .bounds(right - 70 - 8 - 110, bottom, 110, BUTTON_H).build());
-        refreshActionButton();
+        this.refreshActionButton();
     }
 
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        McPanel.panel(graphics, panelLeft, panelTop, panelLeft + panelW, panelTop + panelH);
+        this.renderBackground(graphics);
+        McPanel.panel(graphics, this.panelLeft, this.panelTop, this.panelLeft + this.panelW, this.panelTop + this.panelH);
         int ready = 0;
-        for (int i = 0; i < codes.length; i++) if (actionable(i)) ready++;
-        drawTitleBar(graphics, ready);
-        String hint = "滚轮翻看 · 左键选中 · 右键看大图";
-        graphics.drawString(font, hint, listLeft, hintTop + 2, 0x707070, false);
-        if (selectedSeq >= 0) {
-            // "已选"写在提示行右边（那一行本来就空着），底部工具条留给张数和按钮
-            int x = listLeft + font.width(hint) + 14;
-            int room = panelLeft + panelW - 10 - x;
+
+        for (int i = 0; i < this.codes.length; i++) {
+            if (this.actionable(i)) {
+                ready++;
+            }
+        }
+
+        this.drawTitleBar(graphics, ready);
+        boolean riding = RidingDuelUi.active(this.minecraft);
+        String hint = riding ? "" : "滚轮翻看 · 左键选中 · 右键看大图";
+        if (!hint.isEmpty()) {
+            graphics.drawString(this.font, hint, this.listLeft, this.hintTop + 2, 7368816, false);
+        }
+
+        graphics.fill(this.listLeft, this.hintTop + 15, this.listLeft + 7, this.hintTop + 22, -10662);
+        graphics.drawString(this.font, "可发动", this.listLeft + 11, this.hintTop + 14, 5263440, false);
+        int summonLegendX = this.listLeft + 11 + this.font.width("可发动") + 14;
+        graphics.fill(summonLegendX, this.hintTop + 15, summonLegendX + 7, this.hintTop + 22, -7019521);
+        graphics.drawString(this.font, "可特殊召唤", summonLegendX + 11, this.hintTop + 14, 5263440, false);
+        if (this.selectedSeq >= 0) {
+            int x = this.listLeft + this.font.width(hint) + 14;
+            int room = this.panelLeft + this.panelW - 10 - x;
             if (room > 60) {
-                graphics.drawString(font, trim("已选：" + name(codeOf(selectedSeq)), room),
-                        x, hintTop + 2, 0x1F5F1F, false);
+                graphics.drawString(this.font, this.trim("已选：" + name(this.codeOf(this.selectedSeq)), room), x, this.hintTop + 2, 2055967, false);
             }
         }
 
-        // 卡图网格（视口裁剪）
-        graphics.enableScissor(listLeft - 2, listTop - 2, listLeft + listW + 8, listTop + listH + 2);
-        int hovered = cardAt(mouseX, mouseY);
-        for (int i = 0; i < codes.length; i++) {
-            int y = cardY(i);
-            if (y + McPanel.CARD_H < listTop || y > listTop + listH) continue;
-            int x = cardX(i);
-            McPanel.cardInSlot(graphics, codes[i], x, y, false);
-            if (actionable(i)) {
-                frame(graphics, x, y, 3, 2, McPanel.GOLD, 0xFF7A5A00);
-            }
-            if (seqs[i] == selectedSeq) {
-                // 选中的：白框描在金框外面 + 右上角一个勾
-                int out = actionable(i) ? 5 : 2;
-                frame(graphics, x, y, out, 2, McPanel.LIGHT, 0xFF404040);
-                graphics.drawString(font, "✔", x + McPanel.CARD_W - 10, y + 2, 0xFFFFFF, true);
-            } else if (i == hovered) {
-                // 悬停：轻轻盖一层白纱，鼠标在哪张一眼看得出来
-                graphics.fill(x - 2, y - 2, x + McPanel.CARD_W + 2, y + McPanel.CARD_H + 2, 0x40FFFFFF);
+        graphics.enableScissor(this.listLeft - 2, this.listTop - 2, this.listLeft + this.listW + 8, this.listTop + this.listH + 2);
+        int hovered = this.cardAt(mouseX, mouseY);
+
+        for (int i = 0; i < this.codes.length; i++) {
+            int y = this.cardY(i);
+            if (y + 78 >= this.listTop && y <= this.listTop + this.listH) {
+                int x = this.cardX(i);
+                McPanel.cardInSlot(graphics, this.codes[i], x, y, false);
+                boolean canActivate = this.actionAvailable(this.activateSeqs, this.seqs[i]);
+                boolean canSummon = this.actionAvailable(this.summonSeqs, this.seqs[i]);
+                if (canActivate || canSummon) {
+                    this.frame(graphics, x, y, 7, 7, -14405315, 0);
+                    if (canActivate && canSummon) {
+                        this.frame(graphics, x, y, 6, 3, -7019521, 0);
+                        this.frame(graphics, x, y, 3, 3, -10662, 0);
+                    } else {
+                        this.frame(graphics, x, y, 5, 4, canActivate ? -10662 : -7019521, 0);
+                    }
+                }
+
+                if (this.selectedSeq >= 0 && this.seqs[i] == this.selectedSeq) {
+                    this.frame(graphics, x, y, 8, 1, -1, 0);
+                    graphics.drawString(this.font, "✔", x + 54 - 10, y + 2, 16777215, true);
+                } else if (i == hovered) {
+                    graphics.fill(x, y, x + 54, y + 78, 1090519039);
+                }
             }
         }
+
         graphics.disableScissor();
-
-        drawScrollbar(graphics);
-        drawFooter(graphics);
+        this.drawScrollbar(graphics);
+        this.drawFooter(graphics);
         if (hovered >= 0) {
-            List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>();
-            lines.add(Component.literal(name(codes[hovered])).getVisualOrderText());
-            if (actionable(hovered)) {
-                lines.add(Component.literal("现在可以" + verb()).getVisualOrderText());
+            List<FormattedCharSequence> lines = new ArrayList<>();
+            boolean back = this.codes[hovered] <= 0;
+            lines.add(Component.literal(name(this.codes[hovered])).getVisualOrderText());
+            if (back) {
+                lines.add(Component.literal("内容未知（这堆里还有 " + this.hidden + " 张里侧）").getVisualOrderText());
+            } else if (this.actionable(hovered)) {
+                if (this.actionAvailable(this.activateSeqs, this.seqs[hovered])) {
+                    lines.add(Component.literal("现在可以发动").getVisualOrderText());
+                }
+
+                if (this.actionAvailable(this.summonSeqs, this.seqs[hovered])) {
+                    lines.add(Component.literal("现在可以特殊召唤").getVisualOrderText());
+                }
             }
-            if (seqs[hovered] == selectedSeq) {
+
+            if (!back && this.seqs[hovered] == this.selectedSeq) {
                 lines.add(Component.literal("已选中").getVisualOrderText());
             }
-            lines.add(Component.literal("右键看大图").getVisualOrderText());
-            graphics.renderTooltip(font, lines, mouseX, mouseY);
+
+            if (!back && !riding) {
+                lines.add(Component.literal("右键看大图").getVisualOrderText());
+            }
+
+            graphics.renderTooltip(this.font, lines, mouseX, mouseY);
         }
+
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    /** 标题条：凹进去一条，左边「额外卡组 + 张数」，右边一个状态标签。 */
     private void drawTitleBar(GuiGraphics graphics, int ready) {
-        int x1 = panelLeft + 1;
-        int x2 = panelLeft + panelW - 1;
-        int y2 = panelTop + TITLE_H;
-        graphics.fill(x1, panelTop + 1, x2, y2, McPanel.SLOT);
-        graphics.fill(x1, panelTop + 1, x2, panelTop + 2, McPanel.SLOT_DARK);
-        graphics.fill(x1, y2 - 1, x2, y2, McPanel.DARK);
-        String title = title(location);
-        graphics.drawString(font, title, x1 + 7, panelTop + 7, 0xFFFFFF, true);
-        graphics.drawString(font, codes.length + " 张", x1 + 7 + font.width(title) + 8, panelTop + 7,
-                0xD0D0D0, true);
-        if (codes.length == 0) {
-            tag(graphics, "这堆现在是空的", x2 - 7, panelTop + 6, McPanel.DARK, 0xD0D0D0);
+        int x1 = this.panelLeft + 1;
+        int x2 = this.panelLeft + this.panelW - 1;
+        int y2 = this.panelTop + 22;
+        graphics.fill(x1, this.panelTop + 1, x2, y2, -7631989);
+        graphics.fill(x1, this.panelTop + 1, x2, this.panelTop + 2, -13158601);
+        graphics.fill(x1, y2 - 1, x2, y2, -11184811);
+        String title = title(this.location);
+        graphics.drawString(this.font, title, x1 + 7, this.panelTop + 7, 16777215, true);
+        String count = this.hidden > 0 ? this.codes.length + " 张（" + (this.codes.length - this.hidden) + " 张明置）" : this.codes.length + " 张";
+        graphics.drawString(this.font, count, x1 + 7 + this.font.width(title) + 8, this.panelTop + 7, 13684944, true);
+        if (this.codes.length == 0) {
+            this.tag(graphics, "这堆现在是空的", x2 - 7, this.panelTop + 6, -11184811, 13684944);
         } else if (ready > 0) {
-            tag(graphics, "可以" + verb() + " " + ready + " 张", x2 - 7, panelTop + 6, McPanel.GOLD, 0xFFE9E9E9);
+            this.tag(graphics, "可以" + this.verb() + " " + ready + " 张", x2 - 7, this.panelTop + 6, this.location == 64 ? -7019521 : -10662, -1447447);
         } else {
-            tag(graphics, "现在没有可以" + verb() + "的卡", x2 - 7, panelTop + 6, McPanel.DARK, 0xB0B0B0);
+            this.tag(graphics, "现在没有可以" + this.verb() + "的卡", x2 - 7, this.panelTop + 6, -11184811, 11579568);
         }
     }
 
-    /** 深色小标签 + 一圈彩色描边（标题条右边那个）。 */
     private void tag(GuiGraphics graphics, String text, int rightX, int y, int border, int textColor) {
-        int width = font.width(text) + 10;
+        int width = this.font.width(text) + 10;
         int x = rightX - width;
-        graphics.fill(x, y, x + width, y + 12, 0xFF3C3C3C);
+        graphics.fill(x, y, x + width, y + 12, -12829636);
         graphics.fill(x, y, x + width, y + 1, border);
         graphics.fill(x, y + 11, x + width, y + 12, border);
         graphics.fill(x, y, x + 1, y + 12, border);
         graphics.fill(x + width - 1, y, x + width, y + 12, border);
-        graphics.drawString(font, text, x + 5, y + 2, textColor, true);
+        graphics.drawString(this.font, text, x + 5, y + 2, textColor, true);
     }
 
-    /** 一张卡外面套一圈框（外扩 out、线宽 thick）；outer 不为 0 时再包一圈细边，立体一点。 */
     private void frame(GuiGraphics graphics, int x, int y, int out, int thick, int color, int outer) {
         if (outer != 0) {
-            int bx0 = x - out - thick, by0 = y - out - thick;
-            int bx1 = x + McPanel.CARD_W + out + thick, by1 = y + McPanel.CARD_H + out + thick;
+            int bx0 = x - out - thick;
+            int by0 = y - out - thick;
+            int bx1 = x + 54 + out + thick;
+            int by1 = y + 78 + out + thick;
             graphics.fill(bx0, by0, bx1, by0 + 1, outer);
             graphics.fill(bx0, by1 - 1, bx1, by1, outer);
             graphics.fill(bx0, by0, bx0 + 1, by1, outer);
             graphics.fill(bx1 - 1, by0, bx1, by1, outer);
         }
-        int x0 = x - out, y0 = y - out;
-        int x1 = x + McPanel.CARD_W + out, y1 = y + McPanel.CARD_H + out;
+
+        int x0 = x - out;
+        int y0 = y - out;
+        int x1 = x + 54 + out;
+        int y1 = y + 78 + out;
         graphics.fill(x0, y0, x1, y0 + thick, color);
         graphics.fill(x0, y1 - thick, x1, y1, color);
         graphics.fill(x0, y0, x0 + thick, y1, color);
         graphics.fill(x1 - thick, y0, x1, y1, color);
     }
 
-    /** MC 风格的滚动条：深槽 + 亮滑块（只在真的需要滚动时出现）。 */
     private void drawScrollbar(GuiGraphics graphics) {
-        if (maxScroll() <= 0) return;
-        int barX = listLeft + listW + 3;
-        int width = 6;
-        graphics.fill(barX, listTop, barX + width, listTop + listH, 0xFF2E2E2E);
-        graphics.fill(barX, listTop, barX + width, listTop + 1, McPanel.SLOT_DARK);
-        int barH = Math.max(14, listH * Math.max(1, visibleRows) / totalRows());
-        int barY = listTop + (listH - barH) * scroll / Math.max(1, maxScroll());
-        graphics.fill(barX + 1, barY, barX + width - 1, barY + barH, 0xFFC0C0C0);
-        graphics.fill(barX + 1, barY, barX + width - 1, barY + 1, McPanel.LIGHT);
-        graphics.fill(barX + 1, barY + barH - 1, barX + width - 1, barY + barH, McPanel.DARK);
+        if (this.maxScroll() > 0) {
+            int barX = this.listLeft + this.listW + 3;
+            int width = 6;
+            graphics.fill(barX, this.listTop, barX + width, this.listTop + this.listH, -13750738);
+            graphics.fill(barX, this.listTop, barX + width, this.listTop + 1, -13158601);
+            int barH = Math.max(14, this.listH * Math.max(1, this.visibleRows) / this.totalRows());
+            int barY = this.listTop + (this.listH - barH) * this.scroll / Math.max(1, this.maxScroll());
+            graphics.fill(barX + 1, barY, barX + width - 1, barY + barH, -4144960);
+            graphics.fill(barX + 1, barY, barX + width - 1, barY + 1, -1);
+            graphics.fill(barX + 1, barY + barH - 1, barX + width - 1, barY + barH, -11184811);
+        }
     }
 
-    /** 底部工具条：左边写"看到第几张"，右边两个按钮（按钮是原版控件，在 init 里建）。 */
     private void drawFooter(GuiGraphics graphics) {
-        int footerTop = panelTop + panelH - FOOTER_H;
-        graphics.fill(panelLeft + 1, footerTop, panelLeft + panelW - 1, footerTop + 1, McPanel.DARK);
+        int footerTop = this.panelTop + this.panelH - 30;
+        graphics.fill(this.panelLeft + 1, footerTop, this.panelLeft + this.panelW - 1, footerTop + 1, -11184811);
         String range;
-        if (codes.length == 0) {
+        if (this.codes.length == 0) {
             range = "（空的）";
         } else {
-            int first = Math.min(codes.length, scroll * cols + 1);
-            int last = Math.min(codes.length, (scroll + Math.max(1, visibleRows)) * cols);
-            range = "看到第 " + first + "–" + last + " 张 / 共 " + codes.length + " 张";
+            int first = Math.min(this.codes.length, this.scroll * this.cols + 1);
+            int last = Math.min(this.codes.length, (this.scroll + Math.max(1, this.visibleRows)) * this.cols);
+            range = "看到第 " + first + "–" + last + " 张 / 共 " + this.codes.length + " 张";
         }
-        graphics.drawString(font, range, panelLeft + 10, footerTop + 12, 0x505050, false);
+
+        graphics.drawString(this.font, this.trim(range, this.actionsLeft - this.panelLeft - 18), this.panelLeft + 10, footerTop + 12, 5263440, false);
     }
 
     private int codeOf(int sequence) {
-        for (int i = 0; i < seqs.length; i++) {
-            if (seqs[i] == sequence) return codes[i];
+        for (int i = 0; i < this.seqs.length; i++) {
+            if (this.seqs[i] == sequence) {
+                return this.codes[i];
+            }
         }
+
         return 0;
     }
 
     private String trim(String text, int width) {
-        return font.width(text) <= width ? text : font.plainSubstrByWidth(text, Math.max(8, width - 6)) + "…";
+        return this.font.width(text) <= width ? text : this.font.plainSubstrByWidth(text, Math.max(8, width - 6)) + "…";
     }
 
-    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        scroll = Math.max(0, Math.min(maxScroll(), scroll - (int) Math.signum(delta)));
+        this.scroll = Math.max(0, Math.min(this.maxScroll(), this.scroll - (int)Math.signum(delta)));
         return true;
     }
 
-    /** 左键选中 / 取消选中；右键看大图。 */
-    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        int index = cardAt(mouseX, mouseY);
+        int index = this.cardAt(mouseX, mouseY);
         if (index >= 0) {
-            if (button == 0) {
-                ClientDuelAudio.playUi("SE_DUEL_SELECT");
-                selectedSeq = seqs[index] == selectedSeq ? -1 : seqs[index];
-                refreshActionButton();
+            if (this.codes[index] <= 0) {
+                if (this.minecraft != null && this.minecraft.player != null) {
+                    this.minecraft.player.displayClientMessage(Component.literal("里侧卡片：内容未知（这堆里还有 " + this.hidden + " 张里侧）"), true);
+                }
+
                 return true;
             }
+
+            if (button == 0) {
+                ClientDuelAudio.playUi("SE_DUEL_SELECT");
+                this.selectedSeq = this.seqs[index] == this.selectedSeq ? -1 : this.seqs[index];
+                this.refreshActionButton();
+                return true;
+            }
+
             if (button == 1) {
-                ClientHandBridge.openCard(codes[index]);
+                ClientHandBridge.openCard(this.codes[index], this);
                 return true;
             }
         }
+
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @Override
     public boolean isPauseScreen() {
         return false;
     }

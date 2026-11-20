@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Nullable>annotations</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,6 +13,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="WindBotAi.cs" />
+    <Compile Include="WindBotOptions.cs" />
     <Compile Include="ClassicMessageSplitter.cs" />
     <Compile Include="..\windbot_standalone\src\Windbot\**\*.cs" />
     <Compile Include="..\windbot_standalone\src\YGOSharp\YGOSharp.Network\**\*.cs" />

@@ -1,15 +1,15 @@
 package net.mdpromod;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-/** 客户端手牌快照与选中状态。 */
 @OnlyIn(Dist.CLIENT)
 public final class ClientHandBridge {
     private static int[] cards = new int[0];
     private static boolean active;
-    private static int turnPlayer;
+    private static boolean yourTurn;
     private static int selected;
 
     private ClientHandBridge() {
@@ -18,8 +18,10 @@ public final class ClientHandBridge {
     public static void apply(ModNetwork.HandSync message) {
         cards = message.cards() == null ? new int[0] : message.cards();
         active = message.active();
-        turnPlayer = message.turnPlayer();
-        if (selected >= cards.length) selected = Math.max(0, cards.length - 1);
+        yourTurn = message.yourTurn();
+        if (selected >= cards.length) {
+            selected = Math.max(0, cards.length - 1);
+        }
     }
 
     public static void clear() {
@@ -37,7 +39,7 @@ public final class ClientHandBridge {
     }
 
     public static boolean yourTurn() {
-        return turnPlayer == 0;
+        return yourTurn;
     }
 
     public static int selected() {
@@ -48,11 +50,14 @@ public final class ClientHandBridge {
         selected = Math.max(0, Math.min(index, Math.max(0, cards.length - 1)));
     }
 
-    /** 右键手牌实体：弹出大图详情。 */
     public static void openCard(int code) {
+        openCard(code, null);
+    }
+
+    public static void openCard(int code, Screen returnScreen) {
         if (code > 0) {
             ClientDuelAudio.playUi("SE_CARDEXPAND_DISPLAY");
-            Minecraft.getInstance().setScreen(new HandCardScreen(code));
+            Minecraft.getInstance().setScreen(new HandCardScreen(code, returnScreen));
         }
     }
 }

@@ -1,21 +1,32 @@
 package net.mdpromod;
 
 import com.mojang.logging.LogUtils;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-/** 管理无头决斗主机进程，并把实时统计推给已绑定的决斗盘实体。 */
 final class DuelSessionManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     private DuelHostProcess host;
@@ -23,12 +34,13 @@ final class DuelSessionManager {
     private ResourceKey<Level> fieldDimension;
     private UUID fieldId;
     private UUID ownerId;
-    private int[] lastHand = new int[0];
-    private int lastTurn = -1;
-    private boolean handActive;
+    private UUID seat1Id;
+    private final int[][] lastHand = new int[][]{new int[0], new int[0]};
+    private final int[] lastTurn = new int[]{-1, -1};
+    private final boolean[] handActive = new boolean[]{false, false};
     private int[] previewHand;
     private int[] lastPlaceHints = new int[0];
-    private final java.util.Set<Integer> cardSelection = new java.util.LinkedHashSet<>();
+    private final Set<Integer> cardSelection = new LinkedHashSet<>();
     private String lastSelectSignature = "";
     private int[] lastSelectHints = new int[0];
     private int[] lastPileHints = new int[0];
@@ -38,692 +50,1478 @@ final class DuelSessionManager {
     private int[] lastTargetMarks = new int[0];
     private int[] lastChainMarkAddrs = new int[0];
     private int[] lastTargetMarkAddrs = new int[0];
-    /** 玩家选的时点：跟着决斗盘存着，开局时带给宿主。 */
     private String pendingTiming = "default";
-    /** 当前额外卡组：核心会压缩序号，界面不能直接用卡组原始清单（见 ExtraDeckTracker）。 */
     private final ExtraDeckTracker extraTracker = new ExtraDeckTracker();
-    /** 最近一次放到近半场的额外卡组：重开一局时用它把清单恢复成整副。 */
-    private java.util.List<Integer> extraBase = java.util.List.of();
-    /** 上一次播报过的阶段/回合：只在真的换阶段时才提示一次。 */
+    private final ExtraDeckTracker extraTracker2 = new ExtraDeckTracker(1);
+    private List<Integer> extraBase = List.of();
     private int lastPhaseTurn = -1;
     private String lastPhaseName = "";
     private String lastChainChoiceSignature = "";
     private String lastUnselectSignature = "";
     private String lastPositionSignature = "";
+    private String lastAnnounceSignature = "";
     private String lastSortSignature = "";
     private String lastOptionSignature = "";
-    /** 上一次提醒过的"没有界面"的窗口签名，避免每 tick 刷屏。 */
+    private String lastSumSignature = "";
     private String lastUnknownPromptSignature = "";
+    private DuelSessionManager.PendingActivation pendingActivation;
     private DeckData pendingDeck;
-    /**
-     * Decks bound through the in-world card case.  DuelFieldEntity keeps the
-     * compact render state (counts/name), while the session manager keeps the
-     * actual card list needed when the host process is started.  This also
-     * avoids using one stale global pending deck when more than one field is
-     * present in a world.
-     */
     private final Map<UUID, Map<String, DeckData>> fieldDecks = new HashMap<>();
     private DuelAnimationScene scene;
+    private DuelSessionManager.StartStage startStage = DuelSessionManager.StartStage.IDLE;
+    private final int[] rpsPicks = new int[]{0, 0};
+    private int rpsWinner = -1;
+    private long startDeadline;
+    private static final long RPS_TIMEOUT_MS = 30000L;
+    private static final long RPS_RESEND_MS = 5000L;
+    private long lastRpsPromptAt;
+    private UUID rpsFallbackId;
+    private int rpsFallbackSeat = -1;
+    private Path exportDir;
+    private static final long TP_TIMEOUT_MS = 30000L;
 
     synchronized void start(MinecraftServer server, String deck0, String deck1) throws Exception {
-        start(server, deck0, deck1, false);
+        this.start(server, deck0, deck1, false);
     }
 
     synchronized void start(MinecraftServer server, String deck0, String deck1, boolean auto) throws Exception {
-        start(server, deck0, deck1, auto, null);
+        this.start(server, deck0, deck1, auto, null);
     }
 
-    /** 远半场那个人机的身份：卡组键 / 显示名 / 人格。放的是玩家自己的卡组时传 null。 */
-    record AiProfile(String key, String name, String dialog) {
-    }
-
-    /** 运行时根目录：宿主的工作目录（卡组、cards.cdb、bot.conf 都在这里）。 */
     static Path runtimeRoot() {
         return ModPaths.runtimeRoot();
     }
 
-    synchronized void start(MinecraftServer server, String deck0, String deck1, boolean auto,
-                            AiProfile ai) throws Exception {
-        if (host != null) {
-            // 进程活着但没建起对局（例如卡组文件读不到）时允许重开，
-            // 否则玩家会卡在「A duel is already active」上没法重试。
-            if (host.isRunning() && host.duelActive()) {
+    synchronized void start(MinecraftServer server, String deck0, String deck1, boolean auto, DuelSessionManager.AiProfile ai) throws Exception {
+        this.start(server, deck0, deck1, auto, ai, true);
+    }
+
+    synchronized void start(MinecraftServer server, String deck0, String deck1, boolean auto, DuelSessionManager.AiProfile ai, boolean withAi) throws Exception {
+        this.start(server, deck0, deck1, auto, ai, withAi, withAi ? 1 : -1);
+    }
+
+    synchronized void start(MinecraftServer server, String deck0, String deck1, boolean auto, DuelSessionManager.AiProfile ai, boolean withAi, int aiSeat) throws Exception {
+        if (this.host != null) {
+            if (this.host.isRunning() && this.host.duelActive()) {
                 throw new IllegalStateException("A duel is already active");
             }
-            host.close();
-            host = null;
+
+            this.host.close();
+            this.host = null;
         }
-        clearVisuals();
-        previewHand = null;
+
+        this.clearVisuals();
+        this.pendingActivation = null;
+        this.previewHand = null;
         Path root = runtimeRoot();
         Path dotnet = Path.of(System.getProperty("mdpromod.dotnet", "D:\\MDProMod\\tools\\dotnet\\dotnet.exe"));
         Path dll = Path.of(System.getProperty("mdpromod.duelHost", "D:\\MDProMod\\tools\\duel_host\\bin\\Release\\net8.0\\duel_host.dll"));
-        host = new DuelHostProcess(LOGGER, dotnet, dll, root);
-        // 带上玩家选的时点（决斗盘存着的那档）
-        host.setTiming(pendingTiming);
-        // 额外卡组记账：给"查看额外卡组"一份和核心序号对齐的当前清单（召唤后会前移）
+        this.host = new DuelHostProcess(LOGGER, dotnet, dll, root);
+        this.host.setTiming(this.pendingTiming);
+
         try {
-            extraBase = extrasOf(DeckData.fromYdk(Path.of(deck0)));
-            extraTracker.reset(extraBase);
+            this.extraTracker.reset(extrasOf(DeckData.fromYdk(Path.of(deck0))));
         } catch (Exception ex) {
             LOGGER.warn("读不到开局卡组 {}，额外卡组界面退回卡组清单：{}", deck0, ex.getMessage());
-            extraTracker.stop();
+            this.extraTracker.stop();
         }
-        host.start(deck0, deck1, auto, ai == null ? null : ai.name(),
-                ai == null ? null : ai.dialog());
+
+        try {
+            this.extraTracker2.reset(extrasOf(DeckData.fromYdk(Path.of(deck1))));
+        } catch (Exception ex) {
+            this.extraTracker2.stop();
+        }
+
+        try {
+            String humanDeck = aiSeat == 0 ? deck1 : deck0;
+            this.extraBase = extrasOf(DeckData.fromYdk(Path.of(humanDeck)));
+        } catch (Exception ex) {
+            this.extraBase = List.of();
+        }
+
+        this.host.start(deck0, deck1, auto, ai == null ? null : ai.name(), ai == null ? null : ai.dialog(), withAi, aiSeat);
         this.server = server;
-        scene = new DuelAnimationScene();
-        scene.initialize(host.initialMain(0), host.initialExtra(0), host.initialMain(1), host.initialExtra(1));
+        this.scene = new DuelAnimationScene();
+        this.scene.initialize(this.host.initialMain(0), this.host.initialExtra(0), this.host.initialMain(1), this.host.initialExtra(1));
         LOGGER.info("Started MDProMod duel on server {} (auto={})", server.getServerDirectory(), auto);
     }
 
-    /**
-     * Start the host for an already prepared duel field.  This is the entry
-     * point used by the physical "start duel" control; it deliberately uses
-     * the deck captured when the card case was placed on the field instead of
-     * searching the player's inventory again.
-     */
-    synchronized void startForField(MinecraftServer server, DuelFieldEntity field,
-                                    net.minecraft.server.level.ServerPlayer owner) throws Exception {
-        if (field == null) throw new IllegalArgumentException("No duel field");
-        DeckData deck = boundDeck(field, "p1");
-        if (deck == null && pendingDeck != null) deck = pendingDeck;
-        if (deck == null) {
+    synchronized void startForField(MinecraftServer server, DuelFieldEntity field, ServerPlayer owner) throws Exception {
+        if (field == null) {
+            throw new IllegalArgumentException("No duel field");
+        }
+
+        String aiKey = field.aiKey();
+        boolean withAi = aiKey != null && !aiKey.isBlank();
+        int aiSide = withAi ? Math.max(0, field.aiSide()) : -1;
+        DeckData deck0 = this.boundDeck(field, "p1");
+        DeckData deck1 = this.boundDeck(field, "p2");
+        if (!withAi && deck0 == null && this.pendingDeck != null) {
+            deck0 = this.pendingDeck;
+        }
+
+        if (DuelStart.requiresPlayerDeck(0, aiSide) && deck0 == null) {
             throw new IllegalStateException("该决斗盘近半场还没有卡组");
         }
-        java.util.List<String> problems = DeckRules.problems(deck);
-        if (!problems.isEmpty()) {
-            throw new IllegalStateException("卡组还不能用于决斗：" + String.join("；", problems));
-        }
-        // 卡组放配置目录（config/mdpromod/decks）：换机器、删掉模组资源都不该影响玩家的卡组
-        Path deckDir = ModPaths.deckDir();
-        Files.createDirectories(deckDir);
-        Path exported = CardCaseItem.exportYdk(deck, deckDir);
-        // 时点跟着决斗盘走：开局时把盘上那一档带给宿主
-        pendingTiming = field.timingMode().hostKey();
-        // 远半场必须是玩家放上去的「人机卡组」，用它选的卡组和人格开打；没放就不让开始。
-        String aiKey = field.aiKey();
-        if (aiKey == null || aiKey.isBlank()) {
+
+        if (DuelStart.requiresPlayerDeck(1, aiSide) && deck1 == null) {
             throw new IllegalStateException("等待对手选择卡组");
         }
-        AiDeckCatalog.Entry ai = AiDeckCatalog.find(runtimeRoot(), aiKey);
-        String aiFile = ai == null ? "Data/Windbot/Decks/" + aiKey + ".ydk" : ai.file();
-        start(server, exported.toAbsolutePath().toString(), aiFile, false,
-                new AiProfile(aiKey, field.aiName(), field.aiDialog()));
-        linkField(server, field, owner);
+
+        if (aiSide != 0 && deck0 != null) {
+            List<String> problems0 = DeckRules.problems(deck0);
+            if (!problems0.isEmpty()) {
+                throw new IllegalStateException("卡组还不能用于决斗：" + String.join("；", problems0));
+            }
+        }
+
+        if (aiSide != 1 && deck1 != null) {
+            List<String> problems1 = DeckRules.problems(deck1);
+            if (!problems1.isEmpty()) {
+                throw new IllegalStateException("对手的卡组还不能用于决斗：" + String.join("；", problems1));
+            }
+        }
+
+        // Each duel field writes its duel decks into its own folder: with several duels running at once, two decks
+        // of the same name would otherwise overwrite each other's file while a duel host is still starting up.
+        Path deckDir = ModPaths.deckDir().resolveSibling("duel-decks").resolve(field.getUUID().toString());
+        Files.createDirectories(deckDir);
+        this.exportDir = deckDir;
+        Path exported0 = deck0 == null ? null : CardCaseItem.exportYdk(deck0, deckDir);
+        Path exported1 = deck1 == null
+            ? null
+            : CardCaseItem.exportYdk(DeckData.of(deck1.name() + " (p2)", deck1.mainArray(), deck1.extraArray(), deck1.sideArray()), deckDir);
+        this.pendingTiming = field.timingMode().hostKey();
+        if (withAi) {
+            AiDeckCatalog.Entry ai = AiDeckCatalog.find(runtimeRoot(), aiKey);
+            String aiFile = ai == null ? "Data/Windbot/Decks/" + aiKey + ".ydk" : ai.file();
+            String file0 = aiSide == 0 ? aiFile : exported0.toAbsolutePath().toString();
+            String file1 = aiSide == 1 ? aiFile : exported1.toAbsolutePath().toString();
+            this.start(server, file0, file1, false, new DuelSessionManager.AiProfile(aiKey, field.aiName(), field.aiDialog()), true, aiSide);
+            this.linkField(server, field, this.playerForSeat(server, DuelStart.humanSeat(aiSide)));
+        } else {
+            this.start(server, exported0.toAbsolutePath().toString(), exported1.toAbsolutePath().toString(), false, null, false, -1);
+            this.linkField(server, field, this.playerForSeat(server, 0));
+        }
     }
 
-    /** Compatibility entry point for the physical field control. */
-    synchronized void startFromField(net.minecraft.server.level.ServerPlayer owner,
-                                     DuelFieldEntity field) throws Exception {
-        if (owner == null) throw new IllegalArgumentException("No player");
-        startForField(owner.server, field, owner);
+    synchronized void startFromField(ServerPlayer owner, DuelFieldEntity field) throws Exception {
+        if (owner == null) {
+            throw new IllegalArgumentException("No player");
+        }
+
+        this.startForField(owner.server, field, owner);
         field.setGameStarted(true);
     }
 
-    synchronized DeckData boundDeck(DuelFieldEntity field, String side) {
-        if (field == null) return null;
-        Map<String, DeckData> decks = fieldDecks.get(field.getUUID());
-        if (decks == null) return null;
-        return decks.get(side == null ? "p1" : side);
-    }
-
-    /** 把正在进行的对局绑到某个决斗盘上，并记住手牌要推给谁。 */
-    synchronized void linkField(MinecraftServer server, DuelFieldEntity field,
-                                 net.minecraft.server.level.ServerPlayer owner) {
-        if (host != null && host.isRunning() && this.ownerId != null && owner != null
-                && (!this.ownerId.equals(owner.getUUID()) || this.fieldId != null && !this.fieldId.equals(field.getUUID()))) {
-            owner.displayClientMessage(net.minecraft.network.chat.Component.literal("该对局已绑定玩家和决斗盘"), true);
-            return;
-        }
-        if (this.fieldId != null && !this.fieldId.equals(field.getUUID())) clearVisuals();
-        this.server = server;
-        this.fieldDimension = field.level().dimension();
-        this.fieldId = field.getUUID();
-        this.ownerId = owner == null ? null : owner.getUUID();
-        this.lastHand = new int[0];
-        this.lastTurn = -1;
-        this.handActive = false;
-        if (host != null) {
-            if (scene == null) {
-                scene = new DuelAnimationScene();
-                scene.initialize(host.initialMain(0), host.initialExtra(0), host.initialMain(1), host.initialExtra(1));
-            }
-            // 远半场只认玩家放上去的「人机卡组」，这里不再自动补预设卡组
-        }
-        LOGGER.info("Duel field linked: {} @ {} owner={}", fieldId, fieldDimension.location(), ownerId);
-    }
-
-    synchronized UUID linkedField() {
-        return fieldId;
-    }
-
-    /** Network/engine work never blocks the Minecraft tick; only presentation is paced. */
-    synchronized void tickField() {
-        if (server == null) return;
-        // 宿主的错误 / "应答被拒" 直接说给玩家听，别让它只留在日志里
-        if (host != null) {
-            String notice = host.consumeNotice();
-            if (!notice.isEmpty() && ownerId != null) {
-                var ownerPlayer = server.getPlayerList().getPlayer(ownerId);
-                if (ownerPlayer != null) {
-                    ownerPlayer.displayClientMessage(net.minecraft.network.chat.Component.literal(notice), false);
-                }
-            }
-        }
-        boolean running = host != null && host.isRunning();
-        if (fieldId != null && fieldDimension != null) {
-            ServerLevel level = server.getLevel(fieldDimension);
-            if (level != null && level.getEntity(fieldId) instanceof DuelFieldEntity field) {
-                if (scene != null) {
-                    if (host != null) {
-                        java.util.List<DuelVisualState.Event> events = host.drainEvents();
-                        trackExtraDeck(events);
-                        scene.enqueue(events);
-                    }
-                    scene.tick(level, field, ownerId);
-                }
-                if (host != null) {
-                    boolean caughtUp = scene == null || !scene.busy();
-                    if (caughtUp) {
-                        field.setLifePoints("p1", host.lifePoints(0));
-                        field.setLifePoints("p2", host.lifePoints(1));
-                        field.setTurnSide(host.turnPlayer());
-                        String phase = phaseName(host.phaseCode());
-                        field.setCurrentPhase(host.turnPlayer() == 1 ? "p2" : "p1", phase);
-                        // 进入新阶段时说一声「对方进入准备阶段」——MD 的时机提示就是这个意思
-                        if (host.turnPlayer() != lastPhaseTurn || !phase.equals(lastPhaseName)) {
-                            lastPhaseTurn = host.turnPlayer();
-                            lastPhaseName = phase;
-                            var who = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                            if (who != null) {
-                                who.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                        DuelTiming.phaseEntry(host.turnPlayer() == 1, phase)), true);
-                            }
-                        }
-                    }
-                    // 这一局分出胜负（或宿主进程已经结束）：把结果写到右下角的按钮上，
-                    // 金色=本侧胜利 / 灰色=本侧失败；右键它就能回到「准备」开下一局。
-                    if (caughtUp && field.duelResult() == 0 && field.isGameStarted() && host.duelActive()
-                            && (host.isEnded() || !host.isRunning())) {
-                        Integer winner = host.getWinner();
-                        boolean iWon = winner != null && (winner & 1) == 0;
-                        field.setDuelResult(iWon ? 1 : 2);
-                        field.setOpening(false);
-                        field.setPhasePrompt(-1, false, false, false);
-                        var resultPlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                        if (resultPlayer != null) {
-                            resultPlayer.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                    iWon ? "决斗胜利！右键右下角的金色按钮可以开新一局。"
-                                            : "决斗失败。右键右下角的灰色按钮可以开新一局。"), false);
-                        }
-                    }
-                    // 开局失败（例如卡组文件读不到）时退回「准备」，把原因说清楚，允许重试
-                    if (host.isRunning() && !host.duelActive() && field.isGameStarted()
-                            && !host.lastError().isEmpty()) {
-                        field.setGameStarted(false);
-                        var ownerPlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                        if (ownerPlayer != null) {
-                            ownerPlayer.displayClientMessage(
-                                    net.minecraft.network.chat.Component.literal("开局失败：" + host.lastError()),
-                                    false);
-                        }
-                    }
-                }
-                // 开局先演发牌：这期间右下角保持「游戏中」，阶段键全部锁住，
-                // 初始手牌落位之后才把决策点和阶段键放出来。
-                boolean opening = scene != null && scene.openingBusy();
-                // 演出优先：动画队列没放完之前，弹窗和连锁显示都先压住（等画面跟上再问玩家）
-                boolean reveal = !opening && (scene == null || !scene.busy());
-                field.setOpening(opening);
-                if (host != null && reveal) {
-                    // 阶段键是否可以按，完全跟着核心当前决策点给出的允许位
-                    field.setPhasePrompt(host.promptPlayer(), host.promptToBattle(),
-                            host.promptToEnd(), host.promptToMain2());
-                } else {
-                    field.setPhasePrompt(-1, false, false, false);
-                }
-                // 落点提示：核心问落点时把可用格子同步给客户端（含"清空"）
-                int[] hints = host != null && !opening ? host.placeAddresses() : new int[0];
-                if (reveal && !java.util.Arrays.equals(hints, lastPlaceHints)) {
-                    lastPlaceHints = hints;
-                    var hintPlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (hintPlayer != null) {
-                        ModNetwork.sendTo(hintPlayer, new ModNetwork.PlaceHint(field.getId(), hints));
-                        // 只有 1 个合法落点（场地魔法区这类）时最容易让人以为卡住了：直接说出来
-                        if (hints.length > 0) {
-                            StringBuilder where = new StringBuilder();
-                            for (int i = 0; i < hints.length; i++) {
-                                if (i > 0) where.append("、");
-                                where.append(placeLabel(hints[i]));
-                            }
-                            hintPlayer.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                    "请左键点绿色的格子来选定落点：" + where), false);
-                        }
-                    }
-                }
-                // 选卡提示（弃牌等）：把候选做成"仅自己可见"的发光标记，选择进度也同步过去
-                if (host != null && reveal && host.unselectPrompt()) {
-                    // 融合素材那类"一张一张点 + 完成"：列表每次都推最新的（选/取消后核心会重问）
-                    String signature = host.promptSeq() + ":u:" + java.util.Arrays.toString(host.unselectSelectCodes())
-                            + ":" + java.util.Arrays.toString(host.unselectChosenCodes());
-                    var chooser = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (chooser != null && !signature.equals(lastUnselectSignature)) {
-                        lastUnselectSignature = signature;
-                        ModNetwork.sendTo(chooser, new ModNetwork.UnselectList(
-                                host.unselectSelectCodes(), host.unselectChosenCodes(),
-                                host.selectMin(), host.selectMax(), host.unselectFinishable(),
-                                host.unselectSelectAddresses(), host.unselectChosenAddresses()));
-                        // 场上/手牌的素材要"看得见"：可选的泛绿光，已选的转金光（只有自己可见）
-                        int[] selectable = resolveCardEntities(level, field, host.unselectSelectAddresses());
-                        int[] selected = resolveCardEntities(level, field, host.unselectChosenAddresses());
-                        ModNetwork.sendTo(chooser, new ModNetwork.SelectHint(selectable, selected));
-                    }
-                } else if (host == null || !host.unselectPrompt()) {
-                    lastUnselectSignature = "";
-                }
-                // 选表示形式（融合/同步召唤后问攻守）
-                if (host != null && reveal && host.positionPrompt()) {
-                    int[] values = host.positionValues();
-                    String signature = host.promptSeq() + ":p:" + java.util.Arrays.toString(values);
-                    var chooser = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (chooser != null && !signature.equals(lastPositionSignature)) {
-                        lastPositionSignature = signature;
-                        String[] labels = new String[values.length];
-                        for (int i = 0; i < values.length; i++) {
-                            labels[i] = switch (values[i]) {
-                                case 1 -> "攻击表示";
-                                case 4 -> "守备表示";
-                                case 2 -> "里侧攻击";
-                                case 8 -> "里侧守备";
-                                default -> "表示 " + values[i];
-                            };
-                        }
-                        ModNetwork.sendTo(chooser, new ModNetwork.PositionList(values, labels));
-                    }
-                } else if (host == null || !host.positionPrompt()) {
-                    lastPositionSignature = "";
-                }
-                // 排序（把卡组里的若干张按玩家想要的顺序排好）
-                if (host != null && reveal && host.sortPrompt()) {
-                    int[] codes = host.sortCodes();
-                    String signature = host.promptSeq() + ":s:" + java.util.Arrays.toString(codes);
-                    var sorter = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (sorter != null && !signature.equals(lastSortSignature)) {
-                        lastSortSignature = signature;
-                        ModNetwork.sendTo(sorter, new ModNetwork.SortList(codes));
-                    }
-                } else if (host == null || !host.sortPrompt()) {
-                    lastSortSignature = "";
-                }
-                // 选项（核心给若干处理方式，选一个）
-                if (host != null && reveal && host.optionPrompt()) {
-                    int[] values = host.optionValues();
-                    String signature = host.promptSeq() + ":o:" + java.util.Arrays.toString(values);
-                    var chooser = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (chooser != null && !signature.equals(lastOptionSignature)) {
-                        lastOptionSignature = signature;
-                        ModNetwork.sendTo(chooser, new ModNetwork.OptionList(values, host.optionLabels()));
-                    }
-                } else if (host == null || !host.optionPrompt()) {
-                    lastOptionSignature = "";
-                }
-                if (host != null && reveal && host.hasSelectCardPrompt() && !host.unselectPrompt()) {
-                    // 序号 + 形状：核心重问同一条提示（应答被拒时会重发）也要重新弹界面
-                    String signature = host.promptSeq() + ":" + host.selectSignature();
-                    if (!signature.equals(lastSelectSignature)) {
-                        lastSelectSignature = signature;
-                        cardSelection.clear();
-                        // 同时把候选列成清单：卡组/额外卡组的卡没有世界实体，只能点清单
-                        var chooser = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                        if (chooser != null) {
-                            ModNetwork.sendTo(chooser, new ModNetwork.SelectList(
-                                    host.selectCodes(), host.selectMin(), host.selectMax(),
-                                    host.selectAddrs()));
-                        }
-                    }
-                    int[] selectable = host.selectableAddresses();
-                    int[] entities = resolveCardEntities(level, field, selectable);
-                    int[] selected = resolveCardEntities(level, field, packedSelection());
-                    if (!java.util.Arrays.equals(entities, lastSelectHints)
-                            || !java.util.Arrays.equals(selected, lastSelectHints)) {
-                        lastSelectHints = entities;
-                        var selectPlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                        if (selectPlayer != null) {
-                            ModNetwork.sendTo(selectPlayer, new ModNetwork.SelectHint(entities, selected));
-                        }
-                    }
-                } else if (lastSelectHints.length > 0 && (host == null || !host.unselectPrompt())) {
-                    lastSelectHints = new int[0];
-                    lastSelectSignature = "";
-                    cardSelection.clear();
-                    var selectPlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (selectPlayer != null) {
-                        ModNetwork.sendTo(selectPlayer, new ModNetwork.SelectHint(new int[0], new int[0]));
-                    }
-                }
-                // 卡堆发光：额外卡组有可特召的卡、墓地/除外有可发动的卡
-                int[] piles = host != null && !opening ? host.glowingPileZones() : new int[0];
-                if (reveal && !java.util.Arrays.equals(piles, lastPileHints)) {
-                    lastPileHints = piles;
-                    var pilePlayer = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (pilePlayer != null) {
-                        ModNetwork.sendTo(pilePlayer, new ModNetwork.PileHint(field.getId(), piles));
-                    }
-                }
-                // "是否发动"这类是和否决定：弹窗给玩家，别让对局停在这儿
-                // 连锁演出：链上每多一张/解决一张，就把最新状态广播给场地附近的玩家
-                if (host != null && reveal && host.chainVersion() != lastChainVersion) {
-                    lastChainVersion = host.chainVersion();
-                    ModNetwork.sendNear(level, field.position(), 96,
-                            new ModNetwork.ChainState(field.getId(), host.chainCodes(), host.chainResolving()));
-                }
-                // 卡面标记：连锁里发动的卡（橙红）、被连锁中其他卡点名的卡（青蓝）。
-                // 位置会随卡片移动，所以每 tick 都对一次实体，只有变了才广播。
-                int[] chainMarks = host == null ? new int[0]
-                        : resolveCardEntities(level, field, host.chainMarkAddresses());
-                int[] targetMarks = host == null ? new int[0]
-                        : resolveCardEntities(level, field, host.targetMarkAddresses());
-                int[] chainMarkAddrs = host == null ? new int[0] : host.chainMarkAddresses();
-                int[] targetMarkAddrs = host == null ? new int[0] : host.targetMarkAddresses();
-                boolean clearingMarks = chainMarks.length == 0 && targetMarks.length == 0;
-                if (reveal || clearingMarks) {
-                    if (!java.util.Arrays.equals(chainMarks, lastChainMarks)
-                            || !java.util.Arrays.equals(targetMarks, lastTargetMarks)
-                            || !java.util.Arrays.equals(chainMarkAddrs, lastChainMarkAddrs)
-                            || !java.util.Arrays.equals(targetMarkAddrs, lastTargetMarkAddrs)) {
-                        lastChainMarks = chainMarks;
-                        lastTargetMarks = targetMarks;
-                        lastChainMarkAddrs = chainMarkAddrs;
-                        lastTargetMarkAddrs = targetMarkAddrs;
-                        ModNetwork.sendNear(level, field.position(), 96,
-                                new ModNetwork.CardMarks(chainMarks, targetMarks,
-                                        chainMarkAddrs, targetMarkAddrs));
-                    }
-                }
-                // "要不要接连锁"：有候选卡时弹窗（空窗口由 host 自动放弃，不会到这里）
-                if (host != null && reveal && host.chainChoicePrompt()) {
-                    int[] codes = host.chainChoiceCodes();
-                    // 链上还没有东西 = 这次问的是"要不要发动效果"（转阶段的诱发效果那种），
-                    // 措辞不能说成"已经发动了，是否连锁"
-                    boolean firstActivation = host.chainCodes().length == 0;
-                    String signature = host.promptSeq() + ":"
-                            + java.util.Arrays.toString(codes) + ":" + host.chainForced() + ":"
-                            + firstActivation;
-                    var chooser = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    if (chooser != null && !signature.equals(lastChainChoiceSignature)) {
-                        lastChainChoiceSignature = signature;
-                        // 时机说明：连锁栈最上面那张就是"刚发动、要被连锁"的卡
-                        // 全时点下"没有可接的卡"的空窗口也会停下来问：那时没有候选，措辞单独说
-                        String question = codes.length == 0
-                                ? DuelTiming.passQuestion()
-                                : firstActivation
-                                        ? DuelTiming.openQuestion(chainCandidateNames(host))
-                                        : DuelTiming.chainQuestion(chainTriggerName(host));
-                        ModNetwork.sendTo(chooser, new ModNetwork.ChainChoice(codes, host.chainForced(),
-                                question, firstActivation, host.chainChoiceAddrs()));
-                        // 有候选没解析出卡号时也要能答：说明一下，别让玩家以为界面坏了
-                        if (host.chainChoiceHasUnknown()) {
-                            chooser.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                    "连锁窗口有 " + codes.length + " 张可选（部分卡面没认出来，仍可按下标选择或放弃）"),
-                                    false);
-                        }
-                    }
-                } else if (host == null || !host.chainChoicePrompt()) {
-                    lastChainChoiceSignature = "";
-                }
-                if (host != null && reveal) {
-                    int function = host.decisionFunction();
-                    var decider = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    String signature = function < 0 ? ""
-                            : host.promptSeq() + ":" + host.decisionSignature();
-                    if (function < 0) {
-                        // 决定已经答完/消失：清掉去重标记，同一个效果下次还能弹
-                        lastDecisionSignature = "";
-                    } else if (decider != null && !signature.equals(lastDecisionSignature)) {
-                        lastDecisionSignature = signature;
-                        int code = host.decisionCardCode();
-                        String name = code > 0
-                                ? CardRegistry.get(code).map(CardInfo::name).orElse("#" + code) : "这张卡";
-                        String question = function == 12
-                                ? DuelTiming.activateQuestion(host.turnPlayer() == 1,
-                                        phaseName(host.phaseCode()), name)
-                                : (host.decisionDescription().isEmpty() ? "是否确认？" : "是否确认当前操作？");
-                        ModNetwork.sendTo(decider, new ModNetwork.DecisionPrompt(function, name, question));
-                    }
-                }
-                // 兜底提醒：核心在等一个模组还没有界面的窗口时，至少说出来，别让对局静默停住
-                if (host != null && reveal) {
-                    int pending = host.promptFunction();
-                    var who = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-                    String signature = pending < 0 ? "" : pending + ":" + host.promptSummary();
-                    if (pending >= 0 && !isRenderedPrompt(pending)) {
-                        if (who != null && !signature.equals(lastUnknownPromptSignature)) {
-                            lastUnknownPromptSignature = signature;
-                            who.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                                    "核心在等一个还没有界面的窗口（函数 " + pending + "）："
-                                            + host.promptSummary() + " —— 现在会一直等在这里"), false);
-                        }
-                    } else {
-                        lastUnknownPromptSignature = "";
-                    }
-                }
-                if (previewHand != null && !running) reconcilePreview(level, field);
-            }
-        }
-        pushHand(running || previewHand != null || scene != null && scene.busy());
+    synchronized boolean requestDuelStart(ServerPlayer trigger) {
+        return this.server == null ? false : this.requestDuelStart(this.linkedField(this.server), trigger);
     }
 
     /**
-     * 连锁栈最上面那张（也就是刚发动、正被询问要不要连锁的那张）的卡名。
-     * 场地效果会带 0x80000000 标记，读的时候要掩掉。
+     * Starts rock-paper-scissors for the given field. The field is passed in (instead of taking whatever field the
+     * session was last linked to) so that a start request can never act on another duel field.
      */
+    synchronized boolean requestDuelStart(DuelFieldEntity target, ServerPlayer trigger) {
+        if (target == null) {
+            return false;
+        }
+
+        this.attach(target);
+        DuelFieldEntity field = this.linkedField(this.server);
+        if (field == target && !field.isGameStarted() && !field.hasResult()) {
+            if (this.startStage != DuelSessionManager.StartStage.IDLE) {
+                return true;
+            }
+
+            if (!field.isReadyToStart()) {
+                return false;
+            }
+
+            // Who plays is decided by the field, not by which seat happens to hold a human: a human on the far half
+            // against an AI on the near half (their own choice, or the board was turned because the AI went first in
+            // the duel before) used to be taken for a player duel and waited 30 s for a second human to pick.
+            boolean ai = field.aiSide() >= 0 && field.aiKey() != null && !field.aiKey().isBlank();
+            boolean pvp = !ai && this.ownerId != null && this.seat1Id != null;
+            if (!pvp && !ai) {
+                return false;
+            }
+
+            this.startStage = DuelSessionManager.StartStage.RPS;
+            this.rpsPicks[0] = 0;
+            this.rpsPicks[1] = 0;
+            this.rpsWinner = -1;
+            this.lastRpsPromptAt = System.currentTimeMillis();
+            this.rpsFallbackId = trigger == null ? null : trigger.getUUID();
+            this.startDeadline = System.currentTimeMillis() + 30000L;
+            int aiSeat = ai ? field.aiSide() : -1;
+            this.rpsFallbackSeat = ai ? 1 - aiSeat : -1;
+            if (aiSeat >= 0) {
+                this.rpsPicks[aiSeat] = randomHand();
+            }
+
+            for (int seat = 0; seat < 2; seat++) {
+                ServerPlayer who = this.rpsPicks[seat] == 0 ? this.startPlayer(seat) : null;
+                if (who != null) {
+                    ModNetwork.sendTo(who, new ModNetwork.RpsPrompt());
+                    LOGGER.info("RPS prompt -> seat {} ({})", seat, who.getScoreboardName());
+                }
+            }
+
+            LOGGER.info("Duel start: RPS begins on field {} (pvp={}, aiSeat={})", new Object[]{this.fieldId, pvp, aiSeat});
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static int randomHand() {
+        return 1 + ThreadLocalRandom.current().nextInt(3);
+    }
+
+    /**
+     * The player who answers for a seat while the duel is being started: the seated player, or, when the human
+     * seat of an AI duel has nobody bound to it (deck placed by command), the player who asked to start.
+     */
+    private ServerPlayer startPlayer(int seat) {
+        ServerPlayer who = this.playerForSeat(seat);
+        if (who == null && seat == this.rpsFallbackSeat && this.rpsFallbackId != null && this.server != null) {
+            who = this.server.getPlayerList().getPlayer(this.rpsFallbackId);
+        }
+
+        return who;
+    }
+
+    /** Seat a player answers for during the start, or -1 when the player has no part in it. */
+    private int startSeatOf(ServerPlayer player) {
+        UUID id = player.getUUID();
+        if (id.equals(this.ownerId)) {
+            return 0;
+        } else if (id.equals(this.seat1Id)) {
+            return 1;
+        } else {
+            return this.rpsFallbackSeat >= 0 && id.equals(this.rpsFallbackId) && this.playerForSeat(this.rpsFallbackSeat) == null
+                ? this.rpsFallbackSeat
+                : -1;
+        }
+    }
+
+    synchronized boolean isStarting() {
+        return this.startStage != DuelSessionManager.StartStage.IDLE;
+    }
+
+    synchronized void answerRps(ServerPlayer player, int hand) {
+        if (this.startStage == DuelSessionManager.StartStage.RPS && player != null) {
+            if (hand >= 1 && hand <= 3) {
+                int seat = this.startSeatOf(player);
+                if (seat >= 0 && this.rpsPicks[seat] == 0) {
+                    this.rpsPicks[seat] = hand;
+                    LOGGER.info("RPS pick: seat {} ({})", seat, player.getScoreboardName());
+                    this.resolveRps();
+                }
+            }
+        }
+    }
+
+    synchronized void answerTp(ServerPlayer player, boolean first) {
+        if (this.startStage == DuelSessionManager.StartStage.CHOOSE_TP && player != null) {
+            if (this.startSeatOf(player) == this.rpsWinner) {
+                this.chooseTp(this.rpsWinner, first);
+            }
+        }
+    }
+
+    private void resolveRps() {
+        if (this.rpsPicks[0] != 0 && this.rpsPicks[1] != 0) {
+            int a = this.rpsPicks[0];
+            int b = this.rpsPicks[1];
+            this.broadcast("猜拳：" + this.seatLabel(0) + " " + DuelStart.handName(a) + " vs " + this.seatLabel(1) + " " + DuelStart.handName(b));
+            int winner = DuelStart.winner(a, b);
+            if (winner < 0) {
+                this.broadcast("平局，再来一次");
+                this.restartRps();
+            } else {
+                this.rpsWinner = winner;
+                this.startStage = DuelSessionManager.StartStage.CHOOSE_TP;
+                this.startDeadline = System.currentTimeMillis() + 30000L;
+                this.lastRpsPromptAt = System.currentTimeMillis();
+                ServerPlayer winnerPlayer = this.startPlayer(winner);
+                if (winnerPlayer != null) {
+                    ModNetwork.sendTo(winnerPlayer, new ModNetwork.TpPrompt());
+                } else {
+                    this.chooseTp(winner, ThreadLocalRandom.current().nextBoolean());
+                }
+            }
+        }
+    }
+
+    private void restartRps() {
+        this.rpsPicks[0] = 0;
+        this.rpsPicks[1] = 0;
+        DuelFieldEntity field = this.linkedField(this.server);
+        int aiSeat = field == null ? -1 : field.aiSide();
+        if (aiSeat >= 0) {
+            this.rpsPicks[aiSeat] = randomHand();
+        }
+
+        this.lastRpsPromptAt = System.currentTimeMillis();
+        this.startDeadline = System.currentTimeMillis() + 30000L;
+
+        for (int seat = 0; seat < 2; seat++) {
+            ServerPlayer who = this.rpsPicks[seat] == 0 ? this.startPlayer(seat) : null;
+            if (who != null) {
+                ModNetwork.sendTo(who, new ModNetwork.RpsPrompt());
+            }
+        }
+    }
+
+    private void chooseTp(int winnerSeat, boolean chooseFirst) {
+        if (this.startStage == DuelSessionManager.StartStage.CHOOSE_TP) {
+            this.startStage = DuelSessionManager.StartStage.IDLE;
+            int firstSeat = DuelStart.firstSeat(winnerSeat, chooseFirst);
+            this.broadcast(this.seatLabel(winnerSeat) + " 选择了" + (chooseFirst ? "先攻" : "后攻"));
+            this.finishDuelStart(firstSeat);
+        }
+    }
+
+    private void finishDuelStart(int firstSeat) {
+        DuelFieldEntity field = this.linkedField(this.server);
+        if (field != null) {
+            boolean flipped = false;
+            String firstLabel = this.seatLabel(firstSeat);
+
+            try {
+                if (DuelStart.needsFlip(firstSeat)) {
+                    this.flipField(field);
+                    flipped = true;
+                }
+
+                this.startForField(this.server, field, this.playerForSeat(0));
+                field.setGameStarted(true);
+                this.broadcast("决斗开始：" + firstLabel + " 先手");
+            } catch (Exception ex) {
+                if (flipped) {
+                    this.flipField(field);
+                    LOGGER.warn("开局失败后已恢复翻场前的卡组与座位");
+                }
+
+                LOGGER.warn("开局失败：{}", ex.getMessage());
+                this.broadcast("开局失败：" + ex.getMessage());
+                this.startStage = DuelSessionManager.StartStage.IDLE;
+            }
+        }
+    }
+
+    private void flipField(DuelFieldEntity field) {
+        field.rotateHalfTurn();
+        field.swapSides();
+        UUID oldOwner = this.ownerId;
+        this.ownerId = this.seat1Id;
+        this.seat1Id = oldOwner;
+        Map<String, DeckData> decks = this.fieldDecks.get(field.getUUID());
+        if (decks != null) {
+            DeckData p1 = decks.remove("p1");
+            DeckData p2 = decks.remove("p2");
+            if (p2 != null) {
+                decks.put("p1", p2);
+            }
+
+            if (p1 != null) {
+                decks.put("p2", p1);
+            }
+        }
+
+        int aiSide = field.aiSide();
+        this.pendingDeck = this.boundDeck(field, aiSide == 0 ? "p2" : "p1");
+        LOGGER.info("Duel start: field flipped so seat 0 is the (old) p2 side");
+    }
+
+    private void resendRpsIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - this.lastRpsPromptAt >= 5000L) {
+            this.lastRpsPromptAt = now;
+            if (this.startStage == DuelSessionManager.StartStage.CHOOSE_TP) {
+                // The winner was asked only once: a question closed or covered by another screen never came back.
+                ServerPlayer winnerPlayer = this.startPlayer(this.rpsWinner);
+                if (winnerPlayer != null) {
+                    ModNetwork.sendTo(winnerPlayer, new ModNetwork.TpPrompt());
+                    LOGGER.info("TP prompt resent -> seat {} ({})", this.rpsWinner, winnerPlayer.getScoreboardName());
+                }
+
+                return;
+            }
+
+            for (int seat = 0; seat < 2; seat++) {
+                if (this.rpsPicks[seat] == 0) {
+                    ServerPlayer who = this.startPlayer(seat);
+                    if (who != null) {
+                        ModNetwork.sendTo(who, new ModNetwork.RpsPrompt());
+                        LOGGER.info("RPS prompt resent -> seat {} ({})", seat, who.getScoreboardName());
+                    }
+                }
+            }
+        }
+    }
+
+    private void tickStartStage() {
+        if (this.startStage != DuelSessionManager.StartStage.IDLE) {
+            this.resendRpsIfNeeded();
+        }
+
+        if (this.startStage != DuelSessionManager.StartStage.IDLE && System.currentTimeMillis() >= this.startDeadline) {
+            if (this.startStage == DuelSessionManager.StartStage.RPS) {
+                for (int seat = 0; seat < 2; seat++) {
+                    if (this.rpsPicks[seat] == 0) {
+                        this.rpsPicks[seat] = randomHand();
+                        ServerPlayer who = this.playerForSeat(seat);
+                        if (who != null) {
+                            who.displayClientMessage(Component.literal("猜拳超时，已随机替你出拳"), false);
+                        }
+                    }
+                }
+
+                this.resolveRps();
+            } else if (this.startStage == DuelSessionManager.StartStage.CHOOSE_TP) {
+                ServerPlayer winnerPlayer = this.startPlayer(this.rpsWinner);
+                if (winnerPlayer != null) {
+                    winnerPlayer.displayClientMessage(Component.literal("选先后超时，已随机"), false);
+                }
+
+                this.chooseTp(this.rpsWinner, ThreadLocalRandom.current().nextBoolean());
+            }
+        }
+    }
+
+    private String seatLabel(int seat) {
+        ServerPlayer who = this.playerForSeat(seat);
+        if (who != null) {
+            return who.getScoreboardName();
+        }
+
+        DuelFieldEntity field = this.linkedField(this.server);
+        return field != null && field.aiSide() == seat ? "人机" : "座位 " + seat;
+    }
+
+    private void broadcast(String text) {
+        for (int seat = 0; seat < 2; seat++) {
+            ServerPlayer who = this.playerForSeat(seat);
+            if (who != null) {
+                who.displayClientMessage(Component.literal(text), false);
+            }
+        }
+    }
+
+    synchronized DeckData boundDeck(DuelFieldEntity field, String side) {
+        if (field == null) {
+            return null;
+        }
+
+        Map<String, DeckData> decks = this.fieldDecks.get(field.getUUID());
+        return decks == null ? null : decks.get(side == null ? "p1" : side);
+    }
+
+    private int askedSeat() {
+        return this.host == null ? -1 : this.host.promptPlayer();
+    }
+
+    synchronized boolean isSecondPlayer(ServerPlayer player, DuelFieldEntity field) {
+        if (player == null) {
+            return false;
+        } else if (this.seat1Id != null) {
+            return this.seat1Id.equals(player.getUUID());
+        } else {
+            return this.ownerId != null ? !this.ownerId.equals(player.getUUID()) : field != null && "p2".equals(field.playerSide(player));
+        }
+    }
+
+    synchronized boolean isOwner(ServerPlayer player) {
+        return player != null && this.ownerId != null && this.ownerId.equals(player.getUUID());
+    }
+
+    synchronized boolean sideTakenByOther(ServerPlayer player, String side) {
+        if (player == null) {
+            return false;
+        }
+
+        UUID id = player.getUUID();
+        UUID holder = "p2".equals(side) ? this.seat1Id : this.ownerId;
+        return holder != null && !holder.equals(id);
+    }
+
+    private ServerPlayer playerForSeat(MinecraftServer server, int seat) {
+        UUID id = seat == 1 ? this.seat1Id : this.ownerId;
+        return id != null && server != null ? server.getPlayerList().getPlayer(id) : null;
+    }
+
+    private ServerPlayer playerForSeat(int seat) {
+        return this.playerForSeat(this.server, seat);
+    }
+
+    private ServerPlayer playerForSeat() {
+        int seat = this.askedSeat();
+        return this.playerForSeat(seat < 0 ? 0 : seat);
+    }
+
+    private int seatOf(ServerPlayer player) {
+        return player != null && this.seat1Id != null && this.seat1Id.equals(player.getUUID()) ? 1 : 0;
+    }
+
+    private boolean isAsking(ServerPlayer player) {
+        int asked = this.askedSeat();
+        return asked < 0 || asked == this.seatOf(player);
+    }
+
+    private boolean refuseIfNotAsked(ServerPlayer player) {
+        if (player != null && !this.isAsking(player)) {
+            player.displayClientMessage(Component.literal("现在不是你的操作"), true);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isParticipant(ServerPlayer player) {
+        if (player == null) {
+            return false;
+        }
+
+        UUID id = player.getUUID();
+        return this.ownerId != null && this.ownerId.equals(id) ? true : this.seat1Id != null && this.seat1Id.equals(id);
+    }
+
+    synchronized void requestPromptResend(ServerPlayer player) {
+        if (player != null && this.host != null && this.host.isRunning()) {
+            int asked = this.host.promptPlayer();
+            if (asked >= 0 && asked == this.seatOf(player) && this.isParticipant(player)) {
+                if (this.pendingActivation != null
+                    && this.pendingActivation.host() == this.host
+                    && this.pendingActivation.player().equals(player.getUUID())
+                    && this.pendingActivation.seq() == this.host.promptSeq()) {
+                    this.sendActivationChoices(player, this.pendingActivation);
+                } else {
+                    this.lastSelectSignature = "";
+                    this.lastUnselectSignature = "";
+                    this.lastPositionSignature = "";
+                    this.lastSortSignature = "";
+                    this.lastOptionSignature = "";
+                    this.lastSumSignature = "";
+                    this.lastChainChoiceSignature = "";
+                    this.lastDecisionSignature = "";
+                    this.lastPlaceHints = new int[0];
+                    LOGGER.info("Prompt resend requested by {} (function {})", player.getScoreboardName(), this.host.promptFunction());
+                }
+            }
+        }
+    }
+
+    synchronized void bindSecondPlayer(ServerPlayer player, DuelFieldEntity field, DeckData deck) {
+        this.bindCaseSide(player, field, deck, "p2");
+    }
+
+    synchronized void bindCaseSide(ServerPlayer player, DuelFieldEntity field, DeckData deck, String side) {
+        if (player != null && field != null && deck != null && side != null) {
+            boolean p2 = "p2".equals(side);
+            UUID id = player.getUUID();
+            if (p2) {
+                if (id.equals(this.ownerId)) {
+                    // The near seat can be held without a deck there: placing the AI deck links its player to the
+                    // board. Clearing that half would throw the AI deck away the moment the player sits down opposite.
+                    if (field.aiSide() == 0) {
+                        this.ownerId = null;
+                    } else {
+                        this.releaseSide(field, "p1");
+                    }
+                }
+
+                this.seat1Id = id;
+            } else {
+                if (id.equals(this.seat1Id)) {
+                    if (field.aiSide() == 1) {
+                        this.seat1Id = null;
+                    } else {
+                        this.releaseSide(field, "p2");
+                    }
+                }
+
+                this.ownerId = id;
+            }
+
+            field.bindDeck(side, deck);
+            field.setSeatId(side, id);
+            this.fieldDecks.computeIfAbsent(field.getUUID(), ignored -> new HashMap<>()).put(side, deck);
+            if (!p2) {
+                this.pendingDeck = deck;
+                this.extraBase = List.copyOf(deck.extraDeck());
+                this.extraTracker.reset(this.extraBase);
+            } else {
+                this.extraTracker2.reset(List.copyOf(deck.extraDeck()));
+            }
+
+            LOGGER.info("Card case bound: {} -> {} ({})", new Object[]{player.getName().getString(), side, id});
+            MDProMod.duels().vacateOthers(player, this);
+        }
+    }
+
+    synchronized void clearCaseSide(ServerPlayer player, DuelFieldEntity field, String side) {
+        if (field != null && side != null) {
+            this.releaseSide(field, side);
+            LOGGER.info("Card case cleared: {} (by {})", side, player == null ? "-" : player.getName().getString());
+        }
+    }
+
+    synchronized void bindAiSeat(DuelFieldEntity field) {
+        this.bindAiSeat(field, "p2");
+    }
+
+    synchronized void bindAiSeat(DuelFieldEntity field, String side) {
+        boolean p2 = "p2".equals(side);
+        UUID holder = p2 ? this.seat1Id : this.ownerId;
+        if (holder != null) {
+            LOGGER.info("AI deck takes {}; releasing human binding {}", side, holder);
+            if (field == null) {
+                if (p2) {
+                    this.seat1Id = null;
+                } else {
+                    this.ownerId = null;
+                }
+            } else {
+                this.releaseSide(field, p2 ? "p2" : "p1");
+            }
+        }
+    }
+
+    private void releaseSide(DuelFieldEntity field, String side) {
+        boolean p2 = "p2".equals(side);
+        field.unbindDeck(side);
+        Map<String, DeckData> decks = this.fieldDecks.get(field.getUUID());
+        if (decks != null) {
+            decks.remove(side);
+        }
+
+        if (this.fieldId == null || field.getUUID().equals(this.fieldId)) {
+            if (p2) {
+                this.seat1Id = null;
+                this.extraTracker2.stop();
+            } else {
+                this.ownerId = null;
+                this.pendingDeck = null;
+                this.extraBase = List.of();
+                this.extraTracker.stop();
+            }
+        }
+    }
+
+    private void pushHandForSeat(int seat) {
+        ServerPlayer viewer = this.playerForSeat(seat);
+        if (viewer != null) {
+            boolean running = this.host != null && this.host.isRunning();
+            boolean opening = this.scene != null && this.scene.openingBusy();
+            int[] hand = opening
+                ? new int[0]
+                : (
+                    this.previewHand != null && seat == 0
+                        ? this.previewHand
+                        : (this.scene != null ? this.scene.hand(seat) : (running ? this.host.handOf(seat) : new int[0]))
+                );
+            int turn = running ? this.host.turnPlayer() : 0;
+            boolean active = running && !opening;
+            if (this.handActive[seat] != active || this.lastTurn[seat] != turn || !Arrays.equals(hand, this.lastHand[seat])) {
+                this.handActive[seat] = active;
+                this.lastTurn[seat] = turn;
+                this.lastHand[seat] = hand;
+                ModNetwork.sendTo(viewer, new ModNetwork.HandSync(hand, active, running && turn == seat));
+            }
+        }
+    }
+
+    synchronized void linkField(MinecraftServer server, DuelFieldEntity field, ServerPlayer owner) {
+        UUID linkedId = owner == null ? null : owner.getUUID();
+        if (this.host != null && this.host.isRunning() && linkedId != null) {
+            UUID engineHolder = this.ownerId != null ? this.ownerId : this.seat1Id;
+            if (engineHolder != null && !engineHolder.equals(linkedId) || this.fieldId != null && !this.fieldId.equals(field.getUUID())) {
+                owner.displayClientMessage(Component.literal("该对局已绑定玩家和决斗盘"), true);
+                return;
+            }
+        }
+
+        if (this.fieldId != null && !this.fieldId.equals(field.getUUID())) {
+            this.clearVisuals();
+        }
+
+        this.server = server;
+        this.fieldDimension = field.level().dimension();
+        this.fieldId = field.getUUID();
+        // Linking only fills an empty near seat. It used to overwrite it, so anybody right-clicking the board with
+        // an empty hand took the seat of the player whose deck was already lying there.
+        if (this.ownerId == null && DuelStart.shouldSetOwnerSeat(linkedId, this.seat1Id)) {
+            this.ownerId = linkedId;
+        }
+
+        for (int seat = 0; seat < 2; seat++) {
+            this.lastHand[seat] = new int[0];
+            this.lastTurn[seat] = -1;
+            this.handActive[seat] = false;
+        }
+
+        if (this.host != null && this.scene == null) {
+            this.scene = new DuelAnimationScene();
+            this.scene.initialize(this.host.initialMain(0), this.host.initialExtra(0), this.host.initialMain(1), this.host.initialExtra(1));
+        }
+
+        LOGGER.info(
+            "Duel field linked: {} @ {} seat0={} seat1={} viewer={}",
+            new Object[]{this.fieldId, this.fieldDimension.location(), this.ownerId, this.seat1Id, linkedId}
+        );
+    }
+
+    synchronized UUID linkedField() {
+        return this.fieldId;
+    }
+
+    synchronized void tickField() {
+        if (this.server != null) {
+            this.tickStartStage();
+            if (this.host != null) {
+                String notice = this.host.consumeNotice();
+                if (!notice.isEmpty()) {
+                    ServerPlayer noticePlayer = this.playerForSeat();
+                    if (noticePlayer != null) {
+                        noticePlayer.displayClientMessage(Component.literal(notice), false);
+                    }
+                }
+            }
+
+            boolean running = this.host != null && this.host.isRunning();
+            if (this.fieldId != null && this.fieldDimension != null) {
+                ServerLevel level = this.server.getLevel(this.fieldDimension);
+                if (level != null && level.getEntity(this.fieldId) instanceof DuelFieldEntity field) {
+                    if (this.scene != null) {
+                        if (this.host != null) {
+                            List<DuelVisualState.Event> events = this.host.drainEvents();
+                            this.trackExtraDeck(events);
+                            this.scene.enqueue(events);
+                        }
+
+                        this.scene.tick(level, field, this.ownerId, this.seat1Id);
+                    }
+
+                    if (this.host != null) {
+                        boolean caughtUp = this.scene == null || !this.scene.busy();
+                        if (caughtUp) {
+                            field.setLifePoints("p1", this.host.lifePoints(0));
+                            field.setLifePoints("p2", this.host.lifePoints(1));
+                            field.setTurnSide(this.host.turnPlayer());
+                            String phase = phaseName(this.host.phaseCode());
+                            field.setCurrentPhase(this.host.turnPlayer() == 1 ? "p2" : "p1", phase);
+                            if (this.host.turnPlayer() != this.lastPhaseTurn || !phase.equals(this.lastPhaseName)) {
+                                this.lastPhaseTurn = this.host.turnPlayer();
+                                this.lastPhaseName = phase;
+
+                                for (int seat = 0; seat < 2; seat++) {
+                                    ServerPlayer who = this.playerForSeat(seat);
+                                    if (who != null) {
+                                        who.displayClientMessage(Component.literal(DuelTiming.phaseEntry(this.host.turnPlayer() != seat, phase)), true);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (caughtUp
+                            && field.duelResult() == 0
+                            && field.isGameStarted()
+                            && this.host.duelActive()
+                            && (this.host.isEnded() || !this.host.isRunning())) {
+                            Integer winner = this.host.getWinner();
+                            field.setOpening(false);
+                            field.setPhasePrompt(-1, false, false, false);
+
+                            for (int seat = 0; seat < 2; seat++) {
+                                ServerPlayer resultPlayer = this.playerForSeat(seat);
+                                if (resultPlayer != null) {
+                                    boolean iWon = winner != null && (winner & 1) == seat;
+                                    resultPlayer.displayClientMessage(Component.literal(iWon ? "决斗胜利！右键右下角的金色按钮可以开新一局。" : "决斗失败。右键右下角的灰色按钮可以开新一局。"), false);
+                                }
+                            }
+
+                            if (winner != null) {
+                                field.setDuelResult((winner & 1) + 1);
+                            } else {
+                                // A draw, or a duel host that died: there is no result to show, and the board would
+                                // stay "in a duel" that nobody can surrender, restart or pick up.
+                                LOGGER.warn("Duel on field {} ended without a winner; back to preparation", this.fieldId);
+                                this.abandon(field, "这一局没有分出胜负（平局或决斗核心中断），决斗盘已回到准备状态");
+                                return;
+                            }
+                        }
+
+                        if (this.host.isRunning() && !this.host.duelActive() && field.isGameStarted() && !this.host.lastError().isEmpty()) {
+                            field.setGameStarted(false);
+
+                            for (int seat = 0; seat < 2; seat++) {
+                                ServerPlayer failPlayer = this.playerForSeat(seat);
+                                if (failPlayer != null) {
+                                    failPlayer.displayClientMessage(Component.literal("开局失败：" + this.host.lastError()), false);
+                                }
+                            }
+                        }
+
+                        if (!this.host.isProcessAlive() && !this.host.duelActive() && field.isGameStarted() && !field.hasResult()) {
+                            String error = this.host.lastError();
+                            LOGGER.warn("Duel host of field {} exited before the duel began: {}", this.fieldId, error);
+                            this.abandon(field, "开局失败：" + (error.isEmpty() ? "决斗核心没有启动" : error));
+                            return;
+                        }
+                    }
+
+                    boolean opening = this.scene != null && this.scene.openingBusy();
+                    boolean reveal = !opening && (this.scene == null || !this.scene.busy());
+                    field.setOpening(opening);
+                    if (this.host != null && reveal) {
+                        field.setPhasePrompt(this.host.promptPlayer(), this.host.promptToBattle(), this.host.promptToEnd(), this.host.promptToMain2());
+                    } else {
+                        field.setPhasePrompt(-1, false, false, false);
+                    }
+
+                    int[] hints = this.host != null && !opening ? this.host.placeAddresses() : new int[0];
+                    if (reveal && !Arrays.equals(hints, this.lastPlaceHints)) {
+                        this.lastPlaceHints = hints;
+                        ServerPlayer hintPlayer = this.playerForSeat();
+                        if (hintPlayer != null) {
+                            ModNetwork.sendTo(hintPlayer, new ModNetwork.PlaceHint(field.getId(), hints));
+                            if (hints.length > 0) {
+                                StringBuilder where = new StringBuilder();
+
+                                for (int i = 0; i < hints.length; i++) {
+                                    if (i > 0) {
+                                        where.append("、");
+                                    }
+
+                                    where.append(DuelLocation.label(hints[i], this.seatOf(hintPlayer)));
+                                }
+
+                                hintPlayer.displayClientMessage(Component.literal("请左键点绿色的格子来选定落点：" + where), false);
+                            }
+                        }
+                    }
+
+                    if (this.host != null && reveal && this.host.unselectPrompt()) {
+                        String signature = this.host.promptSeq()
+                            + ":u:"
+                            + Arrays.toString(this.host.unselectSelectCodes())
+                            + ":"
+                            + Arrays.toString(this.host.unselectChosenCodes())
+                            + ":"
+                            + this.host.hintSelectText();
+                        ServerPlayer chooser = this.playerForSeat();
+                        if (chooser != null && !signature.equals(this.lastUnselectSignature)) {
+                            this.lastUnselectSignature = signature;
+                            ModNetwork.sendTo(
+                                chooser,
+                                new ModNetwork.UnselectList(
+                                    this.host.unselectSelectCodes(),
+                                    this.host.unselectChosenCodes(),
+                                    this.host.selectMin(),
+                                    this.host.selectMax(),
+                                    this.host.unselectFinishable(),
+                                    this.host.unselectSelectAddresses(),
+                                    this.host.unselectChosenAddresses(),
+                                    this.seatOf(chooser),
+                                    this.host.hintSelectText()
+                                )
+                            );
+                            int[] selectable = this.resolveCardEntities(level, field, this.host.unselectSelectAddresses());
+                            int[] selected = this.resolveCardEntities(level, field, this.host.unselectChosenAddresses());
+                            ModNetwork.sendTo(chooser, new ModNetwork.SelectHint(selectable, selected));
+                        }
+                    } else if (this.host == null || !this.host.unselectPrompt()) {
+                        this.lastUnselectSignature = "";
+                    }
+
+                    if (this.host != null && reveal && this.host.positionPrompt()) {
+                        int[] values = this.host.positionValues();
+                        String signature = this.host.promptSeq() + ":p:" + Arrays.toString(values);
+                        ServerPlayer chooser = this.playerForSeat();
+                        if (chooser != null && !signature.equals(this.lastPositionSignature)) {
+                            this.lastPositionSignature = signature;
+                            String[] labels = new String[values.length];
+
+                            for (int i = 0; i < values.length; i++) {
+                                labels[i] = switch (values[i]) {
+                                    case 1 -> "攻击表示";
+                                    case 2 -> "里侧攻击";
+                                    default -> "表示 " + values[i];
+                                    case 4 -> "守备表示";
+                                    case 8 -> "里侧守备";
+                                };
+                            }
+
+                            ModNetwork.sendTo(chooser, new ModNetwork.PositionList(values, labels));
+                        }
+                    } else if (this.host == null || !this.host.positionPrompt()) {
+                        this.lastPositionSignature = "";
+                    }
+
+                    if (this.host != null && reveal && this.host.sortPrompt()) {
+                        int[] codes = this.host.sortCodes();
+                        String signature = this.host.promptSeq() + ":s:" + Arrays.toString(codes);
+                        ServerPlayer sorter = this.playerForSeat();
+                        if (sorter != null && !signature.equals(this.lastSortSignature)) {
+                            this.lastSortSignature = signature;
+                            ModNetwork.sendTo(sorter, new ModNetwork.SortList(codes));
+                        }
+                    } else if (this.host == null || !this.host.sortPrompt()) {
+                        this.lastSortSignature = "";
+                    }
+
+                    if (this.host != null && reveal && this.host.optionPrompt()) {
+                        int[] values = this.host.optionValues();
+                        String signature = this.host.promptSeq() + ":o:" + Arrays.toString(values);
+                        ServerPlayer chooser = this.playerForSeat();
+                        if (chooser != null && !signature.equals(this.lastOptionSignature)) {
+                            this.lastOptionSignature = signature;
+                            ModNetwork.sendTo(chooser, new ModNetwork.OptionList(values, this.host.optionLabels()));
+                        }
+                    } else if (this.host == null || !this.host.optionPrompt()) {
+                        this.lastOptionSignature = "";
+                    }
+
+                    if (this.host != null && reveal) {
+                        int announce = this.host.announceFunction();
+                        if (announce < 0) {
+                            this.lastAnnounceSignature = "";
+                        } else {
+                            int[] values = this.host.announceValues();
+                            String signature = this.host.promptSeq() + ":a:" + announce + ":" + Arrays.toString(values);
+                            ServerPlayer chooser = this.playerForSeat();
+                            if (chooser != null && !signature.equals(this.lastAnnounceSignature)) {
+                                this.lastAnnounceSignature = signature;
+                                ModNetwork.sendTo(
+                                    chooser, new ModNetwork.AnnounceList(this.host.announceKind(), this.host.announcePick(), values, this.host.announceHint())
+                                );
+                            }
+                        }
+                    }
+
+                    if (this.host != null && reveal && this.host.hasSelectCardPrompt() && !this.host.unselectPrompt()) {
+                        String signature = this.host.promptSeq() + ":" + this.host.selectSignature() + ":" + this.host.hintSelectText();
+                        if (!signature.equals(this.lastSelectSignature)) {
+                            this.lastSelectSignature = signature;
+                            this.cardSelection.clear();
+                            ServerPlayer chooser = this.playerForSeat();
+                            if (chooser != null) {
+                                ModNetwork.sendTo(
+                                    chooser,
+                                    new ModNetwork.SelectList(
+                                        this.host.selectCodes(),
+                                        this.host.selectMin(),
+                                        this.host.selectMax(),
+                                        this.host.selectAddrs(),
+                                        this.seatOf(chooser),
+                                        this.host.hintSelectText(),
+                                        this.host.selectCancelable(),
+                                        this.host.selectFieldFirst()
+                                    )
+                                );
+                            }
+                        }
+
+                        int[] selectable = this.host.selectableAddresses();
+                        int[] entities = this.resolveCardEntities(level, field, selectable);
+                        int[] selected = this.resolveCardEntities(level, field, this.packedSelection());
+                        if (!Arrays.equals(entities, this.lastSelectHints) || !Arrays.equals(selected, this.lastSelectHints)) {
+                            this.lastSelectHints = entities;
+                            ServerPlayer selectPlayer = this.playerForSeat();
+                            if (selectPlayer != null) {
+                                ModNetwork.sendTo(selectPlayer, new ModNetwork.SelectHint(entities, selected));
+                            }
+                        }
+                    } else if (this.lastSelectHints.length > 0 && (this.host == null || !this.host.unselectPrompt())) {
+                        this.lastSelectHints = new int[0];
+                        this.lastSelectSignature = "";
+                        this.cardSelection.clear();
+                        ServerPlayer selectPlayer = this.playerForSeat();
+                        if (selectPlayer != null) {
+                            ModNetwork.sendTo(selectPlayer, new ModNetwork.SelectHint(new int[0], new int[0]));
+                        }
+                    }
+
+                    int[] piles = this.host != null && !opening ? this.host.glowingPileZones() : new int[0];
+                    if (reveal && !Arrays.equals(piles, this.lastPileHints)) {
+                        this.lastPileHints = piles;
+                        ServerPlayer pilePlayer = this.playerForSeat();
+                        if (pilePlayer != null) {
+                            ModNetwork.sendTo(pilePlayer, new ModNetwork.PileHint(field.getId(), piles));
+                        }
+                    }
+
+                    if (this.host != null && reveal && this.host.chainVersion() != this.lastChainVersion) {
+                        this.lastChainVersion = this.host.chainVersion();
+                        ModNetwork.sendNear(
+                            level, field.position(), 96.0, new ModNetwork.ChainState(field.getId(), this.host.chainCodes(), this.host.chainResolving())
+                        );
+                    }
+
+                    int[] chainMarks = this.host == null ? new int[0] : this.resolveCardEntities(level, field, this.host.chainMarkAddresses());
+                    int[] targetMarks = this.host == null ? new int[0] : this.resolveCardEntities(level, field, this.host.targetMarkAddresses());
+                    int[] chainMarkAddrs = this.host == null ? new int[0] : this.host.chainMarkAddresses();
+                    int[] targetMarkAddrs = this.host == null ? new int[0] : this.host.targetMarkAddresses();
+                    boolean clearingMarks = chainMarks.length == 0 && targetMarks.length == 0;
+                    if ((reveal || clearingMarks)
+                        && (
+                            !Arrays.equals(chainMarks, this.lastChainMarks)
+                                || !Arrays.equals(targetMarks, this.lastTargetMarks)
+                                || !Arrays.equals(chainMarkAddrs, this.lastChainMarkAddrs)
+                                || !Arrays.equals(targetMarkAddrs, this.lastTargetMarkAddrs)
+                        )) {
+                        this.lastChainMarks = chainMarks;
+                        this.lastTargetMarks = targetMarks;
+                        this.lastChainMarkAddrs = chainMarkAddrs;
+                        this.lastTargetMarkAddrs = targetMarkAddrs;
+                        ModNetwork.sendNear(level, field.position(), 96.0, new ModNetwork.CardMarks(chainMarks, targetMarks, chainMarkAddrs, targetMarkAddrs));
+                    }
+
+                    if (this.host != null && reveal && this.host.chainChoicePrompt()) {
+                        int[] codes = this.host.chainChoiceCodes();
+                        boolean firstActivation = this.host.chainCodes().length == 0;
+                        String signature = this.host.promptSeq() + ":" + Arrays.toString(codes) + ":" + this.host.chainForced() + ":" + firstActivation;
+                        ServerPlayer chooser = this.playerForSeat();
+                        if (chooser != null && !signature.equals(this.lastChainChoiceSignature)) {
+                            this.lastChainChoiceSignature = signature;
+                            String question = codes.length == 0
+                                ? DuelTiming.passQuestion()
+                                : (
+                                    firstActivation
+                                        ? DuelTiming.openQuestion(chainCandidateNames(this.host))
+                                        : DuelTiming.chainQuestion(chainTriggerName(this.host))
+                                );
+                            String moment = this.host.chainTimingText();
+                            if (moment.isEmpty()) {
+                                moment = this.host.currentMomentText();
+                            }
+
+                            if (!moment.isEmpty()) {
+                                question = "【" + moment + "】" + question;
+                            }
+
+                            ModNetwork.sendTo(
+                                chooser,
+                                new ModNetwork.ChainChoice(
+                                    codes,
+                                    this.host.chainForced(),
+                                    question,
+                                    firstActivation,
+                                    this.host.chainChoiceAddrs(),
+                                    this.seatOf(chooser),
+                                    this.host.chainChoiceDescriptions()
+                                )
+                            );
+                            if (this.host.chainChoiceHasUnknown()) {
+                                chooser.displayClientMessage(Component.literal("连锁窗口有 " + codes.length + " 张可选（部分卡面没认出来，仍可按下标选择或放弃）"), false);
+                            }
+                        }
+                    } else if (this.host == null || !this.host.chainChoicePrompt()) {
+                        this.lastChainChoiceSignature = "";
+                    }
+
+                    if (this.host != null && reveal && this.host.sumPrompt()) {
+                        ServerPlayer chooser = this.playerForSeat();
+                        String signature = this.host.promptSeq()
+                            + ":sum:"
+                            + this.host.sumTarget()
+                            + ":"
+                            + Arrays.toString(this.host.sumMustCodes())
+                            + ":"
+                            + Arrays.toString(this.host.sumCodes());
+                        if (!signature.equals(this.lastSumSignature)) {
+                            if (this.host.sumMustMatches() && this.answerSumImplicit(this.host)) {
+                                this.lastSumSignature = signature;
+                            } else if (chooser != null) {
+                                this.lastSumSignature = signature;
+                                ModNetwork.sendTo(
+                                    chooser,
+                                    new ModNetwork.SumChoice(
+                                        this.host.promptSeq(),
+                                        this.host.sumOverflow(),
+                                        this.host.sumTarget(),
+                                        this.host.sumMin(),
+                                        this.host.sumMax(),
+                                        this.seatOf(chooser),
+                                        this.host.sumMustCodes(),
+                                        this.host.sumMustAddrs(),
+                                        this.host.sumMustLevel1(),
+                                        this.host.sumMustLevel2(),
+                                        this.host.sumCodes(),
+                                        this.host.sumAddrs(),
+                                        this.host.sumLevel1(),
+                                        this.host.sumLevel2()
+                                    )
+                                );
+                            }
+                        }
+                    } else if (this.host == null || !this.host.sumPrompt()) {
+                        this.lastSumSignature = "";
+                    }
+
+                    if (this.host != null && reveal) {
+                        int function = this.host.decisionFunction();
+                        ServerPlayer decider = this.playerForSeat();
+                        String signature = function < 0 ? "" : this.host.promptSeq() + ":" + this.host.decisionSignature();
+                        if (function < 0) {
+                            this.lastDecisionSignature = "";
+                        } else if (decider != null && !signature.equals(this.lastDecisionSignature)) {
+                            this.lastDecisionSignature = signature;
+                            int code = this.host.decisionCardCode();
+                            String name = code > 0 ? CardRegistry.get(code).map(CardInfo::name).orElse("#" + code) : "这张卡";
+                            int askedNow = Math.max(0, this.askedSeat());
+                            int descriptionId = parseDescription(this.host.decisionDescription());
+                            String rawDescription = descriptionId > 0 ? SystemStrings.get(descriptionId) : "";
+                            String described = descriptionId > 0 ? SystemStrings.format(descriptionId, name, name) : "";
+                            String question = function == 12
+                                ? (
+                                    !rawDescription.contains("%ls")
+                                        ? DuelTiming.activateQuestion(this.host.turnPlayer() != askedNow, phaseName(this.host.phaseCode()), name)
+                                        : described
+                                )
+                                : (described.isEmpty() ? "是否确认当前操作？" : described);
+                            if (function == 12) {
+                                String moment = this.host.chainTimingText();
+                                if (moment.isEmpty()) {
+                                    moment = this.host.currentMomentText();
+                                }
+
+                                if (!moment.isEmpty()) {
+                                    question = "【" + moment + "】" + (!rawDescription.contains("%ls") ? "是否发动「" + name + "」的效果？" : described);
+                                }
+                            }
+
+                            ModNetwork.sendTo(decider, new ModNetwork.DecisionPrompt(function, name, question));
+                        }
+                    }
+
+                    if (this.host != null && reveal) {
+                        int pending = this.host.promptFunction();
+                        ServerPlayer who = this.playerForSeat();
+                        String signature = pending < 0 ? "" : pending + ":" + this.host.promptSummary();
+                        if (pending < 0 || isRenderedPrompt(pending)) {
+                            this.lastUnknownPromptSignature = "";
+                        } else if (who != null && !signature.equals(this.lastUnknownPromptSignature)) {
+                            this.lastUnknownPromptSignature = signature;
+                            who.displayClientMessage(Component.literal("核心在等一个还没有界面的窗口（函数 " + pending + "）：" + this.host.promptSummary() + " —— 现在会一直等在这里"), false);
+                        }
+                    }
+
+                    if (this.previewHand != null && !running) {
+                        this.reconcilePreview(level, field);
+                    }
+                }
+            }
+
+            this.pushHand();
+        }
+    }
+
     private static String chainTriggerName(DuelHostProcess host) {
-        if (host == null) return "";
+        if (host == null) {
+            return "";
+        }
+
         int[] codes = host.chainCodes();
-        if (codes.length == 0) return "";
-        int code = codes[codes.length - 1] & 0x7FFFFFFF;
+        if (codes.length == 0) {
+            return "";
+        }
+
+        int code = codes[codes.length - 1] & 2147483647;
         return code <= 0 ? "" : CardRegistry.get(code).map(CardInfo::name).orElse("");
     }
 
-    /** 连锁窗口里候选卡的卡名（解析不出来的留空，问句会退化成"有 N 张"）。 */
     private static String[] chainCandidateNames(DuelHostProcess host) {
         int[] codes = host == null ? new int[0] : host.chainChoiceCodes();
         String[] names = new String[codes.length];
+
         for (int i = 0; i < codes.length; i++) {
-            int code = codes[i] & 0x7FFFFFFF;
+            int code = codes[i] & 2147483647;
             names[i] = code <= 0 ? "" : CardRegistry.get(code).map(CardInfo::name).orElse("");
         }
+
         return names;
     }
 
     private static String phaseName(int code) {
-        return switch (code & 0xFFFF) {
-            case 0x01 -> "DP";
-            case 0x02 -> "SP";
-            case 0x04 -> "M1";
-            case 0x08, 0x10, 0x20, 0x40, 0x80 -> "BP";
-            case 0x100 -> "M2";
-            case 0x200 -> "EP";
+        return switch (code & 65535) {
+            case 1 -> "DP";
+            case 2 -> "SP";
+            case 4 -> "M1";
+            case 8, 16, 32, 64, 128 -> "BP";
+            case 256 -> "M2";
+            case 512 -> "EP";
             default -> "DP";
         };
     }
 
-    /** 决斗盘菜单上的按钮：action 0 = 投降，1 = 换时点（value = {@link DuelTimingMode} 序号）。 */
-    /**
-     * 客户端按了决斗盘上的某个控件（阶段键 / 确认键）：核对之后交给决斗盘执行。
-     * 命中判定在客户端做（更准），这里只认"控件存在 + 是自己那侧的"。
-     */
-    synchronized void handleFieldClick(net.minecraft.server.level.ServerPlayer player, String controlId) {
-        if (player == null || controlId == null || controlId.isBlank()) return;
-        DuelFieldEntity field = linkedField(player.server);
-        if (field == null) return;
-        DuelFieldLayout.Control control = DuelFieldLayout.controlById(controlId).orElse(null);
-        if (control == null) return;
-        if (!field.ownsControl(control)) {
-            // 自己那侧 = p1 那半场（看归属，不看站位）；对面的键按了也白按
-            player.displayClientMessage(Component.literal("这是对面那半场的按键"), true);
-            return;
+    private static int parseDescription(String text) {
+        if (text != null && !text.isBlank()) {
+            try {
+                return Integer.parseInt(text.trim());
+            } catch (NumberFormatException ignored) {
+                return 0;
+            }
+        } else {
+            return 0;
         }
-        field.activateControl(player, control);
     }
 
-    /** 决斗盘菜单上的按钮：action 0 = 投降，1 = 换时点（value = {@link DuelTimingMode} 序号）。 */
-    synchronized void handleFieldAction(net.minecraft.server.level.ServerPlayer player,
-                                        int action, int value) {
-        if (player == null) return;
-        if (action == 1) {
-            DuelTimingMode mode = DuelTimingMode.byOrdinal(value);
-            DuelFieldEntity field = linkedField(player.server);
-            if (field != null) field.setTimingMode(mode);
-            if (host != null && host.isRunning()) {
-                try {
-                    host.setTiming(mode.hostKey());
-                } catch (Exception ex) {
-                    LOGGER.warn("切换时点失败: {}", ex.getMessage());
+    synchronized void handleFieldClick(ServerPlayer player, String controlId) {
+        if (player != null && controlId != null && !controlId.isBlank()) {
+            DuelFieldEntity field = this.linkedField(player.server);
+            if (field != null) {
+                DuelFieldLayout.Control control = DuelFieldLayout.controlById(controlId).orElse(null);
+                if (control != null) {
+                    if (!field.ownsControl(player, control)) {
+                        player.displayClientMessage(Component.literal("这是对面那半场的按键"), true);
+                    } else {
+                        field.activateControl(player, control);
+                    }
                 }
             }
-            player.displayClientMessage(Component.literal(
-                    "时点：" + mode.label() + "（" + mode.detail() + "）"), true);
-            return;
-        }
-        if (action != 0) return;
-        DuelFieldEntity field = linkedField(player.server);
-        if (host == null || !host.isRunning() || !host.duelActive()
-                || field == null || field.hasResult()) {
-            player.displayClientMessage(Component.literal("现在没有进行中的决斗"), true);
-            return;
-        }
-        try {
-            host.surrender();
-            player.displayClientMessage(Component.literal("已认输，这一局判给对方"), false);
-        } catch (Exception ex) {
-            player.displayClientMessage(Component.literal("投降失败：" + ex.getMessage()), false);
         }
     }
 
-    /** 本会话绑定的决斗盘实体；找不到就返回 null。 */
+    synchronized void handleFieldAction(ServerPlayer player, int action, int value) {
+        if (player != null) {
+            if (action == 1) {
+                if (this.isParticipant(player)) {
+                    DuelTimingMode mode = DuelTimingMode.byOrdinal(value);
+                    DuelFieldEntity field = this.linkedField(player.server);
+                    if (field != null) {
+                        field.setTimingMode(mode);
+                    }
+
+                    if (this.host != null && this.host.isRunning()) {
+                        try {
+                            this.host.setTiming(mode.hostKey());
+                        } catch (Exception ex) {
+                            LOGGER.warn("切换时点失败: {}", ex.getMessage());
+                        }
+                    }
+
+                    player.displayClientMessage(Component.literal("时点：" + mode.label() + "（" + mode.detail() + "）"), true);
+                }
+            } else if (action == 0) {
+                if (this.isParticipant(player)) {
+                    DuelFieldEntity field = this.linkedField(player.server);
+                    if (this.host != null && this.host.isRunning() && this.host.duelActive() && field != null && !field.hasResult()) {
+                        try {
+                            this.host.surrender(this.seatOf(player));
+                            player.displayClientMessage(Component.literal("已认输，这一局判给对方"), false);
+                        } catch (Exception ex) {
+                            player.displayClientMessage(Component.literal("投降失败：" + ex.getMessage()), false);
+                        }
+                    } else {
+                        player.displayClientMessage(Component.literal("现在没有进行中的决斗"), true);
+                    }
+                }
+            }
+        }
+    }
+
     private DuelFieldEntity linkedField(MinecraftServer server) {
-        if (server == null || fieldId == null || fieldDimension == null) return null;
-        ServerLevel level = server.getLevel(fieldDimension);
-        if (level == null) return null;
-        return level.getEntity(fieldId) instanceof DuelFieldEntity field ? field : null;
+        if (server != null && this.fieldId != null && this.fieldDimension != null) {
+            ServerLevel level = server.getLevel(this.fieldDimension);
+            if (level == null) {
+                return null;
+            } else {
+                return level.getEntity(this.fieldId) instanceof DuelFieldEntity field ? field : null;
+            }
+        } else {
+            return null;
+        }
     }
 
-    /**
-     * 这块盘上还有没有真的在跑的对局。
-     * 重启 / 崩溃之后决斗盘可能还留着"进行中"的标记，但服务端这边已经没有宿主了——
-     * 那种不算，否则玩家会卡在一个点不动的假状态里。
-     */
     synchronized boolean hasLiveDuel(DuelFieldEntity field) {
-        return field != null && host != null && host.isRunning()
-                && fieldId != null && fieldId.equals(field.getUUID());
+        return field != null && this.host != null && this.host.isRunning() && this.fieldId != null && this.fieldId.equals(field.getUUID());
     }
 
-    /**
-     * 空手蹲下右键收回决斗盘：停宿主、收掉场上的卡与这场对局的记录、把决斗盘物品还给玩家。
-     *
-     * <p>正在决斗（已开局且还没有结果）时不动，只提醒一句——免得手一滑把一局删了；
-     * 开局后的卡组记录清掉，但**卡盒和里面的卡组都还在玩家身上**，所以什么都不丢。
-     *
-     * @return true = 收回了；false = 因为还在决斗（或者不是本人的盘）没收
-     */
-    synchronized boolean reclaimField(net.minecraft.server.level.ServerPlayer player,
-                                      DuelFieldEntity field) {
-        if (player == null || field == null) return false;
-        if (ownerId != null && !ownerId.equals(player.getUUID())) {
-            player.displayClientMessage(Component.literal("这个决斗盘绑在别人身上，让本人来收"), true);
+    synchronized void handleFieldClick(ServerPlayer player, DuelFieldEntity field, DuelFieldLayout.Control control) {
+        if (!field.ownsControl(player, control)) {
+            player.displayClientMessage(Component.literal("这是对面那半场的按键"), true);
+        } else {
+            field.activateControl(player, control);
+        }
+    }
+
+    synchronized boolean reclaimField(ServerPlayer player, DuelFieldEntity field) {
+        if (player != null && field != null) {
+            UUID id = player.getUUID();
+            boolean seatsFree = this.ownerId == null && this.seat1Id == null;
+            boolean mine = seatsFree
+                || id.equals(this.ownerId)
+                || field.placer() != null && field.placer().equals(id)
+                || player.hasPermissions(2);
+            if (!mine) {
+                player.displayClientMessage(Component.literal("这个决斗盘绑在别人身上，让本人（或放置它的人、管理员）来收"), true);
+                return false;
+            }
+
+            if (this.isStarting() || this.duelInProgress(field)) {
+                player.displayClientMessage(Component.literal("正在决斗，先投降或打完这一局再收（右下角菜单里有投降）"), true);
+                return false;
+            }
+
+            this.stop();
+            this.fieldDecks.remove(field.getUUID());
+            if (field.getUUID().equals(this.fieldId)) {
+                this.fieldId = null;
+                this.fieldDimension = null;
+                this.ownerId = null;
+                this.seat1Id = null;
+                this.pendingDeck = null;
+            }
+
+            this.purgeCards(field);
+            field.discard();
+            MDProMod.duels().forget(field.getUUID(), this);
+            ItemStack stack = new ItemStack((ItemLike)ModItems.DUEL_FIELD_ITEM.get());
+            if (!player.getInventory().add(stack)) {
+                player.drop(stack, false);
+            }
+
+            player.displayClientMessage(Component.literal("已收回决斗盘（卡盒和里面的卡组都还在你身上）"), false);
+            return true;
+        } else {
             return false;
         }
-        if (field.isGameStarted() && !field.hasResult()) {
-            player.displayClientMessage(Component.literal(
-                    "正在决斗，先投降或打完这一局再收（右下角菜单里有投降）"), true);
-            return false;
-        }
-        stop();                       // 关宿主进程 + 收掉场上的卡、手牌和演出
-        fieldDecks.remove(field.getUUID());
-        if (field.getUUID().equals(fieldId)) {
-            fieldId = null;
-            ownerId = null;
-        }
-        field.discard();
-        net.minecraft.world.item.ItemStack stack =
-                new net.minecraft.world.item.ItemStack(ModItems.DUEL_FIELD_ITEM.get());
-        if (!player.getInventory().add(stack)) player.drop(stack, false);
-        player.displayClientMessage(Component.literal(
-                "已收回决斗盘（卡盒和里面的卡组都还在你身上）"), false);
-        return true;
     }
 
-    /** 把打包的落点地址说成人话（自己/对方的怪兽区 3、场地魔法区……）。 */
-    private static String placeLabel(int packed) {
-        int controller = (packed >> 16) & 1;
-        int location = (packed >> 8) & 0xFF;
-        int sequence = packed & 0xFF;
-        String who = controller == 0 ? "自己" : "对方";
-        return switch (location) {
-            case 4 -> sequence < 5 ? who + "怪兽区" + (sequence + 1) : "额外怪兽区";
-            case 8 -> sequence == 5 ? who + "场地魔法区" : who + "魔陷区" + (sequence + 1);
-            case 1 -> who + "卡组";
-            case 16 -> who + "墓地";
-            case 32 -> who + "除外区";
-            case 64 -> who + "额外卡组";
-            default -> who + "区域" + location + "-" + sequence;
-        };
+    synchronized void onPlayerLeft(ServerPlayer player) {
+        if (player != null) {
+            UUID id = player.getUUID();
+            boolean isOwner = this.ownerId != null && this.ownerId.equals(id);
+            boolean isSecond = this.seat1Id != null && this.seat1Id.equals(id);
+            if (isOwner || isSecond) {
+                if (this.startStage != DuelSessionManager.StartStage.IDLE) {
+                    this.startStage = DuelSessionManager.StartStage.IDLE;
+                    this.broadcast("对手离开了游戏，开局取消");
+                }
+
+                int seat = isSecond ? 1 : 0;
+                String side = isSecond ? "p2" : "p1";
+                DuelFieldEntity field = this.linkedField(player.server);
+                boolean active = this.host != null && this.host.isRunning() && this.host.duelActive() && !this.host.isEnded();
+                if (active) {
+                    try {
+                        this.host.surrender(seat);
+                        LOGGER.info("Player {} left mid-duel: seat {} forfeits", player.getScoreboardName(), seat);
+                    } catch (Exception ex) {
+                        LOGGER.warn("退出判负失败（{}）：{}", player.getScoreboardName(), ex.getMessage());
+                    }
+
+                    ServerPlayer opponent = this.playerForSeat(1 - seat);
+                    if (opponent != null) {
+                        opponent.displayClientMessage(Component.literal("对手退出了游戏，这一局判你胜"), false);
+                    }
+                }
+
+                if (field != null) {
+                    this.releaseSide(field, side);
+                } else if (isSecond) {
+                    this.seat1Id = null;
+                    this.extraTracker2.stop();
+                } else {
+                    this.ownerId = null;
+                    this.pendingDeck = null;
+                    this.extraBase = List.of();
+                    this.extraTracker.stop();
+                }
+
+                LOGGER.info("Player {} unbound from duel field (side {})", player.getScoreboardName(), side);
+                if (this.ownerId == null && this.seat1Id == null) {
+                    // Nobody is left to finish or acknowledge this duel. The board is saved with the world, the duel
+                    // host is not: a board left "in a duel" could not be used, reset or picked up after coming back.
+                    if (field != null && (field.isGameStarted() || field.hasResult())) {
+                        this.abandon(field, null);
+                    } else {
+                        this.stop();
+                    }
+                }
+            }
+        }
     }
 
-    /**
-     * 这些功能号的窗口模组已经有界面（或已经有操作方式）：
-     * 10/11 阶段按钮、12/13 是/否、14 选项、15/20 选卡（含祭品）、16 连锁、
-     * 18/24 落点、19 表示形式、25 排序、26 一张一张选。
-     */
     private static boolean isRenderedPrompt(int function) {
         return switch (function) {
-            case 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 24, 25, 26 -> true;
+            case 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 23, 24, 25, 26, 140, 141, 142, 143 -> true;
             default -> false;
         };
     }
 
     private void reconcilePreview(ServerLevel level, DuelFieldEntity field) {
         Map<Integer, HandCardEntity> existing = new HashMap<>();
-        for (HandCardEntity card : level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28)))
-            if (card.belongsTo(field.getUUID(), 0)) existing.put(card.getIndex(), card);
-        for (int i = 0; i < previewHand.length; i++) {
-            var at = DuelAnimationScene.handPoint(field, 0, i, previewHand.length);
+
+        for (HandCardEntity card : level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28.0))) {
+            if (card.belongsTo(field.getUUID(), 0)) {
+                existing.put(card.getIndex(), card);
+            }
+        }
+
+        for (int i = 0; i < this.previewHand.length; i++) {
+            Vec3 at = DuelAnimationScene.handPoint(field, 0, i, this.previewHand.length);
             HandCardEntity card = existing.remove(i);
             if (card == null) {
-                card = ModEntities.HAND_CARD.get().create(level);
-                if (card == null) continue;
-                card.configure(field.getUUID(), ownerIdText(), 0, i);
-                card.moveTo(at.x, at.y, at.z, field.getYRot(), 0);
+                card = (HandCardEntity)((EntityType)ModEntities.HAND_CARD.get()).create(level);
+                if (card == null) {
+                    continue;
+                }
+
+                card.configure(field.getUUID(), this.ownerIdText(), 0, i);
+                card.moveTo(at.x, at.y, at.z, field.getYRot(), 0.0F);
                 level.addFreshEntity(card);
-            } else card.moveTo(at.x, at.y, at.z, field.getYRot(), 0);
-            card.setPrivateCode(previewHand[i]); card.setCardCode(0);
-            var owner = ownerId == null ? null : server.getPlayerList().getPlayer(ownerId);
-            if (owner != null) ModNetwork.sendTo(owner, new ModNetwork.CardKnowledge(card.getId(), previewHand[i]));
+            } else {
+                card.moveTo(at.x, at.y, at.z, field.getYRot(), 0.0F);
+            }
+
+            card.setPrivateCode(this.previewHand[i]);
+            card.setCardCode(0);
+            ServerPlayer owner = this.playerForSeat(0);
+            if (owner != null) {
+                ModNetwork.sendTo(owner, new ModNetwork.CardKnowledge(card.getId(), this.previewHand[i]));
+            }
         }
-        for (var unused : existing.values()) unused.discard();
+
+        for (HandCardEntity unused : existing.values()) {
+            unused.discard();
+        }
     }
 
     private void clearVisuals() {
-        if (server != null && fieldDimension != null && fieldId != null) {
-            ServerLevel level = server.getLevel(fieldDimension);
-            if (level != null && level.getEntity(fieldId) instanceof DuelFieldEntity field) {
-                if (scene != null) scene.clear(level, field);
-                for (var hand : level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28)))
-                    if (hand.fieldId().equals(fieldId.toString())) hand.discard();
-                for (var card : level.getEntitiesOfClass(DuelCardEntity.class, field.getBoundingBox().inflate(28)))
-                    if (card.belongsTo(fieldId)) card.discard();
+        if (this.server != null && this.fieldDimension != null && this.fieldId != null) {
+            ServerLevel level = this.server.getLevel(this.fieldDimension);
+            if (level != null && level.getEntity(this.fieldId) instanceof DuelFieldEntity field) {
+                if (this.scene != null) {
+                    this.scene.clear(level, field);
+                }
+
+                for (HandCardEntity hand : level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28.0))) {
+                    if (hand.fieldId().equals(this.fieldId.toString())) {
+                        hand.discard();
+                    }
+                }
+
+                for (DuelCardEntity card : level.getEntitiesOfClass(DuelCardEntity.class, field.getBoundingBox().inflate(28.0))) {
+                    if (card.belongsTo(this.fieldId)) {
+                        card.discard();
+                    }
+                }
             }
         }
-        scene = null;
-    }
-    private String ownerIdText() {
-        return ownerId == null ? "" : ownerId.toString();
+
+        this.scene = null;
     }
 
-    /** 调试用：不跑对局也能在世界里摆一排手牌实体。 */
-    synchronized void previewHand(net.minecraft.server.level.ServerPlayer player, int[] cards) {
+    private String ownerIdText() {
+        return this.ownerId == null ? "" : this.ownerId.toString();
+    }
+
+    synchronized void previewHand(ServerPlayer player, int[] cards) {
         this.server = player.server;
         this.ownerId = player.getUUID();
         this.previewHand = cards;
@@ -731,100 +1529,284 @@ final class DuelSessionManager {
 
     synchronized void clearPreviewHand() {
         this.previewHand = null;
-        if (host == null) clearVisuals();
-    }
-
-    /** Visual-only rehearsal, using the same event-to-animation path as a live duel. */
-    synchronized void animationDemo(net.minecraft.server.level.ServerPlayer player, DuelFieldEntity field) {
-        if (isRunning()) throw new IllegalStateException("请先结束当前对局，再播放动画演示");
-        stop();
-        linkField(player.server, field, player);
-        scene = new DuelAnimationScene();
-        scene.initialize(40, 15, 40, 15);
-        DeckData demoDeck = DeckData.of("动画演示", new int[40], new int[15], new int[0]);
-        if (!field.hasDeck("p1")) field.bindDeck("p1", demoDeck);
-        if (!field.hasDeck("p2")) field.bindDeck("p2", demoDeck);
-        scene.enqueue(DuelAnimationDemo.events());
-    }
-
-    /** 玩家用卡盒右键放下的卡组，决斗开始时可以直接拿来用。 */
-    synchronized void setPendingDeck(DeckData deck) {
-        this.pendingDeck = deck;
-        // Existing callers predate per-field storage.  When a field has
-        // already been linked (the normal empty-hand bind + card-case flow),
-        // retain the same deck under that field's near-side slot as well.
-        if (fieldId != null && deck != null) {
-            fieldDecks.computeIfAbsent(fieldId, ignored -> new HashMap<>())
-                    .put("p1", deck);
+        if (this.host == null) {
+            this.clearVisuals();
         }
     }
 
-    /** Record a deck for an explicit field side (used by multiplayer UI). */
-    synchronized void setPendingDeck(DuelFieldEntity field, String side, DeckData deck) {
-        if (field == null || deck == null) return;
-        fieldDecks.computeIfAbsent(field.getUUID(), ignored -> new HashMap<>())
-                .put(side == null ? "p1" : side, deck);
+    synchronized void animationDemo(ServerPlayer player, DuelFieldEntity field) {
+        if (this.isRunning()) {
+            throw new IllegalStateException("请先结束当前对局，再播放动画演示");
+        }
+
+        this.stop();
+        this.linkField(player.server, field, player);
+        this.scene = new DuelAnimationScene();
+        this.scene.initialize(40, 15, 40, 15);
+        DeckData demoDeck = DeckData.of("动画演示", new int[40], new int[15], new int[0]);
+        if (!field.hasDeck("p1")) {
+            field.bindDeck("p1", demoDeck);
+        }
+
+        if (!field.hasDeck("p2")) {
+            field.bindDeck("p2", demoDeck);
+        }
+
+        this.scene.enqueue(DuelAnimationDemo.events());
+    }
+
+    synchronized void setPendingDeck(DeckData deck) {
         this.pendingDeck = deck;
-        // 近半场的额外卡组记一份：界面要跟着核心的序号走（召唤后序号会前移）
-        if (!"p2".equals(side)) {
-            extraBase = java.util.List.copyOf(deck.extraDeck());
-            extraTracker.reset(extraBase);
+        if (this.fieldId != null && deck != null) {
+            this.fieldDecks.computeIfAbsent(this.fieldId, ignored -> new HashMap<>()).put("p1", deck);
+        }
+    }
+
+    synchronized void setPendingDeck(DuelFieldEntity field, String side, DeckData deck) {
+        if (field != null && deck != null) {
+            this.fieldDecks.computeIfAbsent(field.getUUID(), ignored -> new HashMap<>()).put(side == null ? "p1" : side, deck);
+            this.pendingDeck = deck;
+            if (!"p2".equals(side)) {
+                this.extraBase = List.copyOf(deck.extraDeck());
+                this.extraTracker.reset(this.extraBase);
+            }
         }
     }
 
     synchronized DeckData pendingDeck() {
-        return pendingDeck;
+        return this.pendingDeck;
     }
 
-    /** 手牌有变化时才发快照给玩家客户端。 */
-    private void pushHand(boolean running) {
-        if (ownerId == null) return;
-        net.minecraft.server.level.ServerPlayer owner = server.getPlayerList().getPlayer(ownerId);
-        if (owner == null) return;
-        // 开局发牌演出期间先不亮手牌 HUD：等牌真的落到手牌位再出现
-        boolean opening = scene != null && scene.openingBusy();
-        int[] hand = opening ? new int[0] : previewHand != null ? previewHand
-                : scene != null ? scene.hand(0) : running && host != null ? host.handOf(0) : new int[0];
-        int turn = running && host != null ? host.turnPlayer() : 0;
-        boolean active = running && !opening;
-        if (handActive == active && lastTurn == turn && java.util.Arrays.equals(hand, lastHand)) return;
-        lastHand = hand;
-        lastTurn = turn;
-        handActive = active;
-        ModNetwork.sendTo(owner, new ModNetwork.HandSync(hand, active, turn));
+    private void pushHand() {
+        this.pushHandForSeat(0);
+        this.pushHandForSeat(1);
     }
 
-    /** 调试用：直接推一份手牌快照（不依赖对局）。 */
-    synchronized void sendHandSnapshot(net.minecraft.server.level.ServerPlayer player,
-                                       int[] cards, boolean active, int turn) {
+    synchronized void sendHandSnapshot(ServerPlayer player, int[] cards, boolean active, int turn) {
         this.server = player.server;
         this.ownerId = player.getUUID();
-        this.lastHand = cards;
-        this.lastTurn = turn;
-        this.handActive = active;
-        ModNetwork.sendTo(player, new ModNetwork.HandSync(cards, active, turn));
+        this.lastHand[0] = cards;
+        this.lastTurn[0] = turn;
+        this.handActive[0] = active;
+        ModNetwork.sendTo(player, new ModNetwork.HandSync(cards, active, turn == 0));
     }
 
     synchronized void stop() {
-        if (host != null) host.close();
-        host = null;
-        previewHand = null;
-        clearVisuals();
-        pushHand(false);
+        if (this.host != null) {
+            this.host.close();
+        }
+
+        this.host = null;
+        this.previewHand = null;
+        this.clearVisuals();
+        this.pushHand();
+        this.deleteExportedDecks();
+    }
+
+    private void deleteExportedDecks() {
+        Path dir = this.exportDir;
+        this.exportDir = null;
+        if (dir != null) {
+            try (java.util.stream.Stream<Path> files = Files.list(dir)) {
+                for (Path file : files.toList()) {
+                    Files.deleteIfExists(file);
+                }
+
+                Files.deleteIfExists(dir);
+            } catch (Exception ex) {
+                LOGGER.debug("Could not remove duel decks in {}: {}", dir, ex.toString());
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ several duels at once / stale boards
+
+    /** Points this session at a duel field without touching seats or a running duel. */
+    synchronized void attach(DuelFieldEntity field) {
+        if (field != null && field.level() instanceof ServerLevel level) {
+            if (this.fieldId == null || this.fieldId.equals(field.getUUID())) {
+                this.server = level.getServer();
+                this.fieldDimension = level.dimension();
+                this.fieldId = field.getUUID();
+            }
+        }
+    }
+
+    synchronized boolean isLinkedTo(UUID field) {
+        return field != null && field.equals(this.fieldId);
+    }
+
+    /** True when the player sits at this session's board. */
+    synchronized boolean involves(ServerPlayer player) {
+        return this.isParticipant(player) || player != null && this.isStarting() && this.startSeatOf(player) >= 0;
+    }
+
+    /** The duel field entity of this session, when it is loaded. */
+    synchronized DuelFieldEntity field(MinecraftServer server) {
+        return this.linkedField(server);
+    }
+
+    /** True when the player sits here and the duel engine is waiting for that player. */
+    synchronized boolean isAskingPlayer(ServerPlayer player) {
+        return this.host != null && this.host.isRunning() && this.isParticipant(player) && this.isAsking(player);
+    }
+
+    /** A duel that is being started or played; such a session must not be taken over or thrown away. */
+    synchronized boolean isBusy() {
+        return this.startStage != DuelSessionManager.StartStage.IDLE
+            || this.host != null && this.host.isRunning() && this.host.duelActive() && !this.host.isEnded();
+    }
+
+    private boolean duelInProgress(DuelFieldEntity field) {
+        return field.isGameStarted()
+            && !field.hasResult()
+            && this.host != null
+            && this.host.isRunning()
+            && field.getUUID().equals(this.fieldId);
+    }
+
+    /** Nothing in here is worth keeping: no duel, no seats, no decks. */
+    synchronized boolean isDisposable() {
+        return this.host == null
+            && this.scene == null
+            && this.ownerId == null
+            && this.seat1Id == null
+            && this.previewHand == null
+            && this.startStage == DuelSessionManager.StartStage.IDLE
+            && this.fieldDecks.values().stream().allMatch(Map::isEmpty);
+    }
+
+    /** Takes the player off this board (used when the player sits down at another one). */
+    synchronized void vacate(ServerPlayer player) {
+        if (player == null || this.isBusy()) {
+            return;
+        }
+
+        UUID id = player.getUUID();
+        DuelFieldEntity field = this.linkedField(player.server);
+        for (String side : new String[]{"p1", "p2"}) {
+            boolean p2 = "p2".equals(side);
+            if (id.equals(p2 ? this.seat1Id : this.ownerId)) {
+                if (field != null) {
+                    this.releaseSide(field, side);
+                } else if (p2) {
+                    this.seat1Id = null;
+                    this.extraTracker2.stop();
+                } else {
+                    this.ownerId = null;
+                    this.pendingDeck = null;
+                    this.extraBase = List.of();
+                    this.extraTracker.stop();
+                }
+
+                LOGGER.info("Player {} moved to another duel field; side {} of {} released", new Object[]{player.getScoreboardName(), side, this.fieldId});
+            }
+        }
     }
 
     /**
-     * 决胜之后重开：收掉上一局的宿主进程与场面，把决斗盘退回「准备」。
-     * 本侧卡组留着（按钮显示绿色「准备」），对面卸掉等点按钮时自动补 AI 卡组，
-     * 然后就能开新一局。玩家想换卡组的话，直接用卡盒右键决斗盘即可。
+     * Repairs a board whose saved state no longer matches any duel.
+     *
+     * <p>A duel field is saved with the world ("in a duel", decks lying on both halves), the duel itself is not: the
+     * duel host is a process of the running server and the decks are kept in memory. After leaving a single-player
+     * world or restarting a server, the board still said "in a duel", and every way out asked for a running duel:
+     * the buttons did nothing, surrendering answered "no duel in progress" and picking the board up answered
+     * "duel in progress".
      */
-    synchronized void resetForNewDuel(net.minecraft.server.level.ServerPlayer player,
-                                      DuelFieldEntity field) {
-        stop();
-        // 新一局：额外卡组恢复成整副（没记过就用盘上绑着的那副）
-        java.util.List<Integer> base = extraBase.isEmpty() ? extrasOf(boundDeck(field, "p1")) : extraBase;
-        if (!base.isEmpty()) extraTracker.reset(base);
-        if (field == null) return;
+    synchronized void reconcile(DuelFieldEntity field) {
+        if (field == null || this.host != null || this.startStage != DuelSessionManager.StartStage.IDLE) {
+            return;
+        }
+
+        if (field.isGameStarted() || field.hasResult()) {
+            LOGGER.info("Duel field {} was left in a duel that no longer exists; back to preparation", field.getUUID());
+            this.abandon(field, null);
+        }
+
+        if (this.scene != null) {
+            return;
+        }
+
+        for (String side : new String[]{"p1", "p2"}) {
+            int seat = "p2".equals(side) ? 1 : 0;
+            if (field.hasDeck(side) && field.aiSide() != seat && this.boundDeck(field, side) == null) {
+                LOGGER.info("Duel field {}: the deck on side {} is not known any more; side cleared", field.getUUID(), side);
+                this.releaseSide(field, side);
+            }
+        }
+    }
+
+    /** Ends whatever is going on at this board and puts it back into preparation, decks still in place. */
+    private void abandon(DuelFieldEntity field, String notice) {
+        this.startStage = DuelSessionManager.StartStage.IDLE;
+        if (notice != null) {
+            this.broadcast(notice);
+        }
+
+        this.stop();
+        if (field != null) {
+            this.purgeCards(field);
+            this.resetFieldState(field);
+        }
+    }
+
+    /** Called when the server stops: no board may be saved "in a duel". */
+    synchronized void shutdown() {
+        DuelFieldEntity field = this.server == null ? null : this.linkedField(this.server);
+        if (field != null && (field.isGameStarted() || field.hasResult() || this.startStage != DuelSessionManager.StartStage.IDLE)) {
+            this.abandon(field, null);
+        } else {
+            this.startStage = DuelSessionManager.StartStage.IDLE;
+            this.stop();
+        }
+
+        this.server = null;
+        this.fieldId = null;
+        this.fieldDimension = null;
+        this.ownerId = null;
+        this.seat1Id = null;
+        this.pendingDeck = null;
+        this.pendingActivation = null;
+        this.fieldDecks.clear();
+        this.extraBase = List.of();
+        this.extraTracker.stop();
+        this.extraTracker2.stop();
+    }
+
+    /** The field entity was removed from the world (picked up, /kill): its duel goes with it. */
+    synchronized void fieldRemoved(DuelFieldEntity field) {
+        this.startStage = DuelSessionManager.StartStage.IDLE;
+        this.stop();
+        this.purgeCards(field);
+        this.fieldDecks.remove(field.getUUID());
+        if (field.getUUID().equals(this.fieldId)) {
+            this.fieldId = null;
+            this.fieldDimension = null;
+            this.ownerId = null;
+            this.seat1Id = null;
+            this.pendingDeck = null;
+        }
+    }
+
+    private void purgeCards(DuelFieldEntity field) {
+        if (field.level() instanceof ServerLevel level) {
+            UUID id = field.getUUID();
+
+            for (HandCardEntity hand : level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28.0))) {
+                if (id.toString().equals(hand.fieldId())) {
+                    hand.discard();
+                }
+            }
+
+            for (DuelCardEntity card : level.getEntitiesOfClass(DuelCardEntity.class, field.getBoundingBox().inflate(28.0))) {
+                if (card.belongsTo(id)) {
+                    card.discard();
+                }
+            }
+        }
+    }
+
+    private void resetFieldState(DuelFieldEntity field) {
         field.setGameStarted(false);
         field.setDuelResult(0);
         field.setOpening(false);
@@ -834,472 +1816,770 @@ final class DuelSessionManager {
         field.setTurnSide(0);
         field.setCurrentPhase("p1", "DP");
         field.setCurrentPhase("p2", "DP");
-        field.unbindDeck("p2");
-        field.updateVisualCounts(
-                new int[]{field.mainCount("p1"), 0},
-                new int[]{field.extraCount("p1"), 0},
-                new int[]{0, 0},
-                new int[]{0, 0});
-        if (player != null) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "已回到准备：想换卡组就用卡盒右键决斗盘，点绿色按钮开始新一局"), false);
+        int[] main = new int[2];
+        int[] extra = new int[2];
+
+        for (int seat = 0; seat < 2; seat++) {
+            String side = seat == 1 ? "p2" : "p1";
+            if (field.hasDeck(side)) {
+                DeckData deck = this.boundDeck(field, side);
+                if (deck == null && field.aiSide() == seat) {
+                    try {
+                        deck = AiDeckCatalog.deck(runtimeRoot(), field.aiKey());
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                main[seat] = deck == null ? field.mainCount(side) : deck.mainDeck().size();
+                extra[seat] = deck == null ? field.extraCount(side) : deck.extraDeck().size();
+            }
+        }
+
+        field.updateVisualCounts(main, extra, new int[]{0, 0}, new int[]{0, 0});
+    }
+
+    synchronized void resetForNewDuel(ServerPlayer player, DuelFieldEntity field) {
+        this.stop();
+        if (field != null) {
+            boolean humanIsP1 = this.ownerId != null || this.seat1Id == null;
+            String keepSide = humanIsP1 ? "p1" : "p2";
+            String dropSide = humanIsP1 ? "p2" : "p1";
+            List<Integer> base = this.extraBase.isEmpty() ? extrasOf(this.boundDeck(field, keepSide)) : this.extraBase;
+            ExtraDeckTracker keepTracker = humanIsP1 ? this.extraTracker : this.extraTracker2;
+            if (!base.isEmpty()) {
+                keepTracker.reset(base);
+            }
+
+            field.setGameStarted(false);
+            field.setDuelResult(0);
+            field.setOpening(false);
+            field.setPhasePrompt(-1, false, false, false);
+            field.setLifePoints("p1", 8000);
+            field.setLifePoints("p2", 8000);
+            field.setTurnSide(0);
+            field.setCurrentPhase("p1", "DP");
+            field.setCurrentPhase("p2", "DP");
+            field.unbindDeck(dropSide);
+            if (humanIsP1) {
+                this.seat1Id = null;
+            } else {
+                this.ownerId = null;
+            }
+
+            int[] mainCounts = new int[]{0, 0};
+            int[] extraCounts = new int[]{0, 0};
+            mainCounts[humanIsP1 ? 0 : 1] = field.mainCount(keepSide);
+            extraCounts[humanIsP1 ? 0 : 1] = field.extraCount(keepSide);
+            field.updateVisualCounts(mainCounts, extraCounts, new int[]{0, 0}, new int[]{0, 0});
+            if (player != null) {
+                player.displayClientMessage(Component.literal("已回到准备：想换卡组就用卡盒右键决斗盘，点绿色按钮开始新一局"), false);
+            }
         }
     }
 
     synchronized boolean isRunning() {
-        return host != null && host.isRunning();
+        return this.host != null && this.host.isRunning();
     }
 
     synchronized boolean isEnded() {
-        return host != null && host.isEnded();
+        return this.host != null && this.host.isEnded();
     }
 
     synchronized String statusSummary() {
-        return host == null ? "no duel host" : host.statusSummary();
+        return this.host == null ? "no duel host" : this.host.statusSummary();
     }
 
     synchronized String statsSummary() {
-        return host == null ? "no duel host" : host.statsSummary();
+        return this.host == null ? "no duel host" : this.host.statsSummary();
     }
 
     synchronized String promptSummary() {
-        return host == null ? "no duel host" : host.promptSummary();
+        return this.host == null ? "no duel host" : this.host.promptSummary();
     }
 
     synchronized String promptResponseKind() {
-        return host == null ? "" : host.promptResponseKind();
+        return this.host == null ? "" : this.host.promptResponseKind();
     }
 
     synchronized void respond(int value) throws Exception {
-        if (host == null) throw new IllegalStateException("No duel host");
-        host.respond(value);
+        if (this.host == null) {
+            throw new IllegalStateException("No duel host");
+        }
+
+        this.host.respond(value);
     }
 
     synchronized void respondBytes(String hex) throws Exception {
-        if (host == null) throw new IllegalStateException("No duel host");
-        host.respondBytes(hex);
+        if (this.host == null) {
+            throw new IllegalStateException("No duel host");
+        }
+
+        this.host.respondBytes(hex);
     }
 
     synchronized String placeOptions() {
-        return host == null ? "no duel host" : host.placeOptions();
+        return this.host == null ? "no duel host" : this.host.placeOptions();
     }
 
     synchronized void respondPlace(int index) throws Exception {
-        if (host == null) throw new IllegalStateException("No duel host");
-        host.respondPlace(index);
+        if (this.host == null) {
+            throw new IllegalStateException("No duel host");
+        }
+
+        this.host.respondPlace(index);
     }
 
-    /**
-     * 阶段按钮点击：把 抽卡/准备/主要1/战斗/主要2/结束 翻译成核心当前决策点允许的应答。
-     * 核心只允许 主要阶段→战斗/结束 与 战斗阶段→主要2/结束 这四种转移。
-     */
-    synchronized void submitPhase(DuelFieldEntity field, net.minecraft.server.level.ServerPlayer player,
-                                  String phase) throws Exception {
-        if (host == null || !host.isRunning()) throw new IllegalStateException("当前没有进行中的决斗");
-        int value = host.phaseResponse(phase);
-        if (value < 0) throw new IllegalStateException("现在还不能切换到该阶段");
-        host.respond(value);
-        LOGGER.info("Phase click: field={} player={} phase={} response={}",
-                field == null ? "-" : field.getUUID(),
-                player == null ? "-" : player.getScoreboardName(), phase, value);
+    synchronized void submitPhase(DuelFieldEntity field, ServerPlayer player, String phase) throws Exception {
+        if (this.host == null || !this.host.isRunning()) {
+            throw new IllegalStateException("当前没有进行中的决斗");
+        }
+
+        if (!this.isAsking(player)) {
+            throw new IllegalStateException("现在不是你的操作");
+        }
+
+        int value = this.host.phaseResponse(phase);
+        if (value < 0) {
+            throw new IllegalStateException("现在还不能切换到该阶段");
+        }
+
+        this.host.respond(value);
+        LOGGER.info(
+            "Phase click: field={} player={} phase={} response={}",
+            new Object[]{field == null ? "-" : field.getUUID(), player == null ? "-" : player.getScoreboardName(), phase, value}
+        );
     }
 
-    /** 当前是否在等玩家给一张卡选落点。 */
     synchronized boolean hasPlacePrompt() {
-        return host != null && host.isRunning() && host.hasPlacePrompt();
+        return this.host != null && this.host.isRunning() && this.host.hasPlacePrompt();
     }
 
-    /**
-     * 卡片点击：把"这张卡现在能做什么"翻译成核心应答。
-     * kinds 按优先级排列（如 summon → spsummon → activate）；返回 false 表示当前做不了。
-     */
-    synchronized boolean submitCardAction(net.minecraft.server.level.ServerPlayer player,
-                                          int controller, int location, int sequence, String... kinds)
-            throws Exception {
-        if (host == null || !host.isRunning()) throw new IllegalStateException("当前没有进行中的决斗");
-        int value = host.promptAction(controller, location, sequence, kinds);
-        if (value < 0) return false;
-        host.respond(value);
-        LOGGER.info("Card action: player={} card=({},{},{}) kinds={} response={}",
-                player == null ? "-" : player.getScoreboardName(), controller, location, sequence,
-                String.join("/", kinds), value);
+    synchronized boolean submitCardAction(ServerPlayer player, int controller, int location, int sequence, String... kinds) throws Exception {
+        if (this.host == null || !this.host.isRunning()) {
+            throw new IllegalStateException("当前没有进行中的决斗");
+        }
+
+        if (!this.isAsking(player)) {
+            throw new IllegalStateException("现在不是你的操作");
+        }
+
+        if (Arrays.asList(kinds).contains("activate")) {
+            List<DuelHostProcess.Activation> choices = this.host.activationChoices(controller, location, sequence);
+            if (choices.size() > 1) {
+                this.pendingActivation = new DuelSessionManager.PendingActivation(
+                    this.host, player.getUUID(), this.host.promptSeq(), controller, location, sequence
+                );
+                this.sendActivationChoices(player, this.pendingActivation);
+                return true;
+            }
+        }
+
+        int value = this.host.promptAction(controller, location, sequence, kinds);
+        if (value < 0) {
+            return false;
+        }
+
+        this.host.respond(value);
+        LOGGER.info(
+            "Card action: player={} card=({},{},{}) kinds={} response={}",
+            new Object[]{player == null ? "-" : player.getScoreboardName(), controller, location, sequence, String.join("/", kinds), value}
+        );
         return true;
     }
 
-    /** 选落点：把 (座位, 区域类型, 序号) 送回去，只在核心正在问落点时有效。 */
+    private void sendActivationChoices(ServerPlayer player, DuelSessionManager.PendingActivation pending) {
+        List<DuelHostProcess.Activation> choices = this.host.activationChoices(pending.controller(), pending.location(), pending.sequence());
+        if (!choices.isEmpty()) {
+            ModNetwork.sendTo(
+                player,
+                new ModNetwork.EffectChoices(
+                    pending.seq(),
+                    choices.get(0).code(),
+                    choices.stream().mapToInt(DuelHostProcess.Activation::response).toArray(),
+                    choices.stream().map(DuelHostProcess.Activation::text).toArray(String[]::new)
+                )
+            );
+        }
+    }
+
+    synchronized void answerEffect(ServerPlayer player, long seq, int value) {
+        DuelSessionManager.PendingActivation pending = this.pendingActivation;
+        if (this.host != null
+            && this.host.isRunning()
+            && pending != null
+            && pending.host() == this.host
+            && pending.player().equals(player.getUUID())
+            && pending.seq() == seq
+            && seq == this.host.promptSeq()
+            && this.isAsking(player)) {
+            if (value == -1) {
+                this.pendingActivation = null;
+            } else if (!this.host
+                .activationChoices(pending.controller(), pending.location(), pending.sequence())
+                .stream()
+                .noneMatch(choice -> choice.response() == value)) {
+                try {
+                    this.host.respond(value);
+                    this.pendingActivation = null;
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("发动失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
     synchronized boolean submitPlaceFor(int controller, int location, int sequence) throws Exception {
-        if (host == null || !host.isRunning()) return false;
-        int index = host.placeIndex(controller, location, sequence);
-        if (index < 0) return false;
-        host.respondPlace(index);
-        LOGGER.info("Place choice: controller={} location={} sequence={} index={}",
-                controller, location, sequence, index);
-        return true;
+        if (this.host != null && this.host.isRunning()) {
+            int index = this.host.placeIndex(controller, location, sequence);
+            if (index < 0) {
+                return false;
+            }
+
+            this.host.respondPlace(index);
+            LOGGER.info("Place choice: controller={} location={} sequence={} index={}", new Object[]{controller, location, sequence, index});
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    /** 左键点卡 → 算出这张卡现在能做的动作，发给客户端弹按钮。 */
-    synchronized void offerCardActions(net.minecraft.server.level.ServerPlayer player, int entityId,
-                                       int[][] candidates) {
-        if (host == null || !host.isRunning() || candidates == null) return;
-        // 核心正在等选卡（弃牌/选素材）时，不弹动作菜单：点卡就是"选/取消选这张"
-        if (host.hasSelectCardPrompt()) {
-            if (candidates.length > 0 && candidates[0] != null) {
-                if (!toggleCardSelect(player, candidates[0][0], candidates[0][1], candidates[0][2])) {
-                    player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                            "这张卡不在可选的候选里"), true);
+    synchronized void offerCardActions(ServerPlayer player, int entityId, int[][] candidates) {
+        if (this.host != null && this.host.isRunning() && candidates != null) {
+            if (!this.refuseIfNotAsked(player)) {
+                if (this.host.hasSelectCardPrompt()) {
+                    if (candidates.length > 0 && candidates[0] != null && !this.toggleCardSelect(player, candidates[0][0], candidates[0][1], candidates[0][2])) {
+                        player.displayClientMessage(Component.literal("这张卡不在可选的候选里"), true);
+                    }
+                } else {
+                    int mask = 0;
+
+                    for (int[] address : candidates) {
+                        if (address != null) {
+                            if (this.host.promptAction(address[0], address[1], address[2], "summon") >= 0) {
+                                mask |= 1;
+                            }
+
+                            if (this.host.promptAction(address[0], address[1], address[2], "spsummon") >= 0) {
+                                mask |= 32;
+                            }
+
+                            if (this.host.promptAction(address[0], address[1], address[2], "mset") >= 0
+                                || this.host.promptAction(address[0], address[1], address[2], "sset") >= 0) {
+                                mask |= 2;
+                            }
+
+                            if (this.host.promptAction(address[0], address[1], address[2], "activate") >= 0) {
+                                mask |= 4;
+                            }
+
+                            if (this.host.promptAction(address[0], address[1], address[2], "attack") >= 0) {
+                                mask |= 8;
+                            }
+
+                            if (this.host.promptAction(address[0], address[1], address[2], "position") >= 0) {
+                                mask |= 16;
+                            }
+                        }
+                    }
+
+                    if (mask == 0) {
+                        String reason = !this.host.isWaiting()
+                            ? "现在不是你的决策点（对手回合或演出中）"
+                            : (this.host.chainChoicePrompt() ? "有连锁窗口要先答完" : "核心当前没给出候选：" + this.host.promptSummary());
+                        player.displayClientMessage(Component.literal("这张卡没有可做的动作 —— " + reason), false);
+                    } else {
+                        ModNetwork.sendTo(player, new ModNetwork.CardActions(entityId, mask));
+                    }
                 }
             }
-            return;
         }
-        int mask = 0;
-        for (int[] address : candidates) {
-            if (address == null) continue;
-            if (host.promptAction(address[0], address[1], address[2], "summon") >= 0
-                    )
-                mask |= 1 << ModNetwork.CARD_MENU_SUMMON;
-            if (host.promptAction(address[0], address[1], address[2], "spsummon") >= 0)
-                mask |= 1 << ModNetwork.CARD_MENU_SPSUMMON;
-            if (host.promptAction(address[0], address[1], address[2], "mset") >= 0
-                    || host.promptAction(address[0], address[1], address[2], "sset") >= 0)
-                mask |= 1 << ModNetwork.CARD_MENU_SET;
-            if (host.promptAction(address[0], address[1], address[2], "activate") >= 0)
-                mask |= 1 << ModNetwork.CARD_MENU_ACTIVATE;
-            if (host.promptAction(address[0], address[1], address[2], "attack") >= 0)
-                mask |= 1 << ModNetwork.CARD_MENU_ATTACK;
-            if (host.promptAction(address[0], address[1], address[2], "position") >= 0)
-                mask |= 1 << ModNetwork.CARD_MENU_POSITION;
-        }
-        if (mask == 0) {
-            // 说清楚"为什么没按钮"：这句话以前只发在动作条上，一闪就没了，玩家会觉得是坏了
-            String reason = !host.isWaiting()
-                    ? "现在不是你的决策点（对手回合或演出中）"
-                    : host.chainChoicePrompt()
-                    ? "有连锁窗口要先答完"
-                    : "核心当前没给出候选：" + host.promptSummary();
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "这张卡没有可做的动作 —— " + reason), false);
-            return;
-        }
-        ModNetwork.sendTo(player, new ModNetwork.CardActions(entityId, mask));
     }
 
-    /** 客户端点了动作按钮：按类型再核一次候选（菜单可能已过期），然后发送应答。 */
-    /** 把打包地址解析成世界实体的 id（移动的实体用 id 定位，客户端据此发光）。 */
     private int[] resolveCardEntities(ServerLevel level, DuelFieldEntity field, int[] addresses) {
-        if (addresses == null || addresses.length == 0) return new int[0];
-        java.util.List<Integer> ids = new java.util.ArrayList<>();
-        var hands = level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28));
-        var cards = level.getEntitiesOfClass(DuelCardEntity.class, field.getBoundingBox().inflate(28));
-        for (int packed : addresses) {
-            int controller = (packed >> 16) & 1;
-            int location = (packed >> 8) & 0xFF;
-            int sequence = packed & 0xFF;
-            if (location == 2) {
-                for (HandCardEntity hand : hands) {
-                    if (hand.side() == controller && hand.getIndex() == sequence) ids.add(hand.getId());
-                }
-            } else {
-                String zoneId = DuelFieldLayout.zoneIdFor(controller, location, sequence);
-                if (zoneId == null) continue;
-                for (DuelCardEntity card : cards) {
-                    if (zoneId.equals(card.getZoneId())) ids.add(card.getId());
+        if (addresses != null && addresses.length != 0) {
+            List<Integer> ids = new ArrayList<>();
+            List<HandCardEntity> hands = level.getEntitiesOfClass(HandCardEntity.class, field.getBoundingBox().inflate(28.0));
+            List<DuelCardEntity> cards = level.getEntitiesOfClass(DuelCardEntity.class, field.getBoundingBox().inflate(28.0));
+
+            for (int packed : addresses) {
+                int controller = packed >> 16 & 1;
+                int location = packed >> 8 & 0xFF;
+                int sequence = packed & 0xFF;
+                if (location == 2) {
+                    for (HandCardEntity hand : hands) {
+                        if (hand.side() == controller && hand.getIndex() == sequence) {
+                            ids.add(hand.getId());
+                        }
+                    }
+                } else {
+                    String zoneId = DuelFieldLayout.zoneIdFor(controller, location, sequence);
+                    if (zoneId != null) {
+                        for (DuelCardEntity card : cards) {
+                            if (zoneId.equals(card.getZoneId())) {
+                                ids.add(card.getId());
+                            }
+                        }
+                    }
                 }
             }
+
+            return ids.stream().mapToInt(Integer::intValue).toArray();
+        } else {
+            return new int[0];
         }
-        return ids.stream().mapToInt(Integer::intValue).toArray();
     }
 
     private int[] packedSelection() {
-        return cardSelection.stream().mapToInt(Integer::intValue).toArray();
+        return this.cardSelection.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    /**
-     * 点选卡（弃牌、选素材那类）：切换这张卡的选中状态。
-     * 选够张数（min == max 时）就把 responseBytes 发回核心。
-     */
-    /** 打开卡堆交互界面：额外卡组列出可特召的卡，墓地/除外列出可发动的卡，另附全部卡。 */
-    synchronized void openPile(net.minecraft.server.level.ServerPlayer player,
-                               DuelFieldEntity field, int side, int location) {
-        if (host == null || !host.isRunning()) return;
-        // 动作按钮只对自己的卡堆有意义（核心给的候选列表也只写自己这一侧）
-        int[][] actions = side == 0 ? host.pileActions(location) : new int[0][];
-        int[] sequences = new int[actions.length];
-        int[] codes = new int[actions.length];
-        for (int i = 0; i < actions.length; i++) {
-            sequences[i] = actions[i][0];
-            codes[i] = actions[i][1];
+    synchronized void openPile(ServerPlayer player, DuelFieldEntity field, int side, int location) {
+        if (this.host != null && this.host.isRunning()) {
+            int viewerSide = this.viewerSeat(player);
+            boolean canAct = side == viewerSide && viewerSide == this.host.promptPlayer();
+            int[][] activations = canAct && location != 64 ? this.host.pileActions(location, "activate") : new int[0][];
+            int[][] summons = canAct ? this.host.pileActions(location, "spsummon") : new int[0][];
+            int[] known = this.allCodes(side, location, viewerSide);
+            int hidden = 0;
+            if (side != viewerSide) {
+                hidden = Math.max(0, this.host.count(side, location) - known.length);
+            }
+
+            ModNetwork.sendTo(
+                player,
+                new ModNetwork.PileView(
+                    location,
+                    Arrays.stream(activations).mapToInt(action -> action[0]).toArray(),
+                    Arrays.stream(activations).mapToInt(action -> action[1]).toArray(),
+                    Arrays.stream(summons).mapToInt(action -> action[0]).toArray(),
+                    Arrays.stream(summons).mapToInt(action -> action[1]).toArray(),
+                    known,
+                    hidden,
+                    field.getUUID()
+                )
+            );
         }
-        ModNetwork.sendTo(player, new ModNetwork.PileView(location, sequences, codes, allCodes(side, location)));
     }
 
-    /** 额外卡组的进出记账：核心压缩序号后，界面上的"序号"必须跟着它走。 */
-    private void trackExtraDeck(java.util.List<DuelVisualState.Event> events) {
+    private int viewerSeat(ServerPlayer player) {
+        return player == null ? -1 : DuelStart.viewerSeat(player.getUUID(), this.ownerId, this.seat1Id);
+    }
+
+    private void trackExtraDeck(List<DuelVisualState.Event> events) {
         for (DuelVisualState.Event event : events) {
             DuelVisualState.Address from = event.from();
             DuelVisualState.Address to = event.to();
-            if (from == null || to == null || event.card() == null) continue;
-            extraTracker.move(from.controller(), from.location(), to.controller(), to.location(),
-                    event.card().code());
+            if (from != null && to != null && event.card() != null) {
+                this.extraTracker.move(from.controller(), from.location(), to.controller(), to.location(), event.card().code());
+                this.extraTracker2.move(from.controller(), from.location(), to.controller(), to.location(), event.card().code());
+            }
         }
     }
 
-    private static java.util.List<Integer> extrasOf(DeckData deck) {
-        return deck == null ? java.util.List.of() : java.util.List.copyOf(deck.extraDeck());
+    private static List<Integer> extrasOf(DeckData deck) {
+        return deck == null ? List.of() : List.copyOf(deck.extraDeck());
     }
 
-    /** 卡堆的全部内容：额外卡组用绑定的卡组数据（核心只公开表侧额外卡），墓地/除外用演出层。 */
-    private int[] allCodes(int side, int location) {
-        // 自己的额外卡组：用"当前还在额外卡组里"的那份（召唤后核心会把序号整体前移，
-        // 拿卡组原始清单会出现"召掉的卡还在、序号还错位"）
-        if (side == 0 && location == 64 && extraTracker.tracking()) {
-            java.util.List<Integer> live = extraTracker.codes();
-            if (host != null && host.isRunning()) {
-                int engineCount = host.count(0, 0x40);
+    private int[] allCodes(int side, int location, int viewerSide) {
+        boolean mine = side == viewerSide;
+        ExtraDeckTracker tracker = side == 1 ? this.extraTracker2 : this.extraTracker;
+        if (mine && location == 64 && tracker.tracking()) {
+            List<Integer> live = tracker.codes();
+            if (this.host != null && this.host.isRunning()) {
+                int engineCount = this.host.count(side, 64);
                 if (live.size() != engineCount) {
-                    LOGGER.warn("额外卡组记账与核心不一致：界面 {} 张 / 核心 {} 张（界面序号可能错位）",
-                            live.size(), engineCount);
+                    LOGGER.warn("座位 {} 的额外卡组记账与核心不一致：界面 {} 张 / 核心 {} 张（界面序号可能错位）", new Object[]{side, live.size(), engineCount});
                 }
             }
+
             return live.stream().mapToInt(Integer::intValue).toArray();
-        }
-        // 对手的卡堆只列公开信息（公开的墓地 / 表侧除外 / 表侧额外），
-        // 否则"看对面的额外卡组"会把 15 张里侧牌全抖出来。
-        if (side != 0) {
-            return scene == null ? new int[0] : scene.publicCodesIn(side, location);
-        }
-        String key = "p1";
-        if (location == 64) {
-            DeckData deck = fieldId == null ? pendingDeck
-                    : fieldDecks.getOrDefault(fieldId, Map.of()).getOrDefault(key, pendingDeck);
-            if (deck == null) return new int[0];
-            return deck.extraDeck().stream().mapToInt(Integer::intValue).toArray();
-        }
-        return scene == null ? new int[0] : scene.codesIn(side, location);
-    }
-
-    /** 卡堆界面里按下"特殊召唤 / 发动"。 */
-    /** 玩家在弹窗里回答"是 / 否"。 */
-    /**
-     * 列表界面选好了卡：把下标发回核心（SelectCard 的应答 = 张数 + 各下标）。
-     * 每个下标都会对着当前候选再校一遍，菜单过期就丢弃。
-     */
-    synchronized void answerSelect(net.minecraft.server.level.ServerPlayer player, int[] indices) {
-        if (host == null || !host.isRunning() || !host.hasSelectCardPrompt()) return;
-        int count = host.selectCodes().length;
-        StringBuilder hex = new StringBuilder();
-        int used = 0;
-        StringBuilder body = new StringBuilder();
-        for (int index : indices) {
-            if (index < 0 || index >= count) continue;
-            body.append(String.format("%02X", index));
-            used++;
-        }
-        if (used == 0) return;
-        hex.append(String.format("%02X", used)).append(body);
-        try {
-            // ocgcore 的 select_card / select_tribute / select_unselect_card 都只认这个格式：
-            //   [张数, 下标…]
-            // （返回值从 returns.bvalue[0] 开始校验，发整数会被判非法 → MSG_RETRY）
-            host.respondBytes(hex.toString());
-            LOGGER.info("Select list answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), hex);
-            lastSelectSignature = "";
-            cardSelection.clear();
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "选卡失败：" + ex.getMessage()), true);
+        } else if (!mine) {
+            return this.scene == null ? new int[0] : this.scene.publicCodesIn(side, location);
+        } else if (location == 64) {
+            DeckData deck = this.boundDeckForSide(side);
+            return deck == null ? new int[0] : deck.extraDeck().stream().mapToInt(Integer::intValue).toArray();
+        } else {
+            return this.scene == null ? new int[0] : this.scene.codesIn(side, location);
         }
     }
 
-    /** 玩家选了"接连锁的第几张"（-1 = 放弃）。 */
-    /** 融合素材那种"一张一张选"：index = 合并列表下标（先可选的、后已选的），-1 = 完成。 */
-    synchronized void unselectPick(net.minecraft.server.level.ServerPlayer player, int index) {
-        if (host == null || !host.isRunning() || !host.unselectPrompt()) return;
-        try {
-            if (index < 0) {
-                host.respond(-1);
-            } else {
-                host.respondBytes(String.format("01%02X", index));
+    private DeckData boundDeckForSide(int side) {
+        if (side == 0) {
+            DeckData deck = this.fieldId == null ? null : this.fieldDecks.getOrDefault(this.fieldId, Map.of()).getOrDefault("p1", null);
+            return deck == null ? this.pendingDeck : deck;
+        } else {
+            return this.fieldId == null ? null : this.fieldDecks.getOrDefault(this.fieldId, Map.of()).getOrDefault("p2", null);
+        }
+    }
+
+    synchronized void answerSelect(ServerPlayer player, int[] indices) {
+        if (this.host != null && this.host.isRunning() && this.host.hasSelectCardPrompt()) {
+            if (!this.refuseIfNotAsked(player)) {
+                int count = this.host.selectCodes().length;
+                if (indices != null && indices.length == 1 && indices[0] == -1) {
+                    if (this.host.selectCancelable()) {
+                        try {
+                            this.host.respond(-1);
+                            this.lastSelectSignature = "";
+                            this.cardSelection.clear();
+                        } catch (Exception ex) {
+                            player.displayClientMessage(Component.literal("取消选择失败：" + ex.getMessage()), true);
+                        }
+                    }
+                } else if (indices != null
+                    && (this.host.promptFunction() == 20 || indices.length >= this.host.selectMin())
+                    && indices.length <= this.host.selectMax()) {
+                    Set<Integer> unique = new HashSet<>();
+
+                    for (int index : indices) {
+                        if (index < 0 || index >= count || !unique.add(index)) {
+                            return;
+                        }
+                    }
+
+                    StringBuilder hex = new StringBuilder();
+                    int used = 0;
+                    StringBuilder body = new StringBuilder();
+
+                    for (int index : indices) {
+                        if (index >= 0 && index < count) {
+                            body.append(String.format("%02X", index));
+                            used++;
+                        }
+                    }
+
+                    if (used != 0 || this.host.selectMin() <= 0) {
+                        hex.append(String.format("%02X", used)).append(body);
+
+                        try {
+                            this.host.respondBytes(hex.toString());
+                            LOGGER.info("Select list answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), hex);
+                            this.lastSelectSignature = "";
+                            this.cardSelection.clear();
+                        } catch (Exception ex) {
+                            player.displayClientMessage(Component.literal("选卡失败：" + ex.getMessage()), true);
+                        }
+                    }
+                }
             }
-            lastUnselectSignature = "";
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "选素材失败：" + ex.getMessage()), true);
         }
     }
 
-    /** 选表示形式（攻击/守备）。 */
-    /** 排序应答：[张数, 新顺序的下标…]。 */
-    /** 选项应答：直接把选项值发回去。 */
-    synchronized void answerOption(net.minecraft.server.level.ServerPlayer player, int value) {
-        if (host == null || !host.isRunning() || !host.optionPrompt()) return;
-        try {
-            host.respond(value);
-            lastOptionSignature = "";
-            LOGGER.info("Option answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), value);
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "选项应答失败：" + ex.getMessage()), true);
+    private boolean answerSumImplicit(DuelHostProcess host) {
+        int must = host.sumMustCount();
+        if (must <= 0) {
+            return false;
         }
-    }
 
-    synchronized void answerSort(net.minecraft.server.level.ServerPlayer player, int[] order) {
-        if (host == null || !host.isRunning() || !host.sortPrompt()) return;
-        int total = host.sortCodes().length;
-        if (order == null || order.length != total) return;
-        // 注意：SortCard 的应答**没有长度前缀**——引擎从 bvalue[0] 开始直接读这个排列
-        // （和 SelectCard 的"张数 + 下标"不同，加前缀会被当成下标越界而 RETRY）。
         StringBuilder hex = new StringBuilder();
-        for (int index : order) {
-            if (index < 0 || index >= total) return;
-            hex.append(String.format("%02X", index));
+        hex.append(String.format("%02X", must));
+
+        for (int i = 0; i < must; i++) {
+            hex.append(String.format("%02X", i));
         }
+
         try {
             host.respondBytes(hex.toString());
-            lastSortSignature = "";
-            LOGGER.info("Sort answered: {}", hex);
+            LOGGER.info("Sum auto-answered: {} -> {}", host.promptSummary(), hex);
+            return true;
         } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "排序失败：" + ex.getMessage()), true);
+            LOGGER.warn("Sum auto-answer failed: {}", ex.toString());
+            return false;
         }
     }
 
-    synchronized void answerPosition(net.minecraft.server.level.ServerPlayer player, int value) {
-        if (host == null || !host.isRunning() || !host.positionPrompt()) return;
-        try {
-            host.respond(value);
-            lastPositionSignature = "";
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "选表示失败：" + ex.getMessage()), true);
-        }
-    }
+    synchronized void answerSum(ServerPlayer player, long seq, int[] chosen) {
+        if (this.host != null && this.host.isRunning() && this.host.sumPrompt()) {
+            if (this.host.promptSeq() == seq) {
+                if (!this.refuseIfNotAsked(player)) {
+                    int selectable = this.host.sumCodes().length;
+                    int must = this.host.sumMustCount();
+                    int[] picked = chosen == null ? new int[0] : chosen;
+                    if (picked.length >= this.host.sumMin() && picked.length <= this.host.sumMax()) {
+                        Set<Integer> unique = new HashSet<>();
 
-    synchronized void answerChain(net.minecraft.server.level.ServerPlayer player, int index) {
-        if (host == null || !host.isRunning()) return;
-        try {
-            // 注意：SelectChain 的应答是**纯下标**（引擎校验 0 <= 值 < 候选数），
-            // 不是 (下标<<16)——后者只有下标 0 恰好合法，别的都会被判非法重选。
-            host.respond(index < 0 ? -1 : index);
-            lastChainChoiceSignature = "";
-            LOGGER.info("Chain answer: {} -> {}", player == null ? "-" : player.getScoreboardName(), index);
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "连锁回答失败：" + ex.getMessage()), true);
-        }
-    }
+                        for (int index : picked) {
+                            if (index < 0 || index >= selectable || !unique.add(index)) {
+                                return;
+                            }
+                        }
 
-    synchronized void answerDecision(net.minecraft.server.level.ServerPlayer player, int value) {
-        if (host == null || !host.isRunning()) return;
-        if (host.decisionFunction() < 0) return;
-        try {
-            host.respond(value == 1 ? 1 : 0);
-            lastDecisionSignature = "";
-            LOGGER.info("Decision answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), value);
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "回答失败：" + ex.getMessage()), true);
-        }
-    }
+                        StringBuilder hex = new StringBuilder();
+                        hex.append(String.format("%02X", must + picked.length));
 
-    synchronized void performPileAct(net.minecraft.server.level.ServerPlayer player,
-                                     int location, int sequence) {
-        if (host == null || !host.isRunning()) return;
-        try {
-            String kind = location == 64 ? "spsummon" : "activate";
-            if (!submitCardAction(player, 0, location, sequence, kind)) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                        "这张卡现在不能执行该动作"), true);
+                        for (int i = 0; i < must; i++) {
+                            hex.append(String.format("%02X", i));
+                        }
+
+                        for (int index : picked) {
+                            hex.append(String.format("%02X", index));
+                        }
+
+                        try {
+                            this.host.respondBytes(hex.toString());
+                            this.lastSumSignature = "";
+                            LOGGER.info("Sum answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), hex);
+                        } catch (Exception ex) {
+                            player.displayClientMessage(Component.literal("选择素材失败：" + ex.getMessage()), true);
+                        }
+                    }
+                }
             }
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "操作失败：" + ex.getMessage()), true);
         }
     }
 
-    synchronized boolean toggleCardSelect(net.minecraft.server.level.ServerPlayer player,
-                                          int controller, int location, int sequence) {
-        if (host == null || !host.isRunning() || !host.hasSelectCardPrompt()) return false;
-        int index = host.selectCardIndex(controller, location, sequence);
-        if (index < 0) return false;
-        // 26 号（融合素材那类）核心只接受"一次一张"：直接发这一张的下标，
-        // 取消/完成走界面（完成 = -1）。
-        if (host.unselectPrompt()) {
+    synchronized void unselectPick(ServerPlayer player, int index) {
+        if (this.host != null && this.host.isRunning() && this.host.unselectPrompt()) {
+            if (!this.refuseIfNotAsked(player)) {
+                try {
+                    if (index < 0) {
+                        this.host.respond(-1);
+                    } else {
+                        this.host.respondBytes(String.format("01%02X", index));
+                    }
+
+                    this.lastUnselectSignature = "";
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("选素材失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
+    synchronized void answerOption(ServerPlayer player, int value) {
+        if (this.host != null && this.host.isRunning() && this.host.optionPrompt()) {
+            if (!this.refuseIfNotAsked(player)) {
+                try {
+                    this.host.respond(value);
+                    this.lastOptionSignature = "";
+                    LOGGER.info("Option answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), value);
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("选项应答失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
+    synchronized void answerAnnounce(ServerPlayer player, int value) {
+        if (this.host != null && this.host.isRunning() && this.host.announceFunction() >= 0) {
+            if (!this.refuseIfNotAsked(player)) {
+                try {
+                    this.host.respond(value);
+                    this.lastAnnounceSignature = "";
+                    LOGGER.info("Announce answered: {} -> {} ({})", new Object[]{player == null ? "-" : player.getScoreboardName(), value, this.host.announceKind()});
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("宣言失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
+    synchronized void answerSort(ServerPlayer player, int[] order) {
+        if (this.host != null && this.host.isRunning() && this.host.sortPrompt()) {
+            if (!this.refuseIfNotAsked(player)) {
+                int total = this.host.sortCodes().length;
+                if (order != null && order.length == total) {
+                    StringBuilder hex = new StringBuilder();
+
+                    for (int index : order) {
+                        if (index < 0 || index >= total) {
+                            return;
+                        }
+
+                        hex.append(String.format("%02X", index));
+                    }
+
+                    try {
+                        this.host.respondBytes(hex.toString());
+                        this.lastSortSignature = "";
+                        LOGGER.info("Sort answered: {}", hex);
+                    } catch (Exception ex) {
+                        player.displayClientMessage(Component.literal("排序失败：" + ex.getMessage()), true);
+                    }
+                }
+            }
+        }
+    }
+
+    synchronized void answerPosition(ServerPlayer player, int value) {
+        if (this.host != null && this.host.isRunning() && this.host.positionPrompt()) {
+            if (!this.refuseIfNotAsked(player)) {
+                try {
+                    this.host.respond(value);
+                    this.lastPositionSignature = "";
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("选表示失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
+    synchronized void answerChain(ServerPlayer player, int index) {
+        if (this.host != null && this.host.isRunning()) {
+            if (!this.refuseIfNotAsked(player)) {
+                try {
+                    this.host.respond(index < 0 ? -1 : index);
+                    this.lastChainChoiceSignature = "";
+                    LOGGER.info("Chain answer: {} -> {}", player == null ? "-" : player.getScoreboardName(), index);
+                } catch (Exception ex) {
+                    player.displayClientMessage(Component.literal("连锁回答失败：" + ex.getMessage()), true);
+                }
+            }
+        }
+    }
+
+    synchronized void answerDecision(ServerPlayer player, int value) {
+        if (this.host != null && this.host.isRunning()) {
+            if (this.host.decisionFunction() >= 0) {
+                if (!this.refuseIfNotAsked(player)) {
+                    try {
+                        this.host.respond(value == 1 ? 1 : 0);
+                        this.lastDecisionSignature = "";
+                        LOGGER.info("Decision answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), value);
+                    } catch (Exception ex) {
+                        player.displayClientMessage(Component.literal("回答失败：" + ex.getMessage()), true);
+                    }
+                }
+            }
+        }
+    }
+
+    synchronized void performPileAct(ServerPlayer player, int location, int sequence, boolean summon) {
+        if (this.host != null && this.host.isRunning()) {
+            if (!this.refuseIfNotAsked(player)) {
+                if (location == 16 || location == 32 || location == 64) {
+                    try {
+                        String kind = summon ? "spsummon" : "activate";
+                        if (!this.submitCardAction(player, this.seatOf(player), location, sequence, kind)) {
+                            player.displayClientMessage(Component.literal("这张卡现在不能执行该动作"), true);
+                        }
+                    } catch (Exception ex) {
+                        player.displayClientMessage(Component.literal("操作失败：" + ex.getMessage()), true);
+                    }
+                }
+            }
+        }
+    }
+
+    synchronized boolean toggleCardSelect(ServerPlayer player, int controller, int location, int sequence) {
+        if (this.host == null || !this.host.isRunning() || !this.host.hasSelectCardPrompt()) {
+            return false;
+        }
+
+        if (this.refuseIfNotAsked(player)) {
+            return false;
+        }
+
+        int index = this.host.selectCardIndex(controller, location, sequence);
+        if (index < 0) {
+            return false;
+        }
+
+        if (this.host.unselectPrompt()) {
             try {
-                host.respondBytes(String.format("01%02X", index));
-                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                        "已选素材（在素材界面里点已选的卡可取消，按完成结束）"), true);
+                this.host.respondBytes(String.format("01%02X", index));
+                player.displayClientMessage(Component.literal("已选素材（在素材界面里点已选的卡可取消，按完成结束）"), true);
             } catch (Exception ex) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                        "选素材失败：" + ex.getMessage()), true);
+                player.displayClientMessage(Component.literal("选素材失败：" + ex.getMessage()), true);
             }
+
+            return true;
+        } else {
+            int packed = controller << 16 | location << 8 | sequence;
+            int min = Math.max(1, this.host.selectMin());
+            int max = Math.max(min, this.host.selectMax());
+            if (!this.cardSelection.remove(packed)) {
+                if (this.cardSelection.size() >= max) {
+                    return true;
+                }
+
+                this.cardSelection.add(packed);
+            }
+
+            player.displayClientMessage(Component.literal("已选 " + this.cardSelection.size() + " 张（需要 " + min + ".." + max + "）"), true);
+            int need = this.host.selectMin() == this.host.selectMax() ? min : max;
+            if (this.cardSelection.size() >= need) {
+                List<Integer> indices = new ArrayList<>();
+
+                for (int address : this.cardSelection) {
+                    int found = this.host.selectCardIndex(address >> 16 & 1, address >> 8 & 0xFF, address & 0xFF);
+                    if (found >= 0) {
+                        indices.add(found);
+                    }
+                }
+
+                Collections.sort(indices);
+                StringBuilder hex = new StringBuilder(String.format("%02X", indices.size()));
+
+                for (int value : indices) {
+                    hex.append(String.format("%02X", value));
+                }
+
+                try {
+                    this.host.respondBytes(hex.toString());
+                    LOGGER.info("Card selection sent: {}", hex);
+                } catch (Exception ex) {
+                    LOGGER.warn("Card selection failed: {}", ex.getMessage());
+                }
+
+                this.cardSelection.clear();
+            }
+
             return true;
         }
-        int packed = (controller << 16) | (location << 8) | sequence;
-        int min = Math.max(1, host.selectMin());
-        int max = Math.max(min, host.selectMax());
-        if (!cardSelection.remove(packed)) {
-            if (cardSelection.size() >= max) return true;
-            cardSelection.add(packed);
-        }
-        player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                "已选 " + cardSelection.size() + " 张（需要 " + min + ".." + max + "）"), true);
-        int need = host.selectMin() == host.selectMax() ? min : max;
-        if (cardSelection.size() >= need) {
-            java.util.List<Integer> indices = new java.util.ArrayList<>();
-            for (int address : cardSelection) {
-                int found = host.selectCardIndex((address >> 16) & 1, (address >> 8) & 0xFF, address & 0xFF);
-                if (found >= 0) indices.add(found);
-            }
-            java.util.Collections.sort(indices);
-            StringBuilder hex = new StringBuilder(String.format("%02X", indices.size()));
-            for (int value : indices) hex.append(String.format("%02X", value));
-            try {
-                host.respondBytes(hex.toString());
-                LOGGER.info("Card selection sent: {}", hex);
-            } catch (Exception ex) {
-                LOGGER.warn("Card selection failed: {}", ex.getMessage());
-            }
-            cardSelection.clear();
-        }
-        return true;
     }
 
-    synchronized void performCardAction(net.minecraft.server.level.ServerPlayer player, int entityId, int kind) {
-        if (host == null || !host.isRunning()) return;
-        net.minecraft.world.entity.Entity entity = player.level().getEntity(entityId);
-        java.util.List<int[]> candidates = new java.util.ArrayList<>();
-        if (entity instanceof HandCardEntity hand && !hand.ownerId().isEmpty()
-                && hand.ownerId().equals(player.getUUID().toString())) {
-            candidates.add(new int[]{hand.side(), 2, hand.getIndex()});
-        } else if (entity instanceof DuelCardEntity card) {
-            String zone = card.getZoneId();
-            if (zone.startsWith("shared_emz_")) {
-                candidates.add(DuelFieldLayout.engineAddress(zone, 0));
-                candidates.add(DuelFieldLayout.engineAddress(zone, 1));
-            } else {
-                candidates.add(DuelFieldLayout.engineAddress(zone, 0));
+    synchronized void performCardAction(ServerPlayer player, int entityId, int kind) {
+        if (this.host != null && this.host.isRunning()) {
+            if (!this.refuseIfNotAsked(player)) {
+                Entity entity = player.level().getEntity(entityId);
+                List<int[]> candidates = new ArrayList<>();
+                if (entity instanceof HandCardEntity hand && !hand.ownerId().isEmpty() && hand.ownerId().equals(player.getUUID().toString())) {
+                    candidates.add(new int[]{hand.side(), 2, hand.getIndex()});
+                } else if (entity instanceof DuelCardEntity card) {
+                    String zone = card.getZoneId();
+                    if (zone.startsWith("shared_emz_")) {
+                        candidates.add(DuelFieldLayout.engineAddress(zone, 0));
+                        candidates.add(DuelFieldLayout.engineAddress(zone, 1));
+                    } else {
+                        candidates.add(DuelFieldLayout.engineAddress(zone, 0));
+                    }
+                }
+                String[] kinds = switch (kind) {
+                    case 0 -> new String[]{"summon"};
+                    case 1 -> new String[]{"mset", "sset"};
+                    case 2 -> new String[]{"activate"};
+                    case 3 -> new String[]{"attack"};
+                    case 4 -> new String[]{"position"};
+                    case 5 -> new String[]{"spsummon"};
+                    default -> new String[0];
+                };
+                if (kinds.length != 0) {
+                    try {
+                        for (int[] address : candidates) {
+                            if (address != null && this.submitCardAction(player, address[0], address[1], address[2], kinds)) {
+                                return;
+                            }
+                        }
+
+                        player.displayClientMessage(Component.literal("这个动作现在做不了（规则核心没有提供候选）"), true);
+                    } catch (Exception ex) {
+                        player.displayClientMessage(Component.literal("操作失败：" + ex.getMessage()), true);
+                    }
+                }
             }
         }
-        String[] kinds = switch (kind) {
-            case ModNetwork.CARD_MENU_SUMMON -> new String[]{"summon"};
-            case ModNetwork.CARD_MENU_SPSUMMON -> new String[]{"spsummon"};
-            case ModNetwork.CARD_MENU_SET -> new String[]{"mset", "sset"};
-            case ModNetwork.CARD_MENU_ACTIVATE -> new String[]{"activate"};
-            case ModNetwork.CARD_MENU_ATTACK -> new String[]{"attack"};
-            case ModNetwork.CARD_MENU_POSITION -> new String[]{"position"};
-            default -> new String[0];
-        };
-        if (kinds.length == 0) return;
-        try {
-            for (int[] address : candidates) {
-                if (address == null) continue;
-                if (submitCardAction(player, address[0], address[1], address[2], kinds)) return;
-            }
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "这个动作现在做不了（规则核心没有提供候选）"), true);
-        } catch (Exception ex) {
-            player.displayClientMessage(net.minecraft.network.chat.Component.literal(
-                    "操作失败：" + ex.getMessage()), true);
-        }
+    }
+
+    record AiProfile(String key, String name, String dialog) {
+    }
+
+    private record PendingActivation(DuelHostProcess host, UUID player, long seq, int controller, int location, int sequence) {
+    }
+
+    private enum StartStage {
+        IDLE,
+        RPS,
+        CHOOSE_TP;
     }
 }

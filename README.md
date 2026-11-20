@@ -20,7 +20,11 @@ sequences, ace-monster cut-ins, monster closeups and music.
 | **Prompts** | Every decision window — select, place, position, chain, sort, material, option, yes/no — as Minecraft-styled panels with card art |
 | **Survival** | Crafting recipes for Card Case, Duel Field, AI Deck and Music Settings |
 
-## Install
+## Source update (0.3.0)
+
+The Forge sources in `mod/` target Minecraft 1.20.1 and Forge 47.4.29. This update incorporates the recovered 0.2.0 code and the 0.3.0 duel-session, networking and host changes. Build the host with the .NET 8 SDK using `dotnet build tools/duel_host/duel_host.csproj -c Release`. The packaged assets for earlier releases are distributed separately.
+
+## Install the packaged 0.1.0 release
 
 1. Install Minecraft 1.20.1 with Forge 47.4.20 — on the **client** *and* the **server** (singleplayer
    counts; the duel runs on the server side).

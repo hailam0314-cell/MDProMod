@@ -1,22 +1,15 @@
 package net.mdpromod;
 
-/**
- * 把"卡在哪"说成人话：自己/对方的怪兽区 3、墓地、除外区、手牌……
- *
- * <p>打包格式和落点提示一致：{@code controller << 16 | location << 8 | sequence}。
- * 纯函数，可离线测试。
- */
 final class DuelLocation {
-
     private DuelLocation() {
     }
 
-    /** {@code 0x000408} → 「自己墓地」这类。 */
-    static String label(int packed) {
-        int controller = (packed >> 16) & 1;
-        int location = (packed >> 8) & 0xFF;
+    static String label(int packed, int viewerSeat) {
+        int controller = packed >> 16 & 1;
+        int location = packed >> 8 & 0xFF;
         int sequence = packed & 0xFF;
-        String who = controller == 0 ? "自己" : "对方";
+        String who = viewerSeat != 0 && viewerSeat != 1 ? (controller == 0 ? "1号玩家" : "2号玩家") : (controller == viewerSeat ? "自己" : "对方");
+
         return switch (location) {
             case 1 -> who + "卡组";
             case 2 -> who + "手牌";
@@ -29,8 +22,7 @@ final class DuelLocation {
         };
     }
 
-    /** 选卡列表悬停时显示的两行：卡名 + 位置。 */
-    static String tooltipLine(int packed) {
-        return "位置：" + label(packed);
+    static String tooltipLine(int packed, int viewerSeat) {
+        return "位置：" + label(packed, viewerSeat);
     }
 }

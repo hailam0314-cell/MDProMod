@@ -1,15 +1,19 @@
 package net.mdpromod;
 
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 
-/** "是否发动 xxx 的效果？"这类是和否的决定。 */
-public class DecisionScreen extends Screen {
+public class DecisionScreen extends Screen implements RequiredAnswer {
     private final int function;
     private final String cardName;
     private final String question;
+    private int panelW;
+    private int panelH;
+    private int panelTop;
 
     public DecisionScreen(int function, String cardName, String question) {
         super(Component.literal("决斗"));
@@ -18,42 +22,44 @@ public class DecisionScreen extends Screen {
         this.question = question == null ? "" : question;
     }
 
-    @Override
     protected void init() {
-        int y = height / 2 - 10;
+        ClientDuelAudio.playUi("SE_DUEL_ACTIVE_POSSIBLE");
+        this.panelW = Math.min(this.width - 20, Math.max(260, this.font.width(this.question) + 30));
+        int lines = this.font.split(Component.literal(this.question), this.panelW - 24).size();
+        this.panelH = Math.min(this.height - 20, 76 + lines * 10);
+        this.panelTop = (this.height - this.panelH) / 2;
+        int y = this.panelTop + this.panelH - 46;
         int half = 70;
-        addRenderableWidget(Button.builder(Component.literal("是"), button -> {
+        this.addRenderableWidget(Button.builder(Component.literal("是"), button -> {
             ModNetwork.sendToServer(new ModNetwork.DecisionAnswer(1));
-            onClose();
-        }).bounds(width / 2 - half - 6, y + 18, half, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("否"), button -> {
+            this.onClose();
+        }).bounds(this.width / 2 - half - 6, y + 18, half, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("否"), button -> {
             ModNetwork.sendToServer(new ModNetwork.DecisionAnswer(0));
-            onClose();
-        }).bounds(width / 2 + 6, y + 18, half, 20).build());
+            this.onClose();
+        }).bounds(this.width / 2 + 6, y + 18, half, 20).build());
     }
 
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        int boxW = Math.max(220, font.width(question) + 40);
-        int left = width / 2 - boxW / 2;
-        int top = height / 2 - 40;
-        McPanel.panel(graphics, left, top, left + boxW, top + 74);
-        graphics.drawCenteredString(font, "发动确认", width / 2, top + 8, 0x404040);
-        graphics.drawCenteredString(font, question, width / 2, top + 30, 0x000000);
-        if (!cardName.isEmpty()) {
-            graphics.drawCenteredString(font, "「" + cardName + "」", width / 2, top + 46, 0x0000A0);
+        this.renderBackground(graphics);
+        int boxW = this.panelW;
+        int left = this.width / 2 - boxW / 2;
+        int top = this.panelTop;
+        McPanel.panel(graphics, left, top, left + boxW, top + this.panelH);
+        graphics.drawCenteredString(this.font, "发动确认", this.width / 2, top + 8, 4210752);
+        List<FormattedCharSequence> lines = this.font.split(Component.literal(this.question), this.panelW - 24);
+
+        for (int i = 0; i < lines.size(); i++) {
+            graphics.drawString(this.font, lines.get(i), left + 12, top + 28 + i * 10, 3158064, false);
         }
+
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    /** 这种弹窗不该暂停游戏：对手和引擎都在等。 */
-    @Override
     public boolean isPauseScreen() {
         return false;
     }
 
-    @Override
     public boolean shouldCloseOnEsc() {
         return false;
     }

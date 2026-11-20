@@ -1,357 +1,442 @@
 using System.Collections.Generic;
 using System.Linq;
-using WindBot.Game.AI;
 using YGOSharp.OCGWrapper.Enums;
 
-namespace WindBot.Game
+namespace WindBot.Game;
+
+public class ClientField
 {
-    public class ClientField
-    {
-        public IList<ClientCard> Hand { get; private set; }
-        public ClientCard[] MonsterZone { get; private set; }
-        public ClientCard[] SpellZone { get; private set; }
-        public IList<ClientCard> Graveyard { get; private set; }
-        public IList<ClientCard> Banished { get; private set; }
-        public IList<ClientCard> Deck { get; private set; }
-        public IList<ClientCard> ExtraDeck { get; private set; }
+	public int LifePoints;
 
-        public int LifePoints;
-        public ClientCard BattlingMonster;
-        public bool UnderAttack;
+	public ClientCard BattlingMonster;
 
-        public ClientField()
-        {
-        }
+	public bool UnderAttack;
 
-        public void Init(int deck, int extra)
-        {
-            Hand = new List<ClientCard>();
-            MonsterZone = new ClientCard[7];
-            SpellZone = new ClientCard[8];
-            Graveyard = new List<ClientCard>();
-            Banished = new List<ClientCard>();
-            Deck = new List<ClientCard>();
-            ExtraDeck = new List<ClientCard>();
+	public IList<ClientCard> Hand { get; private set; }
 
-            for (int i = 0; i < deck; ++i)
-                Deck.Add(new ClientCard(0, CardLocation.Deck, -1));
-            for (int i = 0; i < extra; ++i)
-                ExtraDeck.Add(new ClientCard(0, CardLocation.Extra, -1));
-        }
+	public ClientCard[] MonsterZone { get; private set; }
 
-        public int GetMonstersExtraZoneCount()
-        {
-            int count = 0;
-            if (MonsterZone[5] != null)
-                count++;
-            if (MonsterZone[6] != null)
-                count++;
-            return count;
-        }
-        public int GetMonsterCount()
-        {
-            return GetCount(MonsterZone);
-        }
+	public ClientCard[] SpellZone { get; private set; }
 
-        public int GetSpellCount()
-        {
-            return GetCount(SpellZone);
-        }
+	public IList<ClientCard> Graveyard { get; private set; }
 
-        public int GetHandCount()
-        {
-            return GetCount(Hand);
-        }
+	public IList<ClientCard> Banished { get; private set; }
 
-        public int GetSpellCountWithoutField()
-        {
-            int count = 0;
-            for (int i = 0; i < 5; ++i)
-            {
-                if (SpellZone[i] != null)
-                    ++count;
-            }
-            return count;
-        }
+	public IList<ClientCard> Deck { get; private set; }
 
-        /// <summary>
-        /// Count Column
-        /// </summary>
-        /// <param zone>range of zone 0-4</param>
-        public int GetColumnCount(int zone, bool IncludeExtraMonsterZone = true)
-        {
-            int count = 0;
-            if (SpellZone[zone] != null)
-                count++;
-            if (MonsterZone[zone] != null)
-                count++;
-            if(zone == 1 && IncludeExtraMonsterZone)
-            {
-                if (MonsterZone[5] != null)
-                    count++;
-            }
-            if (zone == 3 && IncludeExtraMonsterZone)
-            {
-                if (MonsterZone[6] != null)
-                    count++;
-            }
-            return count;
-        }
+	public IList<ClientCard> ExtraDeck { get; private set; }
 
-        public int GetFieldCount()
-        {
-            return GetSpellCount() + GetMonsterCount();
-        }
+	public HashSet<int> HintDescriptions { get; private set; }
 
-        public int GetFieldHandCount()
-        {
-            return GetSpellCount() + GetMonsterCount() + GetHandCount();
-        }
+	public void Init(int deck, int extra)
+	{
+		Hand = new List<ClientCard>();
+		MonsterZone = new ClientCard[7];
+		SpellZone = new ClientCard[8];
+		Graveyard = new List<ClientCard>();
+		Banished = new List<ClientCard>();
+		Deck = new List<ClientCard>();
+		ExtraDeck = new List<ClientCard>();
+		HintDescriptions = new HashSet<int>();
+		for (int i = 0; i < deck; i++)
+		{
+			Deck.Add(new ClientCard(0, CardLocation.Deck, -1));
+		}
+		for (int j = 0; j < extra; j++)
+		{
+			ExtraDeck.Add(new ClientCard(0, CardLocation.Extra, -1));
+		}
+	}
 
-        public bool IsFieldEmpty()
-        {
-            return GetMonsters().Count == 0 && GetSpells().Count == 0;
-        }
+	public int GetMonstersExtraZoneCount()
+	{
+		int num = 0;
+		if (MonsterZone[5] != null)
+		{
+			num++;
+		}
+		if (MonsterZone[6] != null)
+		{
+			num++;
+		}
+		return num;
+	}
 
-        public int GetLinkedZones()
-        {
-            int zones = 0;
-            for (int i = 0; i < 7; i++)
-            {
-                zones |= MonsterZone[i]?.GetLinkedZones() ?? 0;
-            }
-            return zones;
-        }
+	public int GetMonsterCount()
+	{
+		return GetCount(MonsterZone);
+	}
 
-        public List<ClientCard> GetMonsters()
-        {
-            return GetCards(MonsterZone);
-        }
+	public int GetSpellCount()
+	{
+		return GetCount(SpellZone);
+	}
 
-        public List<ClientCard> GetGraveyardMonsters()
-        {
-            return GetCards(Graveyard, CardType.Monster);
-        }
+	public int GetHandCount()
+	{
+		return GetCount(Hand);
+	}
 
-        public List<ClientCard> GetGraveyardSpells()
-        {
-            return GetCards(Graveyard, CardType.Spell);
-        }
+	public int GetSpellCountWithoutField()
+	{
+		int num = 0;
+		for (int i = 0; i < 5; i++)
+		{
+			if (SpellZone[i] != null)
+			{
+				num++;
+			}
+		}
+		return num;
+	}
 
-        public List<ClientCard> GetGraveyardTraps()
-        {
-            return GetCards(Graveyard, CardType.Trap);
-        }
+	public int GetColumnCount(int zone, bool IncludeExtraMonsterZone = true)
+	{
+		int num = 0;
+		if (SpellZone[zone] != null)
+		{
+			num++;
+		}
+		if (MonsterZone[zone] != null)
+		{
+			num++;
+		}
+		if (zone == 1 && IncludeExtraMonsterZone && MonsterZone[5] != null)
+		{
+			num++;
+		}
+		if (zone == 3 && IncludeExtraMonsterZone && MonsterZone[6] != null)
+		{
+			num++;
+		}
+		return num;
+	}
 
-        public List<ClientCard> GetSpells()
-        {
-            return GetCards(SpellZone);
-        }
+	public int GetFieldCount()
+	{
+		return GetSpellCount() + GetMonsterCount();
+	}
 
-        public List<ClientCard> GetMonstersInExtraZone()
-        {
-            return GetMonsters().Where(card => card.Sequence >= 5).ToList();
-        }
+	public int GetFieldHandCount()
+	{
+		return GetSpellCount() + GetMonsterCount() + GetHandCount();
+	}
 
-        public List<ClientCard> GetMonstersInMainZone()
-        {
-            return GetMonsters().Where(card => card.Sequence < 5).ToList();
-        }
+	public bool IsFieldEmpty()
+	{
+		if (GetMonsters().Count == 0)
+		{
+			return GetSpells().Count == 0;
+		}
+		return false;
+	}
 
-        public ClientCard GetFieldSpellCard()
-        {
-            return SpellZone[5];
-        }
+	public int GetLinkedZones()
+	{
+		int num = 0;
+		for (int i = 0; i < 7; i++)
+		{
+			num |= MonsterZone[i]?.GetLinkedZones() ?? 0;
+		}
+		return num;
+	}
 
-        public bool HasInHand(int cardId)
-        {
-            return HasInCards(Hand, cardId);
-        }
+	public List<ClientCard> GetMonsters()
+	{
+		return GetCards(MonsterZone);
+	}
 
-        public bool HasInHand(IList<int> cardId)
-        {
-            return HasInCards(Hand, cardId);
-        }
+	public List<ClientCard> GetGraveyardMonsters()
+	{
+		return GetCards(Graveyard, CardType.Monster);
+	}
 
-        public bool HasInGraveyard(int cardId)
-        {
-            return HasInCards(Graveyard, cardId);
-        }
-    
-        public bool HasInGraveyard(IList<int> cardId)
-        {
-            return HasInCards(Graveyard, cardId);
-        }
+	public List<ClientCard> GetGraveyardSpells()
+	{
+		return GetCards(Graveyard, CardType.Spell);
+	}
 
-        public bool HasInBanished(int cardId)
-        {
-            return HasInCards(Banished, cardId);
-        }
+	public List<ClientCard> GetGraveyardTraps()
+	{
+		return GetCards(Graveyard, CardType.Trap);
+	}
 
-        public bool HasInBanished(IList<int> cardId)
-        {
-            return HasInCards(Banished, cardId);
-        }
+	public List<ClientCard> GetSpells()
+	{
+		return GetCards(SpellZone);
+	}
 
-        public bool HasInExtra(int cardId)
-        {
-            return HasInCards(ExtraDeck, cardId);
-        }
+	public List<ClientCard> GetMonstersInExtraZone()
+	{
+		return (from card in GetMonsters()
+			where card.Sequence >= 5
+			select card).ToList();
+	}
 
-        public bool HasInExtra(IList<int> cardId)
-        {
-            return HasInCards(ExtraDeck, cardId);
-        }
+	public List<ClientCard> GetMonstersInMainZone()
+	{
+		return (from card in GetMonsters()
+			where card.Sequence < 5
+			select card).ToList();
+	}
 
-        public bool HasAttackingMonster()
-        {
-            return GetMonsters().Any(card => card.IsAttack());
-        }
+	public ClientCard GetFieldSpellCard()
+	{
+		return SpellZone[5];
+	}
 
-        public bool HasDefendingMonster()
-        {
-            return GetMonsters().Any(card => card.IsDefense());
-        }
+	public bool HasInHand(int cardId)
+	{
+		return HasInCards(Hand, cardId);
+	}
 
-        public bool HasInMonstersZone(int cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
-        {
-            return HasInCards(MonsterZone, cardId, notDisabled, hasXyzMaterial, faceUp);
-        }
+	public bool HasInHand(IList<int> cardId)
+	{
+		return HasInCards(Hand, cardId);
+	}
 
-        public bool HasInMonstersZone(IList<int> cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
-        {
-            return HasInCards(MonsterZone, cardId, notDisabled, hasXyzMaterial, faceUp);
-        }
+	public bool HasInGraveyard(int cardId)
+	{
+		return HasInCards(Graveyard, cardId);
+	}
 
-        public bool HasInSpellZone(int cardId, bool notDisabled = false, bool faceUp = false)
-        {
-            return HasInCards(SpellZone, cardId, notDisabled, false, faceUp);
-        }
+	public bool HasInGraveyard(IList<int> cardId)
+	{
+		return HasInCards(Graveyard, cardId);
+	}
 
-        public bool HasInSpellZone(IList<int> cardId, bool notDisabled = false, bool faceUp = false)
-        {
-            return HasInCards(SpellZone, cardId, notDisabled, false, faceUp);
-        }
+	public bool HasInBanished(int cardId)
+	{
+		return HasInCards(Banished, cardId);
+	}
 
-        public bool HasInHandOrInSpellZone(int cardId)
-        {
-            return HasInHand(cardId) || HasInSpellZone(cardId);
-        }
+	public bool HasInBanished(IList<int> cardId)
+	{
+		return HasInCards(Banished, cardId);
+	}
 
-        public bool HasInHandOrHasInMonstersZone(int cardId)
-        {
-            return HasInHand(cardId) || HasInMonstersZone(cardId);
-        }
+	public bool HasInExtra(int cardId)
+	{
+		return HasInCards(ExtraDeck, cardId);
+	}
 
-        public bool HasInHandOrInGraveyard(int cardId)
-        {
-            return HasInHand(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInExtra(IList<int> cardId)
+	{
+		return HasInCards(ExtraDeck, cardId);
+	}
 
-        public bool HasInGraveyardOrInBanished(int cardId)
-        {
-            return HasInBanished(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasAttackingMonster()
+	{
+		return GetMonsters().Any((ClientCard card) => card.IsAttack());
+	}
 
-        public bool HasInMonstersZoneOrInGraveyard(int cardId)
-        {
-            return HasInMonstersZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasDefendingMonster()
+	{
+		return GetMonsters().Any((ClientCard card) => card.IsDefense());
+	}
 
-        public bool HasInSpellZoneOrInGraveyard(int cardId)
-        {
-            return HasInSpellZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInMonstersZone(int cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
+	{
+		return HasInCards(MonsterZone, cardId, notDisabled, hasXyzMaterial, faceUp);
+	}
 
-        public bool HasInHandOrInMonstersZoneOrInGraveyard(int cardId)
-        {
-            return HasInHand(cardId) || HasInMonstersZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInMonstersZone(IList<int> cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
+	{
+		return HasInCards(MonsterZone, cardId, notDisabled, hasXyzMaterial, faceUp);
+	}
 
-        public bool HasInHandOrInSpellZoneOrInGraveyard(int cardId)
-        {
-            return HasInHand(cardId) || HasInSpellZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInSpellZone(int cardId, bool notDisabled = false, bool faceUp = false)
+	{
+		return HasInCards(SpellZone, cardId, notDisabled, hasXyzMaterial: false, faceUp);
+	}
 
-        public bool HasInHandOrInSpellZone(IList<int> cardId)
-        {
-            return HasInHand(cardId) || HasInSpellZone(cardId);
-        }
+	public bool HasInSpellZone(IList<int> cardId, bool notDisabled = false, bool faceUp = false)
+	{
+		return HasInCards(SpellZone, cardId, notDisabled, hasXyzMaterial: false, faceUp);
+	}
 
-        public bool HasInHandOrHasInMonstersZone(IList<int> cardId)
-        {
-            return HasInHand(cardId) || HasInMonstersZone(cardId);
-        }
+	public bool HasInHandOrInSpellZone(int cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInSpellZone(cardId);
+		}
+		return true;
+	}
 
-        public bool HasInHandOrInGraveyard(IList<int> cardId)
-        {
-            return HasInHand(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInHandOrHasInMonstersZone(int cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInMonstersZone(cardId);
+		}
+		return true;
+	}
 
-        public bool HasInMonstersZoneOrInGraveyard(IList<int> cardId)
-        {
-            return HasInMonstersZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInHandOrInGraveyard(int cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        public bool HasInSpellZoneOrInGraveyard(IList<int> cardId)
-        {
-            return HasInSpellZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInGraveyardOrInBanished(int cardId)
+	{
+		if (!HasInBanished(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        public bool HasInHandOrInMonstersZoneOrInGraveyard(IList<int> cardId)
-        {
-            return HasInHand(cardId) || HasInMonstersZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInMonstersZoneOrInGraveyard(int cardId)
+	{
+		if (!HasInMonstersZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        public bool HasInHandOrInSpellZoneOrInGraveyard(IList<int> cardId)
-        {
-            return HasInHand(cardId) || HasInSpellZone(cardId) || HasInGraveyard(cardId);
-        }
+	public bool HasInSpellZoneOrInGraveyard(int cardId)
+	{
+		if (!HasInSpellZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        public int GetRemainingCount(int cardId, int initialCount)
-        {
-            int remaining = initialCount;
-            remaining = remaining - Hand.Count(card => card != null && card.IsOriginalCode(cardId));
-            remaining = remaining - SpellZone.Count(card => card != null && card.IsOriginalCode(cardId));
-            remaining = remaining - MonsterZone.Count(card => card != null && card.IsOriginalCode(cardId));
-            remaining = remaining - Graveyard.Count(card => card != null && card.IsOriginalCode(cardId));
-            remaining = remaining - Banished.Count(card => card != null && card.IsOriginalCode(cardId));
-            return (remaining < 0) ? 0 : remaining;
-        }
+	public bool HasInHandOrInMonstersZoneOrInGraveyard(int cardId)
+	{
+		if (!HasInHand(cardId) && !HasInMonstersZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        private static int GetCount(IEnumerable<ClientCard> cards)
-        {
-            return cards.Count(card => card != null);
-        }
+	public bool HasInHandOrInSpellZoneOrInGraveyard(int cardId)
+	{
+		if (!HasInHand(cardId) && !HasInSpellZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        public int GetCountCardInZone(IEnumerable<ClientCard> cards, int cardId)
-        {
-            return cards.Count(card => card != null && card.IsCode(cardId));
-        }
+	public bool HasInHandOrInSpellZone(IList<int> cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInSpellZone(cardId);
+		}
+		return true;
+	}
 
-        public int GetCountCardInZone(IEnumerable<ClientCard> cards, List<int> cardId)
-        {
-            return cards.Count(card => card != null && card.IsCode(cardId));
-        }
+	public bool HasInHandOrHasInMonstersZone(IList<int> cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInMonstersZone(cardId);
+		}
+		return true;
+	}
 
-        private static List<ClientCard> GetCards(IEnumerable<ClientCard> cards, CardType type)
-        {
-            return cards.Where(card => card != null && card.HasType(type)).ToList();
-        }
+	public bool HasInHandOrInGraveyard(IList<int> cardId)
+	{
+		if (!HasInHand(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        private static List<ClientCard> GetCards(IEnumerable<ClientCard> cards)
-        {
-            return cards.Where(card => card != null).ToList();
-        }
+	public bool HasInMonstersZoneOrInGraveyard(IList<int> cardId)
+	{
+		if (!HasInMonstersZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        private static bool HasInCards(IEnumerable<ClientCard> cards, int cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
-        {
-            return cards.Any(card => card != null && card.IsCode(cardId) && !(notDisabled && card.IsDisabled()) && !(hasXyzMaterial && !card.HasXyzMaterial()) && !(faceUp && card.IsFacedown()));
-        }
+	public bool HasInSpellZoneOrInGraveyard(IList<int> cardId)
+	{
+		if (!HasInSpellZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
 
-        private static bool HasInCards(IEnumerable<ClientCard> cards, IList<int> cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
-        {
-            return cards.Any(card => card != null && card.IsCode(cardId) && !(notDisabled && card.IsDisabled()) && !(hasXyzMaterial && !card.HasXyzMaterial()) && !(faceUp && card.IsFacedown()));
-        }
-    }
+	public bool HasInHandOrInMonstersZoneOrInGraveyard(IList<int> cardId)
+	{
+		if (!HasInHand(cardId) && !HasInMonstersZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
+
+	public bool HasInHandOrInSpellZoneOrInGraveyard(IList<int> cardId)
+	{
+		if (!HasInHand(cardId) && !HasInSpellZone(cardId))
+		{
+			return HasInGraveyard(cardId);
+		}
+		return true;
+	}
+
+	public int GetRemainingCount(int cardId, int initialCount)
+	{
+		int num = initialCount;
+		num -= Hand.Count((ClientCard card) => card?.IsOriginalCode(cardId) ?? false);
+		num -= SpellZone.Count((ClientCard card) => card?.IsOriginalCode(cardId) ?? false);
+		num -= MonsterZone.Count((ClientCard card) => card?.IsOriginalCode(cardId) ?? false);
+		num -= Graveyard.Count((ClientCard card) => card?.IsOriginalCode(cardId) ?? false);
+		num -= Banished.Count((ClientCard card) => card?.IsOriginalCode(cardId) ?? false);
+		if (num >= 0)
+		{
+			return num;
+		}
+		return 0;
+	}
+
+	private static int GetCount(IEnumerable<ClientCard> cards)
+	{
+		return cards.Count((ClientCard card) => card != null);
+	}
+
+	public int GetCountCardInZone(IEnumerable<ClientCard> cards, int cardId)
+	{
+		return cards.Count((ClientCard card) => card?.IsCode(cardId) ?? false);
+	}
+
+	public int GetCountCardInZone(IEnumerable<ClientCard> cards, List<int> cardId)
+	{
+		return cards.Count((ClientCard card) => card?.IsCode(cardId) ?? false);
+	}
+
+	private static List<ClientCard> GetCards(IEnumerable<ClientCard> cards, CardType type)
+	{
+		return cards.Where((ClientCard card) => card?.HasType(type) ?? false).ToList();
+	}
+
+	private static List<ClientCard> GetCards(IEnumerable<ClientCard> cards)
+	{
+		return cards.Where((ClientCard card) => card != null).ToList();
+	}
+
+	private static bool HasInCards(IEnumerable<ClientCard> cards, int cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
+	{
+		return cards.Any((ClientCard card) => card != null && card.IsCode(cardId) && (!notDisabled || !card.IsDisabled()) && (!hasXyzMaterial || card.HasXyzMaterial()) && (!faceUp || !card.IsFacedown()));
+	}
+
+	private static bool HasInCards(IEnumerable<ClientCard> cards, IList<int> cardId, bool notDisabled = false, bool hasXyzMaterial = false, bool faceUp = false)
+	{
+		return cards.Any((ClientCard card) => card != null && card.IsCode(cardId) && (!notDisabled || !card.IsDisabled()) && (!hasXyzMaterial || card.HasXyzMaterial()) && (!faceUp || !card.IsFacedown()));
+	}
 }

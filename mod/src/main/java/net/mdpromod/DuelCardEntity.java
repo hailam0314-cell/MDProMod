@@ -1,10 +1,14 @@
 package net.mdpromod;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -14,27 +18,24 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class DuelCardEntity extends Entity {
-    private java.util.UUID duelField;
+    private UUID duelField;
     private String owner = "";
     private int privateCode;
+    private static final EntityDataAccessor<Integer> DATA_CARD_CODE = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_FACE_UP = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DEFENSE = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> DATA_ZONE_ID = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> DATA_DISABLED = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
 
-    public void configureDuel(java.util.UUID field, String owner, int privateCode) {
+    public void configureDuel(UUID field, String owner, int privateCode) {
         this.duelField = field;
         this.owner = owner == null ? "" : owner;
         this.privateCode = privateCode;
     }
-    public boolean belongsTo(java.util.UUID field) { return field.equals(duelField); }
-    private static final EntityDataAccessor<Integer> DATA_CARD_CODE =
-            SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_FACE_UP =
-            SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_DEFENSE =
-            SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<String> DATA_ZONE_ID =
-            SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.STRING);
-    /** 效果被无效（核心 QUERY_STATUS bit0）：立绘/卡面据此变灰。 */
-    private static final EntityDataAccessor<Boolean> DATA_DISABLED =
-            SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
+
+    public boolean belongsTo(UUID field) {
+        return field.equals(this.duelField);
+    }
 
     public DuelCardEntity(EntityType<DuelCardEntity> type, Level level) {
         super(type, level);
@@ -43,7 +44,6 @@ public class DuelCardEntity extends Entity {
         this.blocksBuilding = false;
     }
 
-    @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_CARD_CODE, 0);
         this.entityData.define(DATA_FACE_UP, true);
@@ -52,38 +52,34 @@ public class DuelCardEntity extends Entity {
         this.entityData.define(DATA_DISABLED, false);
     }
 
-    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        setCardCode(tag.getInt("CardCode"));
-        setFaceUp(tag.getBoolean("FaceUp"));
-        setDefense(tag.getBoolean("Defense"));
-        setZoneId(tag.getString("ZoneId"));
-        setDisabled(tag.getBoolean("Disabled"));
+        this.setCardCode(tag.getInt("CardCode"));
+        this.setFaceUp(tag.getBoolean("FaceUp"));
+        this.setDefense(tag.getBoolean("Defense"));
+        this.setZoneId(tag.getString("ZoneId"));
+        this.setDisabled(tag.getBoolean("Disabled"));
     }
 
-    @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putInt("CardCode", getCardCode());
-        tag.putBoolean("FaceUp", isFaceUp());
-        tag.putBoolean("Defense", isDefense());
-        tag.putString("ZoneId", getZoneId());
-        tag.putBoolean("Disabled", isDisabled());
+        tag.putInt("CardCode", this.getCardCode());
+        tag.putBoolean("FaceUp", this.isFaceUp());
+        tag.putBoolean("Defense", this.isDefense());
+        tag.putString("ZoneId", this.getZoneId());
+        tag.putBoolean("Disabled", this.isDisabled());
     }
 
-    @Override
     public void tick() {
         super.tick();
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoGravity(true);
     }
 
-    @Override
     public boolean isPickable() {
         return true;
     }
 
     public int getCardCode() {
-        return this.entityData.get(DATA_CARD_CODE);
+        return (Integer)this.entityData.get(DATA_CARD_CODE);
     }
 
     public void setCardCode(int code) {
@@ -91,7 +87,7 @@ public class DuelCardEntity extends Entity {
     }
 
     public boolean isFaceUp() {
-        return this.entityData.get(DATA_FACE_UP);
+        return (Boolean)this.entityData.get(DATA_FACE_UP);
     }
 
     public void setFaceUp(boolean faceUp) {
@@ -99,7 +95,7 @@ public class DuelCardEntity extends Entity {
     }
 
     public boolean isDefense() {
-        return this.entityData.get(DATA_DEFENSE);
+        return (Boolean)this.entityData.get(DATA_DEFENSE);
     }
 
     public void setDefense(boolean defense) {
@@ -107,7 +103,7 @@ public class DuelCardEntity extends Entity {
     }
 
     public String getZoneId() {
-        return this.entityData.get(DATA_ZONE_ID);
+        return (String)this.entityData.get(DATA_ZONE_ID);
     }
 
     public void setZoneId(String zoneId) {
@@ -115,52 +111,62 @@ public class DuelCardEntity extends Entity {
     }
 
     public boolean isDisabled() {
-        return this.entityData.get(DATA_DISABLED);
+        return (Boolean)this.entityData.get(DATA_DISABLED);
     }
 
     public void setDisabled(boolean disabled) {
-        if (this.entityData.get(DATA_DISABLED) != disabled) {
+        if ((Boolean)this.entityData.get(DATA_DISABLED) != disabled) {
             this.entityData.set(DATA_DISABLED, disabled);
         }
     }
 
-    /** 左键：让客户端弹动作按钮（攻击 / 表示变更 / 发动，按核心给的候选决定）。 */
-    public void onLeftClick(net.minecraft.server.level.ServerPlayer player) {
-        if (duelField == null) return;
-        String zone = getZoneId();
-        java.util.List<int[]> candidates = new java.util.ArrayList<>();
-        if (zone.startsWith("shared_emz_")) {
-            // 共享额外怪兽区：同一个物理格子对应两个引擎序号，谁的怪都有可能
-            int[] asP1 = DuelFieldLayout.engineAddress(zone, 0);
-            int[] asP2 = DuelFieldLayout.engineAddress(zone, 1);
-            if (asP1 != null) candidates.add(asP1);
-            if (asP2 != null) candidates.add(asP2);
-        } else {
-            int[] address = DuelFieldLayout.engineAddress(zone, 0);
-            if (address != null) candidates.add(address);
+    public void onLeftClick(ServerPlayer player) {
+        if (this.duelField != null) {
+            String zone = this.getZoneId();
+            List<int[]> candidates = new ArrayList<>();
+            if (zone.startsWith("shared_emz_")) {
+                int[] asP1 = DuelFieldLayout.engineAddress(zone, 0);
+                int[] asP2 = DuelFieldLayout.engineAddress(zone, 1);
+                if (asP1 != null) {
+                    candidates.add(asP1);
+                }
+
+                if (asP2 != null) {
+                    candidates.add(asP2);
+                }
+            } else {
+                int[] address = DuelFieldLayout.engineAddress(zone, 0);
+                if (address != null) {
+                    candidates.add(address);
+                }
+            }
+
+            MDProMod.sessions(player).offerCardActions(player, this.getId(), candidates.toArray(new int[0][]));
         }
-        MDProMod.sessions().offerCardActions(player, getId(), candidates.toArray(new int[0][]));
     }
 
-    @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
-        if (this.level().isClientSide) return InteractionResult.SUCCESS;
-        if (duelField != null) {
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-                    && (isFaceUp() || owner.equals(player.getUUID().toString()))) {
-                ModNetwork.sendTo(serverPlayer, new ModNetwork.OpenCard(privateCode));
+        if (this.level().isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+
+        if (this.duelField == null) {
+            if (player.isShiftKeyDown()) {
+                this.setDefense(!this.isDefense());
+            } else {
+                this.setFaceUp(!this.isFaceUp());
             }
+
+            CardInfo info = CardRegistry.get(this.getCardCode()).orElse(null);
+            String name = info == null ? "#" + this.getCardCode() : info.name();
+            player.displayClientMessage(Component.literal(name + " faceUp=" + this.isFaceUp() + " defense=" + this.isDefense()), false);
+            return InteractionResult.SUCCESS;
+        } else {
+            if (player instanceof ServerPlayer serverPlayer && (this.isFaceUp() || this.owner.equals(player.getUUID().toString()))) {
+                ModNetwork.sendTo(serverPlayer, new ModNetwork.OpenCard(this.privateCode));
+            }
+
             return InteractionResult.CONSUME;
         }
-        if (player.isShiftKeyDown()) {
-            setDefense(!isDefense());
-        } else {
-            setFaceUp(!isFaceUp());
-        }
-        CardInfo info = CardRegistry.get(getCardCode()).orElse(null);
-        String name = info == null ? ("#" + getCardCode()) : info.name();
-        player.displayClientMessage(Component.literal(
-                name + " faceUp=" + isFaceUp() + " defense=" + isDefense()), false);
-        return InteractionResult.SUCCESS;
     }
 }

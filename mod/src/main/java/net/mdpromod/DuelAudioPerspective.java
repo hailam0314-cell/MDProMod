@@ -1,14 +1,22 @@
 package net.mdpromod;
 
-/** Server sound keys use engine seat 0; each listener hears their own side. */
 final class DuelAudioPerspective {
-    private DuelAudioPerspective() {}
+    private DuelAudioPerspective() {
+    }
 
     static String key(String key, boolean farSide) {
-        if (!farSide || key == null) return key;
-        if (key.startsWith("SE_PHASE_OPP_")) return "SE_PHASE_" + key.substring(13);
-        if (key.startsWith("SE_PHASE_") && !key.startsWith("SE_PHASE_WINDOW_"))
+        if (!farSide || key == null) {
+            return key;
+        }
+
+        if (key.startsWith("SE_PHASE_OPP_")) {
+            return "SE_PHASE_" + key.substring(13);
+        }
+
+        if (key.startsWith("SE_PHASE_") && !key.startsWith("SE_PHASE_WINDOW_")) {
             return "SE_PHASE_OPP_" + key.substring(9);
+        }
+
         return switch (key) {
             case "SE_NEXT_TURN_PLAYER" -> "SE_NEXT_TURN_RIVAL";
             case "SE_NEXT_TURN_RIVAL" -> "SE_NEXT_TURN_PLAYER";
@@ -29,9 +37,12 @@ final class DuelAudioPerspective {
     }
 
     static int delay(String key, int delay, boolean farSide) {
-        if (!farSide) return delay;
-        if ("SE_NEXT_TURN_PLAYER".equals(key)) return Math.max(0, delay - 66);
-        if ("SE_NEXT_TURN_RIVAL".equals(key)) return delay + 66;
-        return delay;
+        if (!farSide) {
+            return delay;
+        } else if ("SE_NEXT_TURN_PLAYER".equals(key)) {
+            return Math.max(0, delay - 66);
+        } else {
+            return "SE_NEXT_TURN_RIVAL".equals(key) ? delay + 66 : delay;
+        }
     }
 }

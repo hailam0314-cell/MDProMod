@@ -1,16 +1,18 @@
 package net.mdpromod;
 
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.Item.Properties;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
-
-import java.util.List;
 
 public class DuelCardItem extends Item {
     public DuelCardItem(Properties properties) {
@@ -23,41 +25,33 @@ public class DuelCardItem extends Item {
     }
 
     public static ItemStack createStack(int code, int count) {
-        ItemStack stack = new ItemStack(ModItems.DUEL_CARD_ITEM.get(), count);
+        ItemStack stack = new ItemStack((ItemLike)ModItems.DUEL_CARD_ITEM.get(), count);
         stack.getOrCreateTag().putInt("CardCode", code);
         return stack;
     }
 
-    @Override
     public Component getName(ItemStack stack) {
-        int code = getCardCode(stack);
-        return CardRegistry.get(code)
-                .<Component>map(info -> Component.literal(info.name()))
-                .orElseGet(() -> super.getName(stack));
+        int code = this.getCardCode(stack);
+        return CardRegistry.get(code).<Component>map(info -> Component.literal(info.name())).orElseGet(() -> super.getName(stack));
     }
 
-    @Override
-    public void appendHoverText(ItemStack stack, Level level,
-                                List<Component> tooltip, TooltipFlag flag) {
-        int code = getCardCode(stack);
+    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+        int code = this.getCardCode(stack);
         CardRegistry.get(code).ifPresent(info -> {
             tooltip.add(Component.literal("#" + info.code() + "  " + info.typeLabel()));
             if (info.isMonster()) {
-                tooltip.add(Component.literal(
-                        "ATK " + info.atk() + " / DEF " + info.def()
-                                + " / LV " + info.level()));
+                tooltip.add(Component.literal("ATK " + info.atk() + " / DEF " + info.def() + " / LV " + info.level()));
             }
         });
     }
 
-    @Override
     public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
         if (!level.isClientSide) {
             BlockPos pos = context.getClickedPos().relative(context.getClickedFace());
-            DuelCardEntity card = ModEntities.DUEL_CARD.get().create(level);
+            DuelCardEntity card = (DuelCardEntity)((EntityType)ModEntities.DUEL_CARD.get()).create(level);
             if (card != null) {
-                card.setCardCode(getCardCode(context.getItemInHand()));
+                card.setCardCode(this.getCardCode(context.getItemInHand()));
                 card.setFaceUp(true);
                 card.setDefense(false);
                 float yaw = context.getPlayer() == null ? 0.0F : context.getPlayer().getYRot();
@@ -68,6 +62,7 @@ public class DuelCardItem extends Item {
                 }
             }
         }
+
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 }

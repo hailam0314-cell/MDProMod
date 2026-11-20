@@ -1,49 +1,24 @@
 package net.mdpromod;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 「人机卡组」界面（MC 风格，和编辑卡组同一套面板/凹槽/卡图）：
- *
- * <ul>
- *   <li>顶部一排：{@code ◀ [人机名 ▾] ▶}，点中间那个按钮打开**第二层**选择界面；</li>
- *   <li>下面三个分区标签（主卡组 / 额外卡组 / 副卡组），一次看一个区的卡图网格，滚轮翻页；</li>
- *   <li>只读：不能加卡减卡，只能换人机。换完立刻写回物品。</li>
- * </ul>
- */
 public final class AiDeckScreen extends Screen {
-
     private static final int MAX_COLUMNS = 9;
     private static final int ROWS = 3;
-    /** 标题 + 选择行 + 描述 + 分区标签 + 页脚 + 按钮 占掉的固定高度。 */
     private static final int CHROME = 120;
-    private static final String[] ZONE_NAMES = {"主卡组", "额外卡组", "副卡组"};
-
-    /** 一份人机卡组（服务端发过来的三个数组）。 */
-    record Deck(int[] main, int[] extra, int[] side) {
-        int[] zone(int index) {
-            return switch (index) {
-                case 1 -> extra;
-                case 2 -> side;
-                default -> main;
-            };
-        }
-    }
-
+    private static final String[] ZONE_NAMES = new String[]{"主卡组", "额外卡组", "副卡组"};
     private final String[] keys;
     private final String[] labels;
     private final String[] descriptions;
-    private final List<Deck> decks = new ArrayList<>();
+    private final List<AiDeckScreen.Deck> decks = new ArrayList<>();
     private int selected;
     private int zone;
     private int page;
-
     private int panelLeft;
     private int panelTop;
     private int panelWidth;
@@ -63,184 +38,207 @@ public final class AiDeckScreen extends Screen {
         this.labels = message.labels();
         this.descriptions = message.descriptions();
         int offset = 0;
-        for (int i = 0; i < keys.length; i++) {
+
+        for (int i = 0; i < this.keys.length; i++) {
             int main = message.counts()[i * 3];
             int extra = message.counts()[i * 3 + 1];
             int side = message.counts()[i * 3 + 2];
-            decks.add(new Deck(slice(message.cards(), offset, main),
-                    slice(message.cards(), offset + main, extra),
-                    slice(message.cards(), offset + main + extra, side)));
+            this.decks
+                .add(
+                    new AiDeckScreen.Deck(
+                        slice(message.cards(), offset, main), slice(message.cards(), offset + main, extra), slice(message.cards(), offset + main + extra, side)
+                    )
+                );
             offset += main + extra + side;
         }
-        this.selected = Math.max(0, Math.min(selected, Math.max(0, decks.size() - 1)));
+
+        this.selected = Math.max(0, Math.min(selected, Math.max(0, this.decks.size() - 1)));
     }
 
-    /** 便捷入口：从包里的 selected 键推断下标。 */
     public AiDeckScreen(ModNetwork.AiDeckOpen message) {
         this(message, indexOf(message));
     }
 
     private static int indexOf(ModNetwork.AiDeckOpen message) {
         String[] keys = message.keys();
+
         for (int i = 0; i < keys.length; i++) {
-            if (keys[i].equalsIgnoreCase(message.selected())) return i;
+            if (keys[i].equalsIgnoreCase(message.selected())) {
+                return i;
+            }
         }
+
         return 0;
     }
 
     private static int[] slice(int[] source, int from, int length) {
         int[] out = new int[Math.max(0, length)];
+
         for (int i = 0; i < out.length && from + i < source.length; i++) {
             out[i] = source[from + i];
         }
+
         return out;
     }
 
-    private Deck deck() {
-        return decks.isEmpty() ? new Deck(new int[0], new int[0], new int[0]) : decks.get(selected);
+    private AiDeckScreen.Deck deck() {
+        return this.decks.isEmpty() ? new AiDeckScreen.Deck(new int[0], new int[0], new int[0]) : this.decks.get(this.selected);
     }
 
-    /** 当前人机、当前分区的卡（跟着选择走，不是固定字段）。 */
     private int[] zoneCodes() {
-        return deck().zone(zone);
+        return this.deck().zone(this.zone);
     }
 
     String label(int index) {
-        if (index < 0 || index >= labels.length) return "（没有人机卡组）";
-        return labels[index] == null || labels[index].isBlank() ? keys[index] : labels[index];
+        if (index >= 0 && index < this.labels.length) {
+            return this.labels[index] != null && !this.labels[index].isBlank() ? this.labels[index] : this.keys[index];
+        } else {
+            return "（没有人机卡组）";
+        }
     }
 
-    /** 换一个人机：写回物品，并刷新这一页。由第二层选择界面调用。 */
     void applySelection(int index) {
-        if (index < 0 || index >= keys.length) return;
-        selected = index;
-        zone = 0;
-        page = 0;
-        ModNetwork.sendToServer(new ModNetwork.AiDeckSelect(keys[index], label(index),
-                descriptions.length > index ? descriptions[index] : ""));
+        if (index >= 0 && index < this.keys.length) {
+            this.selected = index;
+            this.zone = 0;
+            this.page = 0;
+            ModNetwork.sendToServer(
+                new ModNetwork.AiDeckSelect(this.keys[index], this.label(index), this.descriptions.length > index ? this.descriptions[index] : "")
+            );
+        }
     }
 
     private void step(int delta) {
-        if (keys.length == 0) return;
-        applySelection((selected + delta + keys.length) % keys.length);
-        rebuildWidgets();
+        if (this.keys.length != 0) {
+            this.applySelection((this.selected + delta + this.keys.length) % this.keys.length);
+            this.rebuildWidgets();
+        }
     }
 
     private int pageSize() {
-        return Math.max(1, columns * rows);
+        return Math.max(1, this.columns * this.rows);
     }
 
     private int pageCount() {
-        return Math.max(1, (zoneCodes().length + pageSize() - 1) / pageSize());
+        return Math.max(1, (this.zoneCodes().length + this.pageSize() - 1) / this.pageSize());
     }
 
-    @Override
     protected void init() {
-        // 固定 3 行，靠卡图大小适配窗口高度：小窗口（GUI scale 3）也不会溢出
-        rows = ROWS;
-        int available = Math.max(60, height - CHROME - 12);
-        cellHeight = Math.max(22, Math.min(McPanel.CARD_H + 4, available / rows));
-        cardHeight = Math.max(16, cellHeight - 4);
-        cardWidth = Math.max(11, cardHeight * McPanel.CARD_W / McPanel.CARD_H);
-        cellWidth = cardWidth + 4;
-        columns = Math.max(1, Math.min(MAX_COLUMNS, (width - 40) / cellWidth));
-        panelWidth = columns * cellWidth + 24;
-        panelHeight = CHROME + rows * cellHeight;
-        panelLeft = (width - panelWidth) / 2;
-        panelTop = Math.max(6, (height - panelHeight) / 2);
-        gridTop = panelTop + 80;
-        page = Math.max(0, Math.min(page, pageCount() - 1));
+        this.rows = 3;
+        int available = Math.max(60, this.height - 120 - 12);
+        this.cellHeight = Math.max(22, Math.min(82, available / this.rows));
+        this.cardHeight = Math.max(16, this.cellHeight - 4);
+        this.cardWidth = Math.max(11, this.cardHeight * 54 / 78);
+        this.cellWidth = this.cardWidth + 4;
+        this.columns = Math.max(1, Math.min(9, (this.width - 40) / this.cellWidth));
+        this.panelWidth = this.columns * this.cellWidth + 24;
+        this.panelHeight = 120 + this.rows * this.cellHeight;
+        this.panelLeft = (this.width - this.panelWidth) / 2;
+        this.panelTop = Math.max(6, (this.height - this.panelHeight) / 2);
+        this.gridTop = this.panelTop + 80;
+        this.page = Math.max(0, Math.min(this.page, this.pageCount() - 1));
+        int selectorY = this.panelTop + 20;
+        this.addRenderableWidget(Button.builder(Component.literal("◀"), button -> this.step(-1)).bounds(this.panelLeft + 12, selectorY, 22, 20).build());
+        this.addRenderableWidget(
+            Button.builder(Component.literal(this.label(this.selected) + "  ▾"), button -> this.openPicker())
+                .bounds(this.panelLeft + 38, selectorY, this.panelWidth - 76, 20)
+                .build()
+        );
+        this.addRenderableWidget(
+            Button.builder(Component.literal("▶"), button -> this.step(1)).bounds(this.panelLeft + this.panelWidth - 34, selectorY, 22, 20).build()
+        );
+        int tabWidth = Math.min(96, (this.panelWidth - 24) / 3);
 
-        int selectorY = panelTop + 20;
-        addRenderableWidget(Button.builder(Component.literal("◀"), button -> step(-1))
-                .bounds(panelLeft + 12, selectorY, 22, 20).build());
-        addRenderableWidget(Button.builder(
-                        Component.literal(label(selected) + "  ▾"),
-                        button -> openPicker())
-                .bounds(panelLeft + 38, selectorY, panelWidth - 76, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("▶"), button -> step(1))
-                .bounds(panelLeft + panelWidth - 34, selectorY, 22, 20).build());
-
-        int tabWidth = Math.min(96, (panelWidth - 24) / 3);
         for (int i = 0; i < 3; i++) {
-            final int index = i;
-            String label = (i == zone ? "▶ " : "") + ZONE_NAMES[i]
-                    + " " + deck().zone(i).length;
-            addRenderableWidget(Button.builder(Component.literal(label), button -> {
-                zone = index;
-                page = 0;
-                rebuildWidgets();
-            }).bounds(panelLeft + 12 + i * (tabWidth + 2), panelTop + 58, tabWidth, 18).build());
+            int index = i;
+            String label = (i == this.zone ? "▶ " : "") + ZONE_NAMES[i] + " " + this.deck().zone(i).length;
+            this.addRenderableWidget(Button.builder(Component.literal(label), button -> {
+                this.zone = index;
+                this.page = 0;
+                this.rebuildWidgets();
+            }).bounds(this.panelLeft + 12 + i * (tabWidth + 2), this.panelTop + 58, tabWidth, 18).build());
         }
 
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> onClose())
-                .bounds(panelLeft + panelWidth / 2 - 40,
-                        gridTop + rows * cellHeight + 18, 80, 20).build());
+        this.addRenderableWidget(
+            Button.builder(Component.translatable("gui.done"), button -> this.onClose())
+                .bounds(this.panelLeft + this.panelWidth / 2 - 40, this.gridTop + this.rows * this.cellHeight + 18, 80, 20)
+                .build()
+        );
     }
 
     private void openPicker() {
-        if (minecraft != null) {
-            minecraft.setScreen(new AiDeckPickerScreen(this, keys, labels, descriptions, selected));
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(new AiDeckPickerScreen(this, this.keys, this.labels, this.descriptions, this.selected));
         }
     }
 
-    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        int next = page + (delta < 0 ? 1 : -1);
-        page = Math.max(0, Math.min(pageCount() - 1, next));
+        int next = this.page + (delta < 0.0 ? 1 : -1);
+        this.page = Math.max(0, Math.min(this.pageCount() - 1, next));
         return true;
     }
 
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        McPanel.panel(graphics, panelLeft, panelTop, panelLeft + panelWidth, panelTop + panelHeight);
-        graphics.drawCenteredString(font, title, width / 2, panelTop + 6, 0x404040);
-        String description = descriptions.length > selected ? descriptions[selected] : "";
+        this.renderBackground(graphics);
+        McPanel.panel(graphics, this.panelLeft, this.panelTop, this.panelLeft + this.panelWidth, this.panelTop + this.panelHeight);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.panelTop + 6, 4210752);
+        String description = this.descriptions.length > this.selected ? this.descriptions[this.selected] : "";
         if (!description.isBlank()) {
-            graphics.drawCenteredString(font, description, width / 2, panelTop + 44, 0x555555);
+            graphics.drawCenteredString(this.font, description, this.width / 2, this.panelTop + 44, 5592405);
         } else {
-            graphics.drawCenteredString(font, "第 " + (page + 1) + "/" + pageCount() + " 页（滚轮翻页）",
-                    width / 2, panelTop + 44, 0x555555);
+            graphics.drawCenteredString(this.font, "第 " + (this.page + 1) + "/" + this.pageCount() + " 页（滚轮翻页）", this.width / 2, this.panelTop + 44, 5592405);
         }
 
-        // 凹槽网格（只读展示）
-        int from = page * pageSize();
-        int[] codes = zoneCodes();
-        hoveredCode = -1;
-        for (int i = 0; i < pageSize(); i++) {
+        int from = this.page * this.pageSize();
+        int[] codes = this.zoneCodes();
+        this.hoveredCode = -1;
+
+        for (int i = 0; i < this.pageSize(); i++) {
             int index = from + i;
-            if (index >= codes.length) break;
-            int x = panelLeft + 14 + (i % columns) * cellWidth;
-            int y = gridTop + (i / columns) * cellHeight;
-            int code = codes[index];
-            boolean hover = McPanel.inside(mouseX, mouseY, x, y, cardWidth, cardHeight);
-            McPanel.slot(graphics, x - 2, y - 2, cardWidth + 4, cardHeight + 4);
-            McPanel.card(graphics, code, x, y, cardWidth, cardHeight);
-            if (hover) {
-                graphics.fill(x - 2, y - 2, x + cardWidth + 2, y - 1, McPanel.GOLD);
-                graphics.fill(x - 2, y + cardHeight + 1, x + cardWidth + 2, y + cardHeight + 2, McPanel.GOLD);
-                graphics.fill(x - 2, y - 2, x - 1, y + cardHeight + 2, McPanel.GOLD);
-                graphics.fill(x + cardWidth + 1, y - 2, x + cardWidth + 2, y + cardHeight + 2, McPanel.GOLD);
+            if (index >= codes.length) {
+                break;
             }
-            if (hover) hoveredCode = code;
+
+            int x = this.panelLeft + 14 + i % this.columns * this.cellWidth;
+            int y = this.gridTop + i / this.columns * this.cellHeight;
+            int code = codes[index];
+            boolean hover = McPanel.inside(mouseX, mouseY, x, y, this.cardWidth, this.cardHeight);
+            McPanel.slot(graphics, x - 2, y - 2, this.cardWidth + 4, this.cardHeight + 4);
+            McPanel.card(graphics, code, x, y, this.cardWidth, this.cardHeight);
+            if (hover) {
+                graphics.fill(x - 2, y - 2, x + this.cardWidth + 2, y - 1, 16777045);
+                graphics.fill(x - 2, y + this.cardHeight + 1, x + this.cardWidth + 2, y + this.cardHeight + 2, 16777045);
+                graphics.fill(x - 2, y - 2, x - 1, y + this.cardHeight + 2, 16777045);
+                graphics.fill(x + this.cardWidth + 1, y - 2, x + this.cardWidth + 2, y + this.cardHeight + 2, 16777045);
+            }
+
+            if (hover) {
+                this.hoveredCode = code;
+            }
         }
+
         if (codes.length == 0) {
-            graphics.drawCenteredString(font, "（这个区没有卡）",
-                    panelLeft + panelWidth / 2, gridTop + 20, 0x606060);
+            graphics.drawCenteredString(this.font, "（这个区没有卡）", this.panelLeft + this.panelWidth / 2, this.gridTop + 20, 6316128);
         }
 
         super.render(graphics, mouseX, mouseY, partialTick);
-
-        String footer = hoveredCode > 0
-                ? McPanel.displayName(hoveredCode)
-                : "第 " + (page + 1) + "/" + pageCount() + " 页 · 共 " + codes.length + " 张";
-        graphics.drawCenteredString(font, footer, width / 2,
-                gridTop + rows * cellHeight + 4, 0x303030);
+        String footer = this.hoveredCode > 0
+            ? McPanel.displayName(this.hoveredCode)
+            : "第 " + (this.page + 1) + "/" + this.pageCount() + " 页 · 共 " + codes.length + " 张";
+        graphics.drawCenteredString(this.font, footer, this.width / 2, this.gridTop + this.rows * this.cellHeight + 4, 3158064);
     }
 
-    @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    record Deck(int[] main, int[] extra, int[] side) {
+        int[] zone(int index) {
+            return switch (index) {
+                case 1 -> this.extra;
+                case 2 -> this.side;
+                default -> this.main;
+            };
+        }
     }
 }

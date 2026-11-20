@@ -11,32 +11,79 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Map.Entry;
 
 public final class CardRegistry {
-    private static final Map<Integer, CardInfo> CARDS = new HashMap<>();
+    private static final String CHINESE_RESOURCE = "/data/mdpromod/cards.json";
+    private static final String ENGLISH_RESOURCE = "/data/mdpromod/cards_en.json";
+    private static final Map<Integer, CardInfo> CHINESE = new HashMap<>();
+    private static Map<Integer, CardInfo> english;
+    private static volatile boolean useEnglish;
+    private static boolean englishFailed;
     private static boolean loaded;
-    /** 载入失败的原因（空串 = 没失败）；日志和离线测试都靠它说清楚。 */
     private static String loadError = "";
 
     private CardRegistry() {
     }
 
     public static synchronized void load() {
-        if (loaded) return;
-        loaded = true;                     // 失败也只试一次，别每次查询都重来一遍
-        try (InputStream input = CardRegistry.class.getResourceAsStream("/data/mdpromod/cards.json")) {
-            if (input == null) {
-                ModLog.warn("卡库资源缺失：/data/mdpromod/cards.json");
-                loadError = "找不到资源 /data/mdpromod/cards.json";
-                return;
+        if (!loaded) {
+            loaded = true;
+            loadError = read(CHINESE, "/data/mdpromod/cards.json");
+        }
+    }
+
+    public static synchronized void setEnglish(boolean value) {
+        if (value) {
+            loadEnglish();
+        }
+
+        boolean next = value && english != null;
+        if (useEnglish != next) {
+            useEnglish = next;
+            CardNameSearch.clearIndex();
+            ModLog.info("卡牌文字：{}", next ? "英文（缺卡回落中文）" : "中文");
+        }
+    }
+
+    public static boolean english() {
+        return useEnglish;
+    }
+
+    private static void loadEnglish() {
+        if (english == null && !englishFailed) {
+            Map<Integer, CardInfo> parsed = new HashMap<>();
+            String error = read(parsed, "/data/mdpromod/cards_en.json");
+            if (error.isEmpty()) {
+                english = Map.copyOf(parsed);
+            } else {
+                englishFailed = true;
+                ModLog.warn("英文卡库不可用，继续使用中文卡名/卡效：{}", error);
             }
-            JsonObject root = JsonParser.parseReader(
-                    new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
-            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+        }
+    }
+
+    private static Map<Integer, CardInfo> active() {
+        Map<Integer, CardInfo> current = english;
+        return useEnglish && current != null ? current : CHINESE;
+    }
+
+    private static String read(Map<Integer, CardInfo> target, String resource) {
+        try (InputStream input = CardRegistry.class.getResourceAsStream(resource)) {
+            if (input == null) {
+                ModLog.warn("卡库资源缺失：{}", resource);
+                return "找不到资源 " + resource;
+            }
+
+            JsonObject root = JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
+
+            for (Entry<String, JsonElement> entry : root.entrySet()) {
                 try {
                     int code = Integer.parseInt(entry.getKey());
                     JsonObject value = entry.getValue().getAsJsonObject();
-                    CARDS.put(code, new CardInfo(
+                    target.put(
+                        code,
+                        new CardInfo(
                             code,
                             value.get("name").getAsString(),
                             value.has("desc") ? value.get("desc").getAsString() : "",
@@ -47,16 +94,20 @@ public final class CardRegistry {
                             value.get("def").getAsInt(),
                             value.get("level").getAsInt(),
                             value.get("race").getAsInt(),
-                            value.get("attribute").getAsInt()));
+                            value.get("attribute").getAsInt(),
+                            value.has("setcode") ? value.get("setcode").getAsInt() : 0
+                        )
+                    );
                 } catch (RuntimeException ex) {
                     ModLog.warn("跳过损坏的卡数据 {}：{}", entry.getKey(), ex.toString());
                 }
             }
-            ModLog.info("载入 {} 张卡的数据", CARDS.size());
+
+            ModLog.info("载入 {} 张卡的数据（{}）", target.size(), resource);
+            return "";
         } catch (Throwable ex) {
-            // 离线测试的 classpath 上没有 gson，这里会走到：卡库为空，但功能照常（禁卡表按卡号算）
-            loadError = ex.toString();
-            ModLog.warn("卡库载入失败：{}", ex.toString());
+            ModLog.warn("卡库载入失败（{}）：{}", resource, ex.toString());
+            return ex.toString();
         }
     }
 
@@ -67,21 +118,26 @@ public final class CardRegistry {
 
     public static Optional<CardInfo> get(int code) {
         load();
-        return Optional.ofNullable(CARDS.get(code));
+        CardInfo card = active().get(code);
+        if (card == null && useEnglish) {
+            card = CHINESE.get(code);
+        }
+
+        return Optional.ofNullable(card);
     }
 
     public static boolean contains(int code) {
         load();
-        return CARDS.containsKey(code);
+        return active().containsKey(code) || CHINESE.containsKey(code);
     }
 
     public static int size() {
         load();
-        return CARDS.size();
+        return active().size();
     }
 
     public static Collection<CardInfo> all() {
         load();
-        return Collections.unmodifiableCollection(CARDS.values());
+        return Collections.unmodifiableCollection(active().values());
     }
 }

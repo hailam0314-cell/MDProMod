@@ -1,51 +1,35 @@
 package net.mdpromod;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 第二层：卡片池检索条件。
- * 面板高度按内容算，内容装不下时整块内容可以滚轮滚动，底部按钮固定在面板底边，不会互相压住。
- */
 @OnlyIn(Dist.CLIENT)
 public class CardSearchScreen extends Screen {
-    private static final int COLOR_PANEL = 0xFFC6C6C6;
-    private static final int COLOR_LIGHT = 0xFFFFFFFF;
-    private static final int COLOR_DARK = 0xFF555555;
-    private static final int COLOR_TITLE = 0x404040;
-    private static final int COLOR_LABEL = 0xFF3F3F3F;
-    private static final int COLOR_SLOT = 0xFF8B8B8B;
-    private static final int COLOR_SLOT_DARK = 0xFF373737;
-
-    private static final String[] ATTRIBUTE_NAMES = {"光", "暗", "地", "水", "炎", "风", "神"};
-    private static final int[] ATTRIBUTE_BITS = {0x10, 0x20, 0x01, 0x02, 0x04, 0x08, 0x40};
-    private static final String[] RACE_NAMES = {
-            "战士", "魔法师", "天使", "恶魔", "不死", "机械", "水", "炎", "岩石",
-            "鸟兽", "植物", "昆虫", "雷", "龙", "兽", "兽战士", "恐龙", "鱼",
-            "海龙", "爬虫", "念动力", "幻神兽", "创造神", "幻龙", "电子界", "幻想魔"};
-    private static final int[] RACE_BITS = {
-            0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100,
-            0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000,
-            0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000, 0x2000000};
-    private static final String[] SUB_NAMES = {
-            "通常魔法", "永续魔法", "装备魔法", "速攻魔法", "仪式魔法", "场地魔法",
-            "通常陷阱", "永续陷阱", "反击陷阱"};
-    private static final int[] SUB_BITS = {
-            CardFilter.SPELL_NORMAL, CardFilter.SUB_CONTINUOUS, CardFilter.SUB_EQUIP,
-            CardFilter.SUB_QUICKPLAY, CardFilter.SUB_RITUAL, CardFilter.SUB_FIELD,
-            CardFilter.TRAP_NORMAL, CardFilter.SUB_CONTINUOUS, CardFilter.SUB_COUNTER};
-    private static final boolean[] SUB_IS_TRAP = {
-            false, false, false, false, false, false, true, true, true};
-
+    private static final int COLOR_PANEL = -3750202;
+    private static final int COLOR_LIGHT = -1;
+    private static final int COLOR_DARK = -11184811;
+    private static final int COLOR_TITLE = 4210752;
+    private static final int COLOR_LABEL = -12632257;
+    private static final int COLOR_SLOT = -7631989;
+    private static final int COLOR_SLOT_DARK = -13158601;
+    private static final String[] ATTRIBUTE_NAMES = CardLabels.ATTRIBUTE_NAMES;
+    private static final int[] ATTRIBUTE_BITS = CardLabels.ATTRIBUTE_BITS;
+    private static final String[] RACE_NAMES = CardLabels.RACE_NAMES;
+    private static final int[] RACE_BITS = CardLabels.RACE_BITS;
+    private static final String[] SUB_NAMES = new String[]{"通常魔法", "永续魔法", "装备魔法", "速攻魔法", "仪式魔法", "场地魔法", "通常陷阱", "永续陷阱", "反击陷阱"};
+    private static final int[] SUB_BITS = new int[]{1073741824, 131072, 262144, 65536, 128, 524288, 536870912, 131072, 1048576};
+    private static final boolean[] SUB_IS_TRAP = new boolean[]{false, false, false, false, false, false, true, true, true};
+    private static final String[] MONSTER_NAMES = new String[]{"通常", "效果", "仪式", "融合", "同调", "超量", "连接", "灵摆", "调整", "反转", "二重", "灵魂"};
+    private static final int[] MONSTER_BITS = new int[]{16, 32, 128, 64, 8192, 8388608, 67108864, 16777216, 4096, 2097152, 2048, 512};
     private final Screen parent;
     private final CardFilter filter;
     private final List<AbstractWidget> tracked = new ArrayList<>();
@@ -53,7 +37,6 @@ public class CardSearchScreen extends Screen {
     private final List<String> labelText = new ArrayList<>();
     private final List<Integer> labelX = new ArrayList<>();
     private final List<Integer> labelY = new ArrayList<>();
-
     private int leftPos;
     private int topPos;
     private int panelW;
@@ -64,13 +47,13 @@ public class CardSearchScreen extends Screen {
     private int viewportBottom;
     private int contentHeight;
     private int scrollY;
-
     private Button kindMonster;
     private Button kindSpell;
     private Button kindTrap;
     private Button kindExtra;
     private Button kindLimited;
     private Button sortButton;
+    private final List<Button> monsterButtons = new ArrayList<>();
     private final List<Button> attributeButtons = new ArrayList<>();
     private final List<Button> raceButtons = new ArrayList<>();
     private final List<Button> subButtons = new ArrayList<>();
@@ -87,205 +70,231 @@ public class CardSearchScreen extends Screen {
         this.filter = filter;
     }
 
-    @Override
     protected void init() {
         super.init();
-        tracked.clear();
-        trackedBaseY.clear();
-        labelText.clear();
-        labelX.clear();
-        labelY.clear();
-        attributeButtons.clear();
-        raceButtons.clear();
-        subButtons.clear();
-
-        panelW = Math.min(Math.max(this.width - 40, 320), Math.min(620, Math.max(260, this.width - 8)));
-        int rowW = panelW - 20;
-        leftPos = (this.width - panelW) / 2;
-        contentX = leftPos + 10;
-        contentW = rowW;
-
+        this.tracked.clear();
+        this.trackedBaseY.clear();
+        this.labelText.clear();
+        this.labelX.clear();
+        this.labelY.clear();
+        this.attributeButtons.clear();
+        this.monsterButtons.clear();
+        this.raceButtons.clear();
+        this.subButtons.clear();
+        this.panelW = Math.min(Math.max(this.width - 40, 320), Math.min(620, Math.max(260, this.width - 8)));
+        int rowW = this.panelW - 20;
+        this.leftPos = (this.width - this.panelW) / 2;
+        this.contentX = this.leftPos + 10;
+        this.contentW = rowW;
         int raceCols = Math.max(4, Math.min(7, rowW / 62));
         int raceRows = (RACE_NAMES.length + raceCols - 1) / raceCols;
         int kindRowH = 16;
         int labelH = 10;
         int blockGap = 6;
         int numbersRowH = 20;
-
         int subRowsPlanned = (SUB_NAMES.length + 4) / 5;
-        // 内容总高（用于决定面板高度和是否需要滚动）
-        contentHeight = (labelH + kindRowH + blockGap) * 2
-                + (labelH + subRowsPlanned * 18 + blockGap)
-                + (labelH + raceRows * 18 + blockGap)
-                + (numbersRowH * 3 + blockGap)
-                + kindRowH;
+        int monsterRowsPlanned = (MONSTER_NAMES.length + 4) / 5;
+        this.contentHeight = (labelH + kindRowH + blockGap) * 2
+            + labelH
+            + monsterRowsPlanned * 18
+            + blockGap
+            + labelH
+            + subRowsPlanned * 18
+            + blockGap
+            + labelH
+            + raceRows * 18
+            + blockGap
+            + numbersRowH * 3
+            + blockGap
+            + kindRowH;
         int chromeTop = 22;
         int chromeBottom = 30;
-        int wanted = contentHeight + chromeTop + chromeBottom;
+        int wanted = this.contentHeight + chromeTop + chromeBottom;
         int maxPanelH = Math.min(470, this.height - 8);
-        panelH = Math.max(160, Math.min(wanted, maxPanelH));
-        topPos = Math.max(4, (this.height - panelH) / 2);
-
-        viewportTop = topPos + chromeTop;
-        viewportBottom = topPos + panelH - chromeBottom;
-        if (viewportBottom - viewportTop < 40) {
-            viewportBottom = viewportTop + 40;
+        this.panelH = Math.max(160, Math.min(wanted, maxPanelH));
+        this.topPos = Math.max(4, (this.height - this.panelH) / 2);
+        this.viewportTop = this.topPos + chromeTop;
+        this.viewportBottom = this.topPos + this.panelH - chromeBottom;
+        if (this.viewportBottom - this.viewportTop < 40) {
+            this.viewportBottom = this.viewportTop + 40;
         }
 
         int y = 0;
-        label("种类", y);
+        this.label("种类", y);
         y += labelH;
-        int kindW = Math.min(66, (contentW - 12) / 4);
-        kindMonster = tracked(Button.builder(label("怪兽", filter.monster), b -> {
-            filter.monster = !filter.monster;
-            refreshLabels();
-        }).bounds(contentX, 0, kindW, kindRowH).build(), y);
-        kindSpell = tracked(Button.builder(label("魔法", filter.spell), b -> {
-            filter.spell = !filter.spell;
-            refreshLabels();
-        }).bounds(contentX + kindW + 4, 0, kindW, kindRowH).build(), y);
-        kindTrap = tracked(Button.builder(label("陷阱", filter.trap), b -> {
-            filter.trap = !filter.trap;
-            refreshLabels();
-        }).bounds(contentX + (kindW + 4) * 2, 0, kindW, kindRowH).build(), y);
-        kindExtra = tracked(Button.builder(label("只看额外", filter.extraOnly), b -> {
-            filter.extraOnly = !filter.extraOnly;
-            refreshLabels();
-        }).bounds(contentX + (kindW + 4) * 3, 0, kindW, kindRowH).build(), y);
+        int kindW = Math.min(66, (this.contentW - 12) / 4);
+        this.kindMonster = this.tracked(Button.builder(this.label("怪兽", this.filter.monster), b -> {
+            this.filter.monster = !this.filter.monster;
+            this.refreshLabels();
+        }).bounds(this.contentX, 0, kindW, kindRowH).build(), y);
+        this.kindSpell = this.tracked(Button.builder(this.label("魔法", this.filter.spell), b -> {
+            this.filter.spell = !this.filter.spell;
+            this.refreshLabels();
+        }).bounds(this.contentX + kindW + 4, 0, kindW, kindRowH).build(), y);
+        this.kindTrap = this.tracked(Button.builder(this.label("陷阱", this.filter.trap), b -> {
+            this.filter.trap = !this.filter.trap;
+            this.refreshLabels();
+        }).bounds(this.contentX + (kindW + 4) * 2, 0, kindW, kindRowH).build(), y);
+        this.kindExtra = this.tracked(Button.builder(this.label("只看额外", this.filter.extraOnly), b -> {
+            this.filter.extraOnly = !this.filter.extraOnly;
+            this.refreshLabels();
+        }).bounds(this.contentX + (kindW + 4) * 3, 0, kindW, kindRowH).build(), y);
         y += kindRowH + blockGap;
-
-        label("属性（可多选）", y);
+        this.label("怪兽类型（可多选）", y);
         y += labelH;
-        int attrW = Math.min(50, (contentW - 24) / 7);
-        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-            final int index = i;
-            Button button = tracked(Button.builder(label(ATTRIBUTE_NAMES[i],
-                            (filter.attributeMask & ATTRIBUTE_BITS[i]) != 0), b -> {
-                        filter.attributeMask ^= ATTRIBUTE_BITS[index];
-                        refreshLabels();
-                    }).bounds(contentX + i * (attrW + 4), 0, attrW, kindRowH).build(), y);
-            attributeButtons.add(button);
+        int monsterCols = 5;
+        int monsterW = Math.max(40, Math.min(62, (this.contentW - (monsterCols - 1) * 4) / monsterCols));
+
+        for (int i = 0; i < MONSTER_NAMES.length; i++) {
+            int index = i;
+            int col = i % monsterCols;
+            int row = i / monsterCols;
+            Button button = this.tracked(Button.builder(this.label(MONSTER_NAMES[i], (this.filter.monsterTypeMask & MONSTER_BITS[i]) != 0), b -> {
+                this.filter.monsterTypeMask = this.filter.monsterTypeMask ^ MONSTER_BITS[index];
+                this.refreshLabels();
+            }).bounds(this.contentX + col * (monsterW + 4), 0, monsterW, kindRowH).build(), y + row * 18);
+            this.monsterButtons.add(button);
         }
-        y += kindRowH + blockGap;
 
-        label("魔陷种类", y);
+        y += monsterRowsPlanned * 18 + blockGap;
+        this.label("属性（可多选）", y);
         y += labelH;
-        int subW = Math.max(40, Math.min(64, (contentW - (SUB_NAMES.length - 1) * 4) / SUB_NAMES.length));
+        int attrW = Math.min(50, (this.contentW - 24) / 7);
+
+        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+            int index = i;
+            Button button = this.tracked(Button.builder(this.label(ATTRIBUTE_NAMES[i], (this.filter.attributeMask & ATTRIBUTE_BITS[i]) != 0), b -> {
+                this.filter.attributeMask = this.filter.attributeMask ^ ATTRIBUTE_BITS[index];
+                this.refreshLabels();
+            }).bounds(this.contentX + i * (attrW + 4), 0, attrW, kindRowH).build(), y);
+            this.attributeButtons.add(button);
+        }
+
+        y += kindRowH + blockGap;
+        this.label("魔陷种类", y);
+        y += labelH;
+        int subW = Math.max(40, Math.min(64, (this.contentW - (SUB_NAMES.length - 1) * 4) / SUB_NAMES.length));
+
         for (int i = 0; i < SUB_NAMES.length; i++) {
-            final int index = i;
+            int index = i;
             int col = i % 5;
             int row = i / 5;
-            Button button = tracked(Button.builder(label(SUB_NAMES[i], subActive(i)), b -> {
+            Button button = this.tracked(Button.builder(this.label(SUB_NAMES[i], this.subActive(i)), b -> {
                 int bit = SUB_BITS[index];
                 if (SUB_IS_TRAP[index]) {
-                    filter.trapSubMask ^= bit;
+                    this.filter.trapSubMask ^= bit;
                 } else {
-                    filter.spellSubMask ^= bit;
+                    this.filter.spellSubMask ^= bit;
                 }
-                refreshLabels();
-            }).bounds(contentX + col * (subW + 4), 0, subW, kindRowH).build(), y + row * 18);
-            subButtons.add(button);
+
+                this.refreshLabels();
+            }).bounds(this.contentX + col * (subW + 4), 0, subW, kindRowH).build(), y + row * 18);
+            this.subButtons.add(button);
         }
+
         int subRows = (SUB_NAMES.length + 4) / 5;
         y += subRows * 18 + blockGap;
-
-        label("种族（可多选）", y);
+        this.label("种族（可多选）", y);
         y += labelH;
-        int raceButtonW = Math.max(34, (contentW - (raceCols - 1) * 4) / raceCols);
+        int raceButtonW = Math.max(34, (this.contentW - (raceCols - 1) * 4) / raceCols);
+
         for (int i = 0; i < RACE_NAMES.length; i++) {
-            final int index = i;
+            int index = i;
             int col = i % raceCols;
             int row = i / raceCols;
-            Button button = tracked(Button.builder(label(RACE_NAMES[i],
-                            (filter.raceMask & RACE_BITS[i]) != 0), b -> {
-                        filter.raceMask ^= RACE_BITS[index];
-                        refreshLabels();
-                    }).bounds(contentX + col * (raceButtonW + 4), 0, raceButtonW, 16).build(),
-                    y + row * 18);
-            raceButtons.add(button);
+            Button button = this.tracked(Button.builder(this.label(RACE_NAMES[i], (this.filter.raceMask & RACE_BITS[i]) != 0), b -> {
+                this.filter.raceMask = this.filter.raceMask ^ RACE_BITS[index];
+                this.refreshLabels();
+            }).bounds(this.contentX + col * (raceButtonW + 4), 0, raceButtonW, 16).build(), y + row * 18);
+            this.raceButtons.add(button);
         }
+
         y += raceRows * 18 + blockGap;
-
-        label("等级", y + 4);
-        label("攻击", y + 24);
-        label("守备", y + 44);
-        levelMinBox = tracked(numberBox(contentX + 40, 0, 44), y);
-        levelMaxBox = tracked(numberBox(contentX + 92, 0, 44), y);
-        atkMinBox = tracked(numberBox(contentX + 40, 0, 44), y + numbersRowH);
-        atkMaxBox = tracked(numberBox(contentX + 92, 0, 44), y + numbersRowH);
-        defMinBox = tracked(numberBox(contentX + 40, 0, 44), y + numbersRowH * 2);
-        defMaxBox = tracked(numberBox(contentX + 92, 0, 44), y + numbersRowH * 2);
-        labelAt("~", contentX + 86, y + 4);
-        labelAt("~", contentX + 86, y + 24);
-        labelAt("~", contentX + 86, y + 44);
-        labelAt("留空表示不限", contentX + 146, y + 4);
+        this.label("等级", y + 4);
+        this.label("攻击", y + 24);
+        this.label("守备", y + 44);
+        this.levelMinBox = this.tracked(this.numberBox(this.contentX + 40, 0, 44, this.filter.levelMin, this.levelMinBox), y);
+        this.levelMaxBox = this.tracked(this.numberBox(this.contentX + 92, 0, 44, this.filter.levelMax, this.levelMaxBox), y);
+        this.atkMinBox = this.tracked(this.numberBox(this.contentX + 40, 0, 44, this.filter.atkMin, this.atkMinBox), y + numbersRowH);
+        this.atkMaxBox = this.tracked(this.numberBox(this.contentX + 92, 0, 44, this.filter.atkMax, this.atkMaxBox), y + numbersRowH);
+        this.defMinBox = this.tracked(this.numberBox(this.contentX + 40, 0, 44, this.filter.defMin, this.defMinBox), y + numbersRowH * 2);
+        this.defMaxBox = this.tracked(this.numberBox(this.contentX + 92, 0, 44, this.filter.defMax, this.defMaxBox), y + numbersRowH * 2);
+        this.labelAt("~", this.contentX + 86, y + 4);
+        this.labelAt("~", this.contentX + 86, y + 24);
+        this.labelAt("~", this.contentX + 86, y + 44);
+        this.labelAt("留空表示不限", this.contentX + 146, y + 4);
         y += numbersRowH * 3 + blockGap;
-
-        kindLimited = tracked(Button.builder(label("仅限制卡", filter.limitedOnly), b -> {
-            filter.limitedOnly = !filter.limitedOnly;
-            refreshLabels();
-        }).bounds(contentX, 0, 76, kindRowH).build(), y);
-        sortButton = tracked(Button.builder(
-                Component.literal("排序：" + CardFilter.sortName(filter.sortMode)), b -> {
-                    filter.sortMode = (filter.sortMode + 1) % 5;
-                    refreshLabels();
-                }).bounds(contentX + 80, 0, 92, kindRowH).build(), y);
+        this.kindLimited = this.tracked(Button.builder(this.label("仅限制卡", this.filter.limitedOnly), b -> {
+            this.filter.limitedOnly = !this.filter.limitedOnly;
+            this.refreshLabels();
+        }).bounds(this.contentX, 0, 76, kindRowH).build(), y);
+        this.sortButton = this.tracked(Button.builder(Component.literal("排序：" + CardFilter.sortName(this.filter.sortMode)), b -> {
+            this.filter.sortMode = (this.filter.sortMode + 1) % 5;
+            this.refreshLabels();
+        }).bounds(this.contentX + 80, 0, 92, kindRowH).build(), y);
         y += kindRowH;
-        contentHeight = y;
+        this.contentHeight = y;
+        int buttonY = this.topPos + this.panelH - 24;
+        this.addRenderableWidget(Button.builder(Component.literal("重置条件"), b -> {
+            this.filter.reset();
 
-        int buttonY = topPos + panelH - 24;
-        addRenderableWidget(Button.builder(Component.literal("重置条件"), b -> {
-            filter.reset();
-            for (EditBox box : new EditBox[]{levelMinBox, levelMaxBox, atkMinBox, atkMaxBox, defMinBox, defMaxBox}) {
-                if (box != null) box.setValue("");
+            for (EditBox box : new EditBox[]{this.levelMinBox, this.levelMaxBox, this.atkMinBox, this.atkMaxBox, this.defMinBox, this.defMaxBox}) {
+                if (box != null) {
+                    box.setValue("");
+                }
             }
-            refreshLabels();
-        }).bounds(leftPos + 10, buttonY, 80, 18).build());
-        addRenderableWidget(Button.builder(Component.literal("取消"), b -> back())
-                .bounds(leftPos + panelW - 188, buttonY, 70, 18).build());
-        addRenderableWidget(Button.builder(Component.literal("应用并返回"), b -> {
-            applyNumbers();
-            back();
-        }).bounds(leftPos + panelW - 114, buttonY, 104, 18).build());
 
-        applyScroll();
-        refreshLabels();
+            this.refreshLabels();
+        }).bounds(this.leftPos + 10, buttonY, 80, 18).build());
+        this.addRenderableWidget(Button.builder(Component.literal("取消"), b -> this.back()).bounds(this.leftPos + this.panelW - 188, buttonY, 70, 18).build());
+        this.addRenderableWidget(Button.builder(Component.literal("应用并返回"), b -> {
+            this.applyNumbers();
+            this.back();
+        }).bounds(this.leftPos + this.panelW - 114, buttonY, 104, 18).build());
+        this.applyScroll();
+        this.refreshLabels();
     }
 
     private boolean subActive(int index) {
         int bit = SUB_BITS[index];
-        return SUB_IS_TRAP[index] ? (filter.trapSubMask & bit) != 0 : (filter.spellSubMask & bit) != 0;
+        return SUB_IS_TRAP[index] ? (this.filter.trapSubMask & bit) != 0 : (this.filter.spellSubMask & bit) != 0;
     }
 
     private Button tracked(Button button, int baseY) {
-        tracked.add(button);
-        trackedBaseY.add(baseY);
-        addRenderableWidget(button);
+        this.tracked.add(button);
+        this.trackedBaseY.add(baseY);
+        this.addRenderableWidget(button);
         return button;
     }
 
     private EditBox tracked(EditBox box, int baseY) {
-        tracked.add(box);
-        trackedBaseY.add(baseY);
-        addRenderableWidget(box);
+        this.tracked.add(box);
+        this.trackedBaseY.add(baseY);
+        this.addRenderableWidget(box);
         return box;
     }
 
-    private EditBox numberBox(int x, int y, int width) {
+    private EditBox numberBox(int x, int y, int width, int initial, EditBox previous) {
         EditBox box = new EditBox(this.font, x, y, width, 16, Component.literal("数值"));
         box.setMaxLength(5);
         box.setFilter(text -> text.matches("\\d{0,5}"));
+        if (previous != null) {
+            box.setValue(previous.getValue());
+        } else if (initial > 0) {
+            box.setValue(Integer.toString(initial));
+        }
+
         return box;
     }
 
     private void label(String text, int baseY) {
-        labelAt(text, contentX, baseY);
+        this.labelAt(text, this.contentX, baseY);
     }
 
     private void labelAt(String text, int x, int baseY) {
-        labelText.add(text);
-        labelX.add(x);
-        labelY.add(baseY);
+        this.labelText.add(text);
+        this.labelX.add(x);
+        this.labelY.add(baseY);
     }
 
     private Component label(String text, boolean active) {
@@ -293,48 +302,61 @@ public class CardSearchScreen extends Screen {
     }
 
     private void applyScroll() {
-        int max = Math.max(0, contentHeight - (viewportBottom - viewportTop));
-        scrollY = Math.max(0, Math.min(scrollY, max));
-        for (int i = 0; i < tracked.size(); i++) {
-            AbstractWidget widget = tracked.get(i);
-            int y = viewportTop + trackedBaseY.get(i) - scrollY;
+        int max = Math.max(0, this.contentHeight - (this.viewportBottom - this.viewportTop));
+        this.scrollY = Math.max(0, Math.min(this.scrollY, max));
+
+        for (int i = 0; i < this.tracked.size(); i++) {
+            AbstractWidget widget = this.tracked.get(i);
+            int y = this.viewportTop + this.trackedBaseY.get(i) - this.scrollY;
             widget.setY(y);
-            widget.visible = y + widget.getHeight() > viewportTop && y < viewportBottom;
+            widget.visible = y + widget.getHeight() > this.viewportTop && y < this.viewportBottom;
         }
     }
 
     private void refreshLabels() {
-        kindMonster.setMessage(label("怪兽", filter.monster));
-        kindSpell.setMessage(label("魔法", filter.spell));
-        kindTrap.setMessage(label("陷阱", filter.trap));
-        kindExtra.setMessage(label("只看额外", filter.extraOnly));
-        kindLimited.setMessage(label("仅限制卡", filter.limitedOnly));
-        sortButton.setMessage(Component.literal("排序：" + CardFilter.sortName(filter.sortMode)));
-        for (int i = 0; i < attributeButtons.size(); i++) {
-            attributeButtons.get(i).setMessage(label(ATTRIBUTE_NAMES[i],
-                    (filter.attributeMask & ATTRIBUTE_BITS[i]) != 0));
+        this.kindMonster.setMessage(this.label("怪兽", this.filter.monster));
+        this.kindSpell.setMessage(this.label("魔法", this.filter.spell));
+        this.kindTrap.setMessage(this.label("陷阱", this.filter.trap));
+        this.kindExtra.setMessage(this.label("只看额外", this.filter.extraOnly));
+        this.kindLimited.setMessage(this.label("仅限制卡", this.filter.limitedOnly));
+        this.sortButton.setMessage(Component.literal("排序：" + CardFilter.sortName(this.filter.sortMode)));
+
+        for (int i = 0; i < this.monsterButtons.size(); i++) {
+            this.monsterButtons.get(i).setMessage(this.label(MONSTER_NAMES[i], (this.filter.monsterTypeMask & MONSTER_BITS[i]) != 0));
         }
-        for (int i = 0; i < subButtons.size(); i++) {
-            subButtons.get(i).setMessage(label(SUB_NAMES[i], subActive(i)));
+
+        for (int i = 0; i < this.attributeButtons.size(); i++) {
+            this.attributeButtons.get(i).setMessage(this.label(ATTRIBUTE_NAMES[i], (this.filter.attributeMask & ATTRIBUTE_BITS[i]) != 0));
         }
-        for (int i = 0; i < raceButtons.size(); i++) {
-            raceButtons.get(i).setMessage(label(RACE_NAMES[i], (filter.raceMask & RACE_BITS[i]) != 0));
+
+        for (int i = 0; i < this.subButtons.size(); i++) {
+            this.subButtons.get(i).setMessage(this.label(SUB_NAMES[i], this.subActive(i)));
+        }
+
+        for (int i = 0; i < this.raceButtons.size(); i++) {
+            this.raceButtons.get(i).setMessage(this.label(RACE_NAMES[i], (this.filter.raceMask & RACE_BITS[i]) != 0));
         }
     }
 
     private void applyNumbers() {
-        filter.levelMin = parse(levelMinBox);
-        filter.levelMax = parse(levelMaxBox);
-        filter.atkMin = parse(atkMinBox);
-        filter.atkMax = parse(atkMaxBox);
-        filter.defMin = parse(defMinBox);
-        filter.defMax = parse(defMaxBox);
+        this.filter.levelMin = this.parse(this.levelMinBox);
+        this.filter.levelMax = this.parse(this.levelMaxBox);
+        this.filter.atkMin = this.parse(this.atkMinBox);
+        this.filter.atkMax = this.parse(this.atkMaxBox);
+        this.filter.defMin = this.parse(this.defMinBox);
+        this.filter.defMax = this.parse(this.defMaxBox);
     }
 
     private int parse(EditBox box) {
-        if (box == null) return 0;
+        if (box == null) {
+            return 0;
+        }
+
         String value = box.getValue().trim();
-        if (value.isEmpty()) return 0;
+        if (value.isEmpty()) {
+            return 0;
+        }
+
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException ex) {
@@ -344,72 +366,77 @@ public class CardSearchScreen extends Screen {
 
     private void back() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.setScreen(this.parent);
         }
     }
 
-    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (mouseX >= leftPos && mouseX <= leftPos + panelW
-                && mouseY >= viewportTop && mouseY <= viewportBottom) {
-            scrollY -= (int) Math.signum(delta) * 18;
-            applyScroll();
+        if (mouseX >= this.leftPos && mouseX <= this.leftPos + this.panelW && mouseY >= this.viewportTop && mouseY <= this.viewportBottom) {
+            this.scrollY = this.scrollY - (int)Math.signum(delta) * 18;
+            this.applyScroll();
             return true;
+        } else {
+            return super.mouseScrolled(mouseX, mouseY, delta);
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
     }
 
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        graphics.fill(leftPos - 1, topPos - 1, leftPos + panelW + 1, topPos + panelH + 1, 0xFF000000);
-        graphics.fill(leftPos, topPos, leftPos + panelW, topPos + panelH, COLOR_PANEL);
-        graphics.fill(leftPos, topPos, leftPos + panelW, topPos + 1, COLOR_LIGHT);
-        graphics.fill(leftPos, topPos, leftPos + 1, topPos + panelH, COLOR_LIGHT);
-        graphics.fill(leftPos, topPos + panelH - 1, leftPos + panelW, topPos + panelH, COLOR_DARK);
-        graphics.fill(leftPos + panelW - 1, topPos, leftPos + panelW, topPos + panelH, COLOR_DARK);
-        graphics.drawString(this.font, Component.literal("卡片检索条件"), leftPos + 10, topPos + 6, COLOR_TITLE, false);
+        this.renderBackground(graphics);
+        graphics.fill(this.leftPos - 1, this.topPos - 1, this.leftPos + this.panelW + 1, this.topPos + this.panelH + 1, -16777216);
+        graphics.fill(this.leftPos, this.topPos, this.leftPos + this.panelW, this.topPos + this.panelH, -3750202);
+        graphics.fill(this.leftPos, this.topPos, this.leftPos + this.panelW, this.topPos + 1, -1);
+        graphics.fill(this.leftPos, this.topPos, this.leftPos + 1, this.topPos + this.panelH, -1);
+        graphics.fill(this.leftPos, this.topPos + this.panelH - 1, this.leftPos + this.panelW, this.topPos + this.panelH, -11184811);
+        graphics.fill(this.leftPos + this.panelW - 1, this.topPos, this.leftPos + this.panelW, this.topPos + this.panelH, -11184811);
+        graphics.drawString(this.font, Component.literal("卡片检索条件"), this.leftPos + 10, this.topPos + 6, 4210752, false);
+        graphics.fill(this.leftPos + 4, this.viewportTop - 2, this.leftPos + this.panelW - 4, this.viewportBottom + 2, -7631989);
+        graphics.fill(this.leftPos + 4, this.viewportTop - 2, this.leftPos + this.panelW - 4, this.viewportTop - 1, -13158601);
+        graphics.fill(this.leftPos + 4, this.viewportTop - 2, this.leftPos + 5, this.viewportBottom + 2, -13158601);
+        boolean scrollable = this.contentHeight > this.viewportBottom - this.viewportTop;
+        int rightLimit = scrollable ? this.leftPos + this.panelW - 12 : this.leftPos + this.panelW - 5;
+        graphics.enableScissor(this.leftPos + 5, this.viewportTop - 1, rightLimit, this.viewportBottom + 1);
 
-        // 内容区背景 + 裁剪
-        graphics.fill(leftPos + 4, viewportTop - 2, leftPos + panelW - 4, viewportBottom + 2, COLOR_SLOT);
-        graphics.fill(leftPos + 4, viewportTop - 2, leftPos + panelW - 4, viewportTop - 1, COLOR_SLOT_DARK);
-        graphics.fill(leftPos + 4, viewportTop - 2, leftPos + 5, viewportBottom + 2, COLOR_SLOT_DARK);
-
-        boolean scrollable = contentHeight > viewportBottom - viewportTop;
-        int rightLimit = scrollable ? leftPos + panelW - 12 : leftPos + panelW - 5;
-        graphics.enableScissor(leftPos + 5, viewportTop - 1, rightLimit, viewportBottom + 1);
-        super.render(graphics, mouseX, mouseY, partialTick);
-        for (int i = 0; i < labelText.size(); i++) {
-            int y = viewportTop + labelY.get(i) - scrollY;
-            if (y + 8 < viewportTop || y > viewportBottom) continue;
-            graphics.drawString(this.font, Component.literal(labelText.get(i)), labelX.get(i), y,
-                    COLOR_LABEL, false);
+        for (AbstractWidget widget : this.tracked) {
+            widget.render(graphics, mouseX, mouseY, partialTick);
         }
+
+        for (int i = 0; i < this.labelText.size(); i++) {
+            int y = this.viewportTop + this.labelY.get(i) - this.scrollY;
+            if (y + 8 >= this.viewportTop && y <= this.viewportBottom) {
+                graphics.drawString(this.font, Component.literal(this.labelText.get(i)), this.labelX.get(i), y, -12632257, false);
+            }
+        }
+
         graphics.disableScissor();
 
+        for (GuiEventListener child : this.children()) {
+            if (child instanceof AbstractWidget widget && !this.tracked.contains(widget)) {
+                widget.render(graphics, mouseX, mouseY, partialTick);
+            }
+        }
+
         if (scrollable) {
-            int trackTop = viewportTop;
-            int trackHeight = viewportBottom - viewportTop;
-            graphics.fill(leftPos + panelW - 10, trackTop, leftPos + panelW - 6, trackTop + trackHeight, 0xFF6F6F6F);
-            int thumbHeight = Math.max(12, trackHeight * trackHeight / contentHeight);
-            int max = contentHeight - trackHeight;
-            int thumbY = trackTop + (max <= 0 ? 0 : (trackHeight - thumbHeight) * scrollY / max);
-            graphics.fill(leftPos + panelW - 10, thumbY, leftPos + panelW - 6, thumbY + thumbHeight, COLOR_LIGHT);
+            int trackTop = this.viewportTop;
+            int trackHeight = this.viewportBottom - this.viewportTop;
+            graphics.fill(this.leftPos + this.panelW - 10, trackTop, this.leftPos + this.panelW - 6, trackTop + trackHeight, -9474193);
+            int thumbHeight = Math.max(12, trackHeight * trackHeight / this.contentHeight);
+            int max = this.contentHeight - trackHeight;
+            int thumbY = trackTop + (max <= 0 ? 0 : (trackHeight - thumbHeight) * this.scrollY / max);
+            graphics.fill(this.leftPos + this.panelW - 10, thumbY, this.leftPos + this.panelW - 6, thumbY + thumbHeight, -1);
         }
 
         String hint = scrollable ? "滚轮查看更多条件" : "";
         if (!hint.isEmpty()) {
-            graphics.drawString(this.font, Component.literal(hint),
-                    leftPos + panelW - 16 - this.font.width(hint), topPos + 6, COLOR_TITLE, false);
+            graphics.drawString(
+                this.font, Component.literal(hint), this.leftPos + this.panelW - 16 - this.font.width(hint), this.topPos + 6, 4210752, false
+            );
         }
     }
 
-    @Override
     public void onClose() {
-        back();
+        this.back();
     }
 
-    @Override
     public boolean isPauseScreen() {
         return false;
     }

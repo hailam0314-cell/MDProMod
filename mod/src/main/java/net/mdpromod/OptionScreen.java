@@ -1,15 +1,18 @@
 package net.mdpromod;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 
-/** 选项弹窗（MC 风格）：核心给了若干个处理方式，选一个。 */
-public class OptionScreen extends Screen {
+public class OptionScreen extends Screen implements RequiredAnswer {
     private static final int MIN_BOX_W = 320;
     private final int[] values;
     private final String[] labels;
+    private final List<Button> optionButtons = new ArrayList<>();
 
     public OptionScreen(int[] values, String[] labels) {
         super(Component.literal("选择选项"));
@@ -17,56 +20,79 @@ public class OptionScreen extends Screen {
         this.labels = labels == null ? new String[0] : labels;
     }
 
-    @Override
     protected void init() {
-        int boxWidth = boxWidth();
-        int left = (width - boxWidth) / 2;
-        int top = height / 2 - 20 - values.length * 12;
+        this.optionButtons.clear();
+        int boxWidth = this.boxWidth();
+        int left = (this.width - boxWidth) / 2;
+        int top = this.height / 2 - 20 - this.values.length * 12;
         int y = top + 30;
-        for (int i = 0; i < values.length; i++) {
-            final int value = values[i];
-            String text = label(i);
-            addRenderableWidget(Button.builder(Component.literal(text), button -> {
+
+        for (int i = 0; i < this.values.length; i++) {
+            int value = this.values[i];
+            Button button = Button.builder(Component.literal(this.fittedLabel(i)), b -> {
                 ModNetwork.sendToServer(new ModNetwork.OptionAnswer(value));
-                onClose();
-            }).bounds(left + 20, y, boxWidth - 40, 20).build());
+                this.onClose();
+            }).bounds(left + 20, y, boxWidth - 40, 20).build();
+            this.optionButtons.add(button);
+            this.addRenderableWidget(button);
             y += 24;
         }
     }
 
-    /** 标签为空时给个可点的占位，别让按钮变成空白。 */
-    private String label(int index) {
-        String text = index < labels.length ? labels[index] : "";
-        return text == null || text.isBlank() ? "选项 " + (index + 1) : text;
+    private String fittedLabel(int index) {
+        String text = this.label(index);
+        int max = Math.max(40, this.boxWidth() - 56);
+        if (this.font.width(text) <= max) {
+            return text;
+        }
+
+        String cut = text;
+
+        while (!cut.isEmpty() && this.font.width(cut + "…") > max) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+
+        return cut + "…";
     }
 
-    /** 选项文字可能很长（卡脚本原文），窗口按最长的一条自适应，避免文字溢出按钮。 */
+    private String label(int index) {
+        String text = index < this.labels.length ? this.labels[index] : "";
+        return text != null && !text.isBlank() ? text : "选项 " + (index + 1);
+    }
+
     private int boxWidth() {
         int widest = 0;
-        for (int i = 0; i < values.length; i++) {
-            widest = Math.max(widest, font.width(label(i)));
+
+        for (int i = 0; i < this.values.length; i++) {
+            widest = Math.max(widest, this.font.width(this.label(i)));
         }
-        return Math.max(MIN_BOX_W, Math.min(width - 20, widest + 60));
+
+        return Math.max(320, Math.min(this.width - 20, widest + 60));
     }
 
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics);
-        int boxH = 46 + values.length * 24;
-        int boxWidth = boxWidth();
-        int left = (width - boxWidth) / 2;
-        int top = height / 2 - 20 - values.length * 12;
+        this.renderBackground(graphics);
+        int boxH = 46 + this.values.length * 24;
+        int boxWidth = this.boxWidth();
+        int left = (this.width - boxWidth) / 2;
+        int top = this.height / 2 - 20 - this.values.length * 12;
         McPanel.panel(graphics, left, top, left + boxWidth, top + boxH);
-        graphics.drawCenteredString(font, "选择选项", width / 2, top + 8, 0x404040);
+        graphics.drawCenteredString(this.font, "选择选项", this.width / 2, top + 8, 4210752);
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        for (int i = 0; i < this.optionButtons.size(); i++) {
+            if (this.optionButtons.get(i).isHovered()) {
+                List<FormattedCharSequence> lines = this.font.split(Component.literal(this.label(i)), Math.min(400, this.width - 40));
+                graphics.renderTooltip(this.font, lines, mouseX, mouseY);
+                break;
+            }
+        }
     }
 
-    @Override
     public boolean isPauseScreen() {
         return false;
     }
 
-    @Override
     public boolean shouldCloseOnEsc() {
         return false;
     }
