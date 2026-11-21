@@ -50,6 +50,23 @@ final class DuelAnimationDemo {
         return s.drainEvents();
     }
 
+    static List<DuelVisualState.Event> pendulum() {
+        DuelVisualState s = new DuelVisualState();
+        s.initializeCounts(0, 40, 15);
+        draw(s, 0, 15146890, 51531505, 46986414, 91152256);
+        s.apply("demo", "290400");
+        move(s, 15146890, a(0, 2, 0, 10), a(0, 8, 0, 5), 0x02000400);
+        move(s, 51531505, a(0, 2, 0, 10), a(0, 8, 4, 5), 0x02000400);
+        s.apply("demo", "530100080005");
+        s.apply("demo", "530100080405");
+        move(s, 46986414, a(0, 2, 0, 10), a(0, 4, 1, 1), 0x800);
+        annotate(s, 62, 46986414, a(0, 4, 1, 1));
+        move(s, 91152256, a(0, 2, 0, 10), a(0, 4, 3, 4), 0x800);
+        annotate(s, 62, 91152256, a(0, 4, 3, 4));
+        s.apply("demo", "3F");
+        return s.drainEvents();
+    }
+
     private static DuelVisualState.Address a(int side, int loc, int seq, int pos) {
         return new DuelVisualState.Address(side, loc, seq, pos);
     }

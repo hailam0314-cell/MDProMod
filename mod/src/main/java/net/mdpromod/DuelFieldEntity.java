@@ -56,7 +56,32 @@ public class DuelFieldEntity extends Entity {
     private static final EntityDataAccessor<Integer> DATA_AI_SIDE = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> DATA_P1_ID = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> DATA_P2_ID = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> DATA_FIELD_THEME = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.STRING);
     private UUID placerId;
+
+    private static final EntityDataAccessor<Integer> DATA_P1_BACK = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_P2_BACK = SynchedEntityData.defineId(DuelFieldEntity.class, EntityDataSerializers.INT);
+
+    int cardBack(int side) {
+        return entityData.get(side == 1 ? DATA_P2_BACK : DATA_P1_BACK);
+    }
+
+    void setCardBack(int seat, int back) {
+        entityData.set(seat == 1 ? DATA_P2_BACK : DATA_P1_BACK, back);
+    }
+
+    DuelFieldTheme theme() {
+        return DuelFieldTheme.byId(entityData.get(DATA_FIELD_THEME));
+    }
+
+    void setTheme(DuelFieldTheme theme) {
+        entityData.set(DATA_FIELD_THEME, theme.id);
+    }
+
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        return theme() != DuelFieldTheme.CLASSIC ? super.getBoundingBoxForCulling().inflate(7, 6, 7) : super.getBoundingBoxForCulling();
+    }
 
     public DuelFieldEntity(EntityType<DuelFieldEntity> type, Level level) {
         super(type, level);
@@ -66,6 +91,9 @@ public class DuelFieldEntity extends Entity {
     }
 
     protected void defineSynchedData() {
+        this.entityData.define(DATA_FIELD_THEME, DuelFieldTheme.CLASSIC.id);
+        this.entityData.define(DATA_P1_BACK, 0);
+        this.entityData.define(DATA_P2_BACK, 0);
         this.entityData.define(DATA_P1_DECK, false);
         this.entityData.define(DATA_P2_DECK, false);
         this.entityData.define(DATA_P1_NAME, "");
@@ -104,6 +132,9 @@ public class DuelFieldEntity extends Entity {
     }
 
     protected void readAdditionalSaveData(CompoundTag tag) {
+        setTheme(DuelFieldTheme.read(tag));
+        entityData.set(DATA_P1_BACK, CardBacks.validId(tag.getInt("P1Back")));
+        entityData.set(DATA_P2_BACK, CardBacks.validId(tag.getInt("P2Back")));
         this.entityData.set(DATA_P1_DECK, tag.getBoolean("P1Deck"));
         this.entityData.set(DATA_P2_DECK, tag.getBoolean("P2Deck"));
         this.entityData.set(DATA_P1_NAME, tag.getString("P1Name"));
@@ -141,6 +172,9 @@ public class DuelFieldEntity extends Entity {
     }
 
     protected void addAdditionalSaveData(CompoundTag tag) {
+        theme().write(tag);
+        tag.putInt("P1Back", cardBack(0));
+        tag.putInt("P2Back", cardBack(1));
         tag.putBoolean("P1Deck", (Boolean)this.entityData.get(DATA_P1_DECK));
         tag.putBoolean("P2Deck", (Boolean)this.entityData.get(DATA_P2_DECK));
         tag.putString("P1Name", (String)this.entityData.get(DATA_P1_NAME));
@@ -272,8 +306,14 @@ public class DuelFieldEntity extends Entity {
         this.setInt(DATA_P2_BANISH, Math.max(0, banish[1]));
     }
 
+    void bindPlayerDeck(String side, DeckData deck, ServerPlayer player) {
+        bindDeck(side, deck);
+        setCardBack("p2".equals(side) ? 1 : 0, DuelAppearance.of(player).backOr(deck.cardBack()));
+    }
+
     public void bindDeck(String side, DeckData deck) {
         boolean p2 = "p2".equals(side);
+        this.entityData.set(p2 ? DATA_P2_BACK : DATA_P1_BACK, deck.cardBack());
         this.entityData.set(p2 ? DATA_P2_DECK : DATA_P1_DECK, true);
         this.entityData.set(p2 ? DATA_P2_NAME : DATA_P1_NAME, deck.name());
         this.entityData.set(p2 ? DATA_P2_MAIN : DATA_P1_MAIN, deck.mainDeck().size());
@@ -299,6 +339,7 @@ public class DuelFieldEntity extends Entity {
             this.entityData.set(DATA_AI_SIDE, -1);
         }
 
+        this.entityData.set(p2 ? DATA_P2_BACK : DATA_P1_BACK, 0);
         this.entityData.set(p2 ? DATA_P2_DECK : DATA_P1_DECK, false);
         this.entityData.set(p2 ? DATA_P2_NAME : DATA_P1_NAME, "");
         this.entityData.set(p2 ? DATA_P2_MAIN : DATA_P1_MAIN, 0);
@@ -342,6 +383,7 @@ public class DuelFieldEntity extends Entity {
     }
 
     public void swapSides() {
+        this.swap(DATA_P1_BACK, DATA_P2_BACK);
         this.swap(DATA_P1_DECK, DATA_P2_DECK);
         this.swap(DATA_P1_NAME, DATA_P2_NAME);
         this.swap(DATA_P1_MAIN, DATA_P2_MAIN);
@@ -629,6 +671,8 @@ public class DuelFieldEntity extends Entity {
     }
 
     public InteractionResult interact(Player player, InteractionHand hand) {
+        ItemStack held = player.getItemInHand(hand);
+        if (held.is(ModItems.APPEARANCE_SETTINGS_ITEM.get())) return held.use(level(), player, hand).getResult();
         if (this.level().isClientSide) {
             return InteractionResult.SUCCESS;
         }
@@ -899,6 +943,25 @@ public class DuelFieldEntity extends Entity {
         return best;
     }
 
+    Vec3 controlLocalPosition(DuelFieldLayout.Control control) {
+        double z = control.z() / 16.0;
+        double y = control.y() / 16.0;
+        var rows = theme().controls;
+        if (rows != null) {
+            boolean panel = "confirm".equals(control.kind()) || "lp_display".equals(control.kind());
+            z = Math.copySign(panel ? rows.panelZ() : rows.phaseZ(), z);
+            y = panel ? rows.panelY() : rows.phaseY();
+        } else if (theme() != DuelFieldTheme.CLASSIC) {
+            z -= Math.copySign(1.31, z);
+            y += 0.29;
+        }
+        return new Vec3(control.x() / 16.0, y, z);
+    }
+
+    Vec3 controlWorldPosition(DuelFieldLayout.Control control) {
+        return position().add(controlLocalPosition(control).yRot(-(float)Math.toRadians(getYRot())));
+    }
+
     private DuelFieldLayout.Control findClickedControl(Player player) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getViewVector(1.0F);
@@ -906,8 +969,7 @@ public class DuelFieldEntity extends Entity {
         DuelFieldLayout.Control best = null;
 
         for (DuelFieldLayout.Control control : DuelFieldLayout.controls()) {
-            Vec3 localCenter = new Vec3(control.x() / 16.0, control.y() / 16.0, control.z() / 16.0).yRot(-((float)Math.toRadians(this.getYRot())));
-            Vec3 center = new Vec3(this.getX() + localCenter.x, this.getY() + localCenter.y, this.getZ() + localCenter.z);
+            Vec3 center = controlWorldPosition(control);
             Vec3 normal = new Vec3(0.0, 1.0, 0.0);
             double denom = look.dot(normal);
             if (!(Math.abs(denom) < 1.0E-6)) {
@@ -963,6 +1025,7 @@ public class DuelFieldEntity extends Entity {
         card.setCardCode(code);
         card.setFaceUp(true);
         card.setDefense(false);
+        card.setCardBack(cardBack("p2".equals(side) ? 1 : 0));
         card.setZoneId(zone.id());
         card.moveTo(position.x, position.y, position.z, this.getYRot(), 0.0F);
         this.level().addFreshEntity(card);
@@ -983,38 +1046,26 @@ public class DuelFieldEntity extends Entity {
     }
 
     private DuelFieldLayout.Zone findZone(Player player, boolean placementOnly) {
-        Vec3 eye = player.getEyePosition();
         Vec3 look = player.getViewVector(1.0F);
-        double planeY = this.getY() + 0.02;
-        if (Math.abs(look.y) < 1.0E-6) {
-            return null;
-        }
-
-        double t = (planeY - eye.y) / look.y;
-        if (!(t < 0.0) && !(t > 48.0)) {
-            Vec3 hit = eye.add(look.scale(t));
-            Vec3 local = new Vec3(hit.x - this.getX(), 0.0, hit.z - this.getZ()).yRot((float)Math.toRadians(this.getYRot()));
-            double modelX = local.x * 16.0;
-            double modelZ = local.z * 16.0;
-            DuelFieldLayout.Zone best = null;
-            double bestDistance = Double.MAX_VALUE;
-
-            for (DuelFieldLayout.Zone zone : DuelFieldLayout.zones()) {
-                if (!placementOnly || this.isPlacementZone(zone.kind())) {
-                    double dx = zone.x() - modelX;
-                    double dz = zone.z() - modelZ;
-                    double distance = dx * dx + dz * dz;
-                    if (distance < bestDistance) {
-                        bestDistance = distance;
-                        best = zone;
-                    }
-                }
+        if (Math.abs(look.y) < 1.0E-6) return null;
+        float yaw = (float)Math.toRadians(this.getYRot());
+        Vec3 eye = player.getEyePosition().subtract(position()).yRot(yaw);
+        look = look.yRot(yaw);
+        DuelFieldLayout.Zone best = null;
+        double bestDistance = 225.0;
+        for (var zone : DuelFieldLayout.zones()) {
+            if (placementOnly && !isPlacementZone(zone.kind())) continue;
+            double t = (zoneSurface(zone) + 0.02 - eye.y) / look.y;
+            if (t < 0 || t > 48) continue;
+            double dx = zone.x() - (eye.x + t * look.x) * 16;
+            double dz = (zoneLocalZ(zone) - eye.z - t * look.z) * 16;
+            double distance = dx * dx + dz * dz;
+            if (distance < bestDistance || best == null && distance == bestDistance) {
+                best = zone;
+                bestDistance = distance;
             }
-
-            return bestDistance <= 225.0 ? best : null;
-        } else {
-            return null;
         }
+        return best;
     }
 
     public String playerSide(Player player) {
@@ -1068,8 +1119,26 @@ public class DuelFieldEntity extends Entity {
         return false;
     }
 
+    double zoneLocalZ(DuelFieldLayout.Zone zone) {
+        double z = zone.z() / 16.0;
+        if (theme().originalTrays() && ("deck".equals(zone.kind()) || "extra".equals(zone.kind()))) {
+            return Math.copySign(5.33, z);
+        }
+        return z;
+    }
+
+    double zoneSurface(DuelFieldLayout.Zone zone) {
+        if (theme().originalTrays()) return theme().surface(zone);
+        if (!theme().raisedTrays) return 0;
+        return switch (zone.kind()) {
+            case "deck", "extra" -> 0.321;
+            case "graveyard" -> 0.035;
+            default -> 0;
+        };
+    }
+
     public Vec3 zoneWorldPosition(DuelFieldLayout.Zone zone) {
-        Vec3 local = new Vec3(zone.x() / 16.0, 0.0, zone.z() / 16.0).yRot(-((float)Math.toRadians(this.getYRot())));
-        return new Vec3(this.getX() + local.x, this.getY() + 0.03, this.getZ() + local.z);
+        Vec3 local = new Vec3(zone.x() / 16.0, 0.0, zoneLocalZ(zone)).yRot(-((float)Math.toRadians(this.getYRot())));
+        return new Vec3(this.getX() + local.x, this.getY() + zoneSurface(zone) + 0.03, this.getZ() + local.z);
     }
 }

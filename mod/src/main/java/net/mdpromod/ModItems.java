@@ -14,6 +14,8 @@ public final class ModItems {
     public static final RegistryObject<Item> MUSIC_SETTINGS_ITEM = ITEMS.register("music_settings", () -> new MusicSettingsItem(new Properties().stacksTo(1)));
     public static final RegistryObject<Item> AI_DECK_ITEM = ITEMS.register("ai_deck", () -> new AiDeckItem(new Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> APPEARANCE_SETTINGS_ITEM = ITEMS.register("appearance_settings", () -> new AppearanceSettingsItem(new Properties().stacksTo(1)));
+
     private ModItems() {
     }
 }

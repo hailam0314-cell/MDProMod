@@ -91,8 +91,9 @@ public final class ClientDuelAnimationRenderer {
                             case "effect", "effect_reveal", "reveal", "search_reveal", "material" -> 15728880;
                             default -> LevelRenderer.getLightColor(minecraft.level, BlockPos.containing(frame.center()));
                         };
-                        ResourceLocation front = frame.faceUp() && frame.cardCode() > 0 ? CardTextureCache.get(frame.cardCode()) : CardTextureCache.CARD_BACK;
-                        drawCard(poses, BUFFER, front, frame.width(), frame.height(), light);
+                        ResourceLocation back = CardBacks.texture(frame.cardBack());
+                        ResourceLocation front = frame.faceUp() && frame.cardCode() > 0 ? CardTextureCache.get(frame.cardCode()) : back;
+                        drawCard(poses, BUFFER, front, back, frame.width(), frame.height(), light);
                         poses.popPose();
                     }
                 }
@@ -106,12 +107,18 @@ public final class ClientDuelAnimationRenderer {
     public static void loggedOut(LoggingOut event) {
         ClientAnimBridge.clear();
         ClientCardMarkers.clear();
+        ClientHandBridge.clear();
     }
 
     public static void drawCard(PoseStack poses, MultiBufferSource buffers, ResourceLocation frontTexture, float width, float height, int light) {
+        drawCard(poses, buffers, frontTexture, CardTextureCache.CARD_BACK, width, height, light);
+    }
+
+    public static void drawCard(PoseStack poses, MultiBufferSource buffers, ResourceLocation frontTexture, ResourceLocation backTexture,
+                                float width, float height, int light) {
         VertexConsumer front = buffers.getBuffer(RenderType.entityCutout(frontTexture));
         side(poses, front, width, height, 0.002F, light, true);
-        VertexConsumer back = buffers.getBuffer(RenderType.entityCutout(CardTextureCache.CARD_BACK));
+        VertexConsumer back = buffers.getBuffer(RenderType.entityCutout(backTexture));
         side(poses, back, width, height, -0.002F, light, false);
     }
 

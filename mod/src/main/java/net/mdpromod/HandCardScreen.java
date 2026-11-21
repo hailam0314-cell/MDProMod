@@ -136,7 +136,8 @@ public class HandCardScreen extends Screen {
     public void onClose() {
         ClientDuelAudio.playUi("SE_MENU_CANCEL");
         if (this.minecraft != null) {
-            if (this.returnScreen instanceof PileScreen pile && pile.canReturnFromCard()) {
+            if (this.returnScreen instanceof PileScreen pile && pile.canReturnFromCard()
+                || this.returnScreen instanceof DuelControlScreen panel && panel.isCurrent()) {
                 this.minecraft.setScreen(this.returnScreen);
             } else {
                 this.minecraft.setScreen(null);

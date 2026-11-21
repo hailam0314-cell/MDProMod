@@ -76,7 +76,7 @@ public final class HandHudOverlay {
         }
     }
 
-    private static void drawCard(GuiGraphics graphics, int code, int x, int y, boolean hover, boolean selected, boolean dim) {
+    static void drawCard(GuiGraphics graphics, int code, int x, int y, boolean hover, boolean selected, boolean dim) {
         float scale = hover ? 1.25F : 1.0F;
         graphics.pose().pushPose();
         graphics.pose().translate(x + 17.0, y + 49, 0.0);
@@ -93,10 +93,10 @@ public final class HandHudOverlay {
         }
 
         if (selected) {
-            graphics.fill(0, 0, 34, 1, 16777045);
-            graphics.fill(0, 48, 34, 49, 16777045);
-            graphics.fill(0, 0, 1, 49, 16777045);
-            graphics.fill(33, 0, 34, 49, 16777045);
+            graphics.fill(0, 0, 34, 1, 0xffffdc70);
+            graphics.fill(0, 48, 34, 49, 0xffffdc70);
+            graphics.fill(0, 0, 1, 49, 0xffffdc70);
+            graphics.fill(33, 0, 34, 49, 0xffffdc70);
         }
 
         graphics.pose().popPose();

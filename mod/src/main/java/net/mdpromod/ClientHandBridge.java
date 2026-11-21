@@ -7,6 +7,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class ClientHandBridge {
+    private static ModNetwork.HandSync snapshot;
     private static int[] cards = new int[0];
     private static boolean active;
     private static boolean yourTurn;
@@ -16,6 +17,10 @@ public final class ClientHandBridge {
     }
 
     public static void apply(ModNetwork.HandSync message) {
+        if (snapshot != null && snapshot.active() && !message.active() && snapshot.duel() != null
+            && !snapshot.duel().equals(message.duel())) return;
+        if (snapshot == null || !java.util.Objects.equals(snapshot.duel(), message.duel())) selected = 0;
+        snapshot = message;
         cards = message.cards() == null ? new int[0] : message.cards();
         active = message.active();
         yourTurn = message.yourTurn();
@@ -25,9 +30,21 @@ public final class ClientHandBridge {
     }
 
     public static void clear() {
+        snapshot = null;
         cards = new int[0];
         active = false;
+        yourTurn = false;
         selected = 0;
+    }
+
+    static ModNetwork.HandSync snapshot() {
+        return snapshot;
+    }
+
+    static DuelFieldEntity field() {
+        Minecraft mc = Minecraft.getInstance();
+        return active && snapshot != null && snapshot.duel() != null && mc.level != null
+            && mc.level.getEntity(snapshot.field()) instanceof DuelFieldEntity f && !f.hasResult() ? f : null;
     }
 
     public static int[] cards() {

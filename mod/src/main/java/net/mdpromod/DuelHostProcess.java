@@ -41,6 +41,7 @@ final class DuelHostProcess implements AutoCloseable {
     private volatile String promptSummary = "";
     private volatile String promptResponseKind = "";
     private volatile String promptJson = "";
+    private volatile long promptSequence;
     private volatile boolean promptToBattle;
     private volatile boolean promptToEnd;
     private volatile boolean promptToMain2;
@@ -67,6 +68,10 @@ final class DuelHostProcess implements AutoCloseable {
         }
 
         return codes;
+    }
+
+    int[] chainOwnerSides() {
+        return visualState.chainOwnerSides(chainLinks.size());
     }
 
     int chainResolving() {
@@ -347,8 +352,7 @@ final class DuelHostProcess implements AutoCloseable {
     }
 
     long promptSeq() {
-        JsonObject prompt = this.currentPrompt();
-        return prompt != null && prompt.has("seq") ? prompt.get("seq").getAsLong() : 0L;
+        return this.waiting ? this.promptSequence : 0L;
     }
 
     boolean isEnded() {
@@ -507,6 +511,10 @@ final class DuelHostProcess implements AutoCloseable {
         return this.visualState.hand(player & 1).stream().mapToInt(DuelVisualState.Card::code).toArray();
     }
 
+    int monsterCode(int seat, int slot) {
+        return this.visualState.monsterCode(seat, slot);
+    }
+
     int handSize(int player) {
         return this.visualState.hand(player & 1).size();
     }
@@ -622,6 +630,11 @@ final class DuelHostProcess implements AutoCloseable {
         return packed;
     }
 
+    int placeCount() {
+        JsonObject prompt = this.currentPrompt();
+        return prompt != null && prompt.has("count") ? Math.max(1, prompt.get("count").getAsInt()) : 1;
+    }
+
     private JsonObject currentPrompt() {
         if (this.waiting && this.promptJson != null && !this.promptJson.isEmpty()) {
             try {
@@ -656,6 +669,11 @@ final class DuelHostProcess implements AutoCloseable {
 
     boolean selectFieldFirst() {
         return this.selectCancelable() && this.visualState.hintSelectId() == 575;
+    }
+
+    boolean selectingAttackTarget() {
+        return this.lastFunction == 15 && this.visualState.hintSelectId() == 549
+            && this.selectMin() == 1 && this.selectMax() == 1;
     }
 
     boolean unselectPrompt() {
@@ -1500,6 +1518,7 @@ final class DuelHostProcess implements AutoCloseable {
                                 this.lastError = "";
                                 break;
                             case "state":
+                                this.promptSequence = 0;
                                 this.waiting = message.has("waiting") && message.get("waiting").getAsBoolean();
                                 if (message.has("function")) {
                                     this.lastFunction = message.get("function").getAsInt();
@@ -1523,6 +1542,7 @@ final class DuelHostProcess implements AutoCloseable {
                                 this.promptToBattle = flag(message, "toBattle");
                                 this.promptToEnd = flag(message, "toEnd");
                                 this.promptToMain2 = flag(message, "toMain2");
+                                this.promptSequence = message.has("seq") ? message.get("seq").getAsLong() : 0;
                                 break;
                             case "message":
                                 if (message.has("function")) {

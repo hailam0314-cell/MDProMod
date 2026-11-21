@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 @EventBusSubscriber(modid = "mdpromod")
 public final class RecipeSelfCheck {
-    private static final List<String> EXPECTED = List.of("card_case", "duel_field", "ai_deck", "music_settings");
+    private static final List<String> EXPECTED = List.of("card_case", "duel_field", "ai_deck", "music_settings", "appearance_settings");
 
     private RecipeSelfCheck() {
     }

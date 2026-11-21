@@ -46,6 +46,8 @@ public class DuelFieldRenderer extends EntityRenderer<DuelFieldEntity> {
     private static final float CARD_W = 0.859375F;
     private static final float CARD_D = 1.25F;
     private final Font font;
+    private final java.util.Map<DuelFieldTheme, DuelFieldModel> models = new java.util.EnumMap<>(DuelFieldTheme.class);
+    private final java.util.Map<DuelFieldEntity, Long> lastAmbientTick = new java.util.WeakHashMap<>();
 
     private static ResourceLocation texture(String name) {
         return ResourceLocation.fromNamespaceAndPath("mdpromod", "textures/entity/" + name + ".png");
@@ -63,25 +65,33 @@ public class DuelFieldRenderer extends EntityRenderer<DuelFieldEntity> {
     public void render(DuelFieldEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(-entityYaw));
-        VertexConsumer mat = buffer.getBuffer(RenderType.entityCutoutNoCull(FIELD));
-        RenderUtil.flatQuad(poseStack, mat, 16.0F, 14.0F, 0.01F, 0.0F, 0.0F, 1.0F, 1.0F, packedLight);
-        VertexConsumer cardBack = buffer.getBuffer(RenderType.entityCutoutNoCull(CardTextureCache.CARD_BACK));
+        DuelFieldTheme theme = entity.theme();
+        DuelFieldModel model = theme == DuelFieldTheme.CLASSIC ? null : models.computeIfAbsent(theme, DuelFieldModel::new);
+        long tick = entity.level().getGameTime();
+        if (model == null || !model.draw(poseStack, buffer, packedLight, tick, partialTicks, entityYaw)) {
+            VertexConsumer mat = buffer.getBuffer(RenderType.entityCutoutNoCull(FIELD));
+            RenderUtil.flatQuad(poseStack, mat, 16.0F, 14.0F, 0.01F, 0.0F, 0.0F, 1.0F, 1.0F, packedLight);
+        } else if (lastAmbientTick.getOrDefault(entity, -1L) != tick) {
+            lastAmbientTick.put(entity, tick);
+            model.emitAmbient(entity, tick);
+        }
 
         for (String side : new String[]{"p1", "p2"}) {
             if (entity.hasDeck(side)) {
                 String boundSide = side;
+                VertexConsumer cardBack = buffer.getBuffer(RenderType.entityCutoutNoCull(CardBacks.texture(entity.cardBack("p2".equals(side) ? 1 : 0))));
                 int remaining = Math.max(entity.remainingCount(boundSide), entity.mainCount(boundSide) > 0 ? 1 : 0);
-                DuelFieldLayout.byId(side + "_deck").ifPresent(zone -> drawStack(poseStack, cardBack, zone, stackLayers(remaining, 10, 6), packedLight));
+                DuelFieldLayout.byId(side + "_deck").ifPresent(zone -> drawStack(poseStack, cardBack, entity, zone, stackLayers(remaining, 10, 6), packedLight));
                 DuelFieldLayout.byId(side + "_extra")
-                    .ifPresent(zone -> drawStack(poseStack, cardBack, zone, stackLayers(entity.extraCount(boundSide), 5, 3), packedLight));
+                    .ifPresent(zone -> drawStack(poseStack, cardBack, entity, zone, stackLayers(entity.extraCount(boundSide), 5, 3), packedLight));
                 DuelFieldLayout.byId(side + "_graveyard").ifPresent(zone -> {
                     if (entity.graveyardCount(boundSide) > 0) {
-                        drawStack(poseStack, cardBack, zone, stackLayers(entity.graveyardCount(boundSide), 5, 6), packedLight);
+                        drawStack(poseStack, cardBack, entity, zone, stackLayers(entity.graveyardCount(boundSide), 5, 6), packedLight);
                     }
                 });
                 DuelFieldLayout.byId(side + "_banished").ifPresent(zone -> {
                     if (entity.banishedCount(boundSide) > 0) {
-                        drawStack(poseStack, cardBack, zone, stackLayers(entity.banishedCount(boundSide), 5, 6), packedLight);
+                        drawStack(poseStack, cardBack, entity, zone, stackLayers(entity.banishedCount(boundSide), 5, 6), packedLight);
                     }
                 });
             }
@@ -97,9 +107,10 @@ public class DuelFieldRenderer extends EntityRenderer<DuelFieldEntity> {
 
     private void drawControl(DuelFieldEntity entity, DuelFieldLayout.Control control, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
-        poseStack.translate(control.x() / 16.0, 0.0, control.z() / 16.0);
+        var at = entity.controlLocalPosition(control);
+        poseStack.translate(at.x, 0.0, at.z);
         poseStack.mulPose(Axis.YP.rotationDegrees(-control.rotationY()));
-        float top = (float)control.y() / 16.0F;
+        float top = (float) at.y;
         float halfW = (float)control.width() / 32.0F;
         float halfD = (float)control.depth() / 32.0F;
         if ("lp_display".equals(control.kind())) {
@@ -248,9 +259,9 @@ public class DuelFieldRenderer extends EntityRenderer<DuelFieldEntity> {
         return cards <= 0 ? 1 : Math.max(1, Math.min(max, (cards + perLayer - 1) / perLayer));
     }
 
-    private static void drawStack(PoseStack poseStack, VertexConsumer consumer, DuelFieldLayout.Zone zone, int layers, int packedLight) {
+    private static void drawStack(PoseStack poseStack, VertexConsumer consumer, DuelFieldEntity field, DuelFieldLayout.Zone zone, int layers, int packedLight) {
         poseStack.pushPose();
-        poseStack.translate(zone.x() / 16.0, 0.02, zone.z() / 16.0);
+        poseStack.translate(zone.x() / 16.0, field.zoneSurface(zone) + 0.02, field.zoneLocalZ(zone));
         poseStack.mulPose(Axis.YP.rotationDegrees(-zone.rotationY()));
 
         for (int i = 0; i < layers; i++) {

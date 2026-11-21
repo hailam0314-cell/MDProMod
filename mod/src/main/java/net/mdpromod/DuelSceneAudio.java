@@ -238,7 +238,7 @@ final class DuelSceneAudio {
             int type = info == null ? 0 : info.type();
 
             boolean movement = switch (e.kind()) {
-                case "move", "draw", "summon", "special_summon", "set" -> !e.from().equals(e.to());
+                case "move", "draw", "summon", "special_summon", "pendulum_summon", "set" -> !e.from().equals(e.to());
                 default -> false;
             };
             if (e.kind().equals("activate")) {

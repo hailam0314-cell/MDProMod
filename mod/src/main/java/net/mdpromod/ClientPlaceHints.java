@@ -46,8 +46,8 @@ public final class ClientPlaceHints {
                     Optional<DuelFieldLayout.Zone> zone = zoneId == null ? Optional.empty() : DuelFieldLayout.byId(zoneId);
                     if (!zone.isEmpty()) {
                         float x = (float)(zone.get().x() / 16.0);
-                        float z = (float)(zone.get().z() / 16.0);
-                        quad(quads, matrix, x - 0.75F, 0.06F, z - 0.875F, x + 0.75F, z + 0.875F);
+                        float z = (float)field.zoneLocalZ(zone.get());
+                        quad(quads, matrix, x - 0.75F, (float)field.zoneSurface(zone.get()) + 0.06F, z - 0.875F, x + 0.75F, z + 0.875F);
                     }
                 }
 

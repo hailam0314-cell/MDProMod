@@ -103,6 +103,7 @@ public class CardCaseScreen extends Screen {
             this.deck.extraDeck().addAll(initial.extraDeck());
             this.deck.sideDeck().addAll(initial.sideDeck());
             this.deck.setName(initial.name());
+            this.deck.setCardBack(initial.cardBack());
             if (!this.deck.mainDeck().isEmpty()) {
                 this.selectedCode = this.deck.mainDeck().get(0);
             }
@@ -112,9 +113,9 @@ public class CardCaseScreen extends Screen {
     protected void init() {
         super.init();
         this.layout();
-        this.banlistW = clamp(this.panelW - 34 - 4 - 52 - 68 - 4 - 58, 32, 100);
+        this.banlistW = clamp(this.panelW - 34 - 4 - 52 - 102 - 4 - 58, 32, 100);
         this.nameBoxX = this.leftPos + 34 + this.banlistW + 4;
-        this.nameBoxW = clamp(this.panelW - (this.nameBoxX - this.leftPos) - 3 - 32 - 2 - 32 - 58, 52, 110);
+        this.nameBoxW = clamp(this.panelW - (this.nameBoxX - this.leftPos) - 3 - 32 - 2 - 32 - 34 - 58, 52, 110);
         this.nameBox = new EditBox(this.font, this.nameBoxX, this.topPos + 4, this.nameBoxW, 14, Component.literal("卡组名"));
         this.nameBox.setMaxLength(32);
         this.nameBox.setHint(Component.literal("卡组名"));
@@ -133,6 +134,10 @@ public class CardCaseScreen extends Screen {
         this.addRenderableWidget(
             Button.builder(Component.literal("完成"), b -> this.onClose()).bounds(this.leftPos + this.panelW - 52, this.topPos + 3, 46, 16).build()
         );
+        this.addRenderableWidget(Button.builder(Component.literal("卡背"), b -> {
+            this.sendName();
+            this.minecraft.setScreen(new CardBackScreen(this, this.deck.cardBack()));
+        }).bounds(this.nameBoxX + this.nameBoxW + 71, this.topPos + 3, 32, 16).build());
         int detailInnerX = this.detailX + 4;
         int detailInnerW = Math.max(48, this.detailW - 8);
         int smallButtonW = 20;
@@ -254,6 +259,7 @@ public class CardCaseScreen extends Screen {
         this.deck.sideDeck().clear();
         this.deck.sideDeck().addAll(incoming.sideDeck());
         this.deck.setName(incoming.name());
+        this.deck.setCardBack(incoming.cardBack());
         if (this.nameBox != null && !this.nameBox.isFocused()) {
             this.nameBox.setValue(this.deck.name());
         }

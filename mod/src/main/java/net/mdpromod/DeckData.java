@@ -13,6 +13,16 @@ public final class DeckData {
     private final List<Integer> extraDeck = new ArrayList<>();
     private final List<Integer> sideDeck = new ArrayList<>();
 
+    private int cardBack;
+
+    public int cardBack() {
+        return cardBack;
+    }
+
+    public void setCardBack(int id) {
+        cardBack = CardBacks.validId(id);
+    }
+
     public String name() {
         return this.name;
     }
@@ -40,6 +50,7 @@ public final class DeckData {
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         tag.putString("name", this.name);
+        if (cardBack != 0) tag.putInt("CardBack", cardBack);
         tag.putIntArray("main", toArray(this.mainDeck));
         tag.putIntArray("extra", toArray(this.extraDeck));
         tag.putIntArray("side", toArray(this.sideDeck));
@@ -49,6 +60,7 @@ public final class DeckData {
     public static DeckData load(CompoundTag tag) {
         DeckData data = new DeckData();
         data.setName(tag.getString("name"));
+        data.setCardBack(tag.getInt("CardBack"));
 
         for (int code : tag.getIntArray("main")) {
             data.mainDeck.add(code);

@@ -39,19 +39,10 @@ public final class ClientPacketScreens {
     }
 
     public static void openSelectCard(ModNetwork.SelectList message) {
-        Minecraft.getInstance()
-            .setScreen(
-                new SelectCardScreen(
-                    message.codes(),
-                    message.min(),
-                    message.max(),
-                    message.addrs(),
-                    message.viewerSeat(),
-                    message.hint(),
-                    message.cancelable(),
-                    message.fieldFirst()
-                )
-            );
+        Minecraft mc = Minecraft.getInstance();
+        DuelControlScreen panel = mc.screen instanceof DuelControlScreen p ? p
+            : mc.screen instanceof SelectCardScreen previous ? previous.returnPanel() : null;
+        mc.setScreen(new SelectCardScreen(message, panel));
     }
 
     public static void openEffects(ModNetwork.EffectChoices message) {

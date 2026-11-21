@@ -22,10 +22,15 @@ public class HandCardRenderer extends EntityRenderer<HandCardEntity> {
     }
 
     public ResourceLocation getTextureLocation(HandCardEntity entity) {
-        return CardTextureCache.CARD_BACK;
+        return CardBacks.texture(entity.cardBack());
     }
 
     public void render(HandCardEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        var screen = Minecraft.getInstance().screen;
+        if (screen instanceof DuelControlScreen || screen instanceof SelectCardScreen selection && selection.returnPanel() != null) {
+            DuelFieldEntity field = ClientHandBridge.field();
+            if (field != null && entity.belongsTo(field.getUUID(), ClientHandBridge.snapshot().seat())) return;
+        }
         if (!ClientAnimBridge.shouldHide(entity)) {
             poseStack.pushPose();
             ClientAnimBridge.Transform anim = ClientAnimBridge.renderOffset(entity, partialTicks);
@@ -42,9 +47,9 @@ public class HandCardRenderer extends EntityRenderer<HandCardEntity> {
             poseStack.translate(0.0, bob, 0.0);
             LocalPlayer viewer = Minecraft.getInstance().player;
             int code = viewer != null && entity.faceVisibleTo(viewer) ? ClientAnimBridge.privateCardCode(entity.getId(), entity.getCardCode()) : 0;
-            ResourceLocation front = code > 0 ? CardTextureCache.get(code) : CardTextureCache.CARD_BACK;
+            ResourceLocation front = code > 0 ? CardTextureCache.get(code) : getTextureLocation(entity);
             poseStack.translate(0.0, 0.4F, 0.0);
-            ClientDuelAnimationRenderer.drawCard(poseStack, buffer, front, 0.55F, 0.8F, packedLight);
+            ClientDuelAnimationRenderer.drawCard(poseStack, buffer, front, getTextureLocation(entity), 0.55F, 0.8F, packedLight);
             poseStack.popPose();
             super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }

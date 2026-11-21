@@ -89,8 +89,7 @@ public final class ClientFieldMenu {
             return field.position().add(0.0, 0.95F, 0.0);
         }
 
-        Vec3 local = new Vec3(control.x() / 16.0, control.y() / 16.0, control.z() / 16.0).yRot(-((float)Math.toRadians(field.getYRot())));
-        return field.position().add(local);
+        return field.controlWorldPosition(control);
     }
 
     private static List<Object[]> layout(Minecraft minecraft, DuelFieldEntity field) {

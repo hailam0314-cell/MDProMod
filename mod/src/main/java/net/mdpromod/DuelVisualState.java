@@ -33,6 +33,10 @@ public final class DuelVisualState {
     private final Set<Integer> negatedChains = new HashSet<>();
     private final Set<Integer> targetedChains = new HashSet<>();
     private final Set<Long> targetMarkIds = new LinkedHashSet<>();
+    private int phase;
+    private MutableCard firstScale;
+    private int pendulumSide = -1;
+    private final Set<Long> pendulumArrivals = new HashSet<>();
     private int latestChain;
     private DuelVisualState.Event pendingAttack;
     private long nextId = 1L;
@@ -53,6 +57,8 @@ public final class DuelVisualState {
         this.negatedChains.clear();
         this.targetedChains.clear();
         this.targetMarkIds.clear();
+        this.phase = 0;
+        this.endPendulum();
         this.latestChain = 0;
         this.pendingAttack = null;
         this.nextId = 1L;
@@ -71,6 +77,15 @@ public final class DuelVisualState {
 
     public synchronized int hintSelectId() {
         return this.lastHintType == 3 ? this.lastHintValue : 0;
+    }
+
+    synchronized int[] chainOwnerSides(int count) {
+        int[] sides = new int[count];
+        for (int i = 0; i < count; i++) {
+            Card card = chainCards.get(i + 1);
+            sides[i] = card == null ? -1 : card.ownerSide();
+        }
+        return sides;
     }
 
     public synchronized int[] chainMarkAddresses() {
@@ -133,6 +148,11 @@ public final class DuelVisualState {
         return snapshots(this.zone(side, 2));
     }
 
+    synchronized int monsterCode(int controller, int sequence) {
+        MutableCard card = this.find(new Address(controller, 4, sequence, 0));
+        return card == null ? 0 : card.code;
+    }
+
     public synchronized List<DuelVisualState.Card> cards() {
         return snapshots(new ArrayList<>(this.cards.values()));
     }
@@ -185,6 +205,11 @@ public final class DuelVisualState {
     }
 
     private void applyMessage(int function, byte[] b, int o, int size) {
+        // The shipped procedure emits two consecutive MSG_BECOME_TARGET packets.
+        // Host queries and hints may arrive between them, even across scene drains.
+        if (function != 83 && function != 6 && function != 7 && function != 2) {
+            this.firstScale = null;
+        }
         switch (function) {
             case 2:
                 this.lastHintType = u8(b, o + 1);
@@ -228,7 +253,6 @@ public final class DuelVisualState {
             case 58:
             case 59:
             case 61:
-            case 63:
             case 65:
             case 66:
             case 67:
@@ -313,7 +337,12 @@ public final class DuelVisualState {
             case 169:
             default:
                 break;
+            case 63:
+                this.endPendulum();
+                break;
             case 4:
+                this.phase = 0;
+                this.endPendulum();
                 this.lifePoints[0] = (int)Math.min(2147483647L, u32(b, o + 2));
                 this.lifePoints[1] = (int)Math.min(2147483647L, u32(b, o + 6));
                 break;
@@ -349,11 +378,15 @@ public final class DuelVisualState {
                 this.deckTop(b, o);
                 break;
             case 40:
+                this.endPendulum();
+                this.phase = 0;
                 this.turnSide = u8(b, o + 1) & 1;
                 this.semantic("audio_turn", this.turnSide, ++this.turnNumber, null, 0, 0);
                 break;
             case 41:
-                this.semantic("audio_phase", this.turnSide, u8(b, o + 1) | u8(b, o + 2) << 8, null, 0, 0);
+                this.endPendulum();
+                this.phase = u8(b, o + 1) | u8(b, o + 2) << 8;
+                this.semantic("audio_phase", this.turnSide, this.phase, null, 0, 0);
                 break;
             case 50:
                 this.move(code(b, o + 1), address(b, o + 5), address(b, o + 9), u32(b, o + 13));
@@ -371,6 +404,7 @@ public final class DuelVisualState {
                 this.swap(b, o);
                 break;
             case 70:
+                this.endPendulum();
                 this.activate(b, o);
                 break;
             case 71:
@@ -392,8 +426,12 @@ public final class DuelVisualState {
                 this.negate(u8(b, o + 1));
                 break;
             case 81:
+                this.targetList("selected", b, o, 3);
+                break;
             case 83:
-                this.targetList(function == 81 ? "selected" : "target", b, o, function == 81 ? 3 : 2);
+                if (!this.pendulumTargets(b, o)) {
+                    this.targetList("target", b, o, 2);
+                }
                 break;
             case 90:
                 this.draw(b, o);
@@ -516,7 +554,19 @@ public final class DuelVisualState {
                                 card.publicKnown = publiclyVisible(a);
                             }
 
-                            int status = queryStatus(b, cursor + 8, cursor + length, flags);
+                            if (card.address.scaleSlot() && (flags & 8) != 0) {
+                                // QUERY_TYPE follows code, position and alias. A scale is a Pendulum Spell.
+                                int typeAt = cursor + 8 + 4 * Integer.bitCount(flags & 7);
+                                if (typeAt + 4 <= cursor + length) {
+                                    card.inPendulumZone = (i32(b, typeAt) & 0x1000002) == 0x1000002;
+                                }
+                            }
+                            int tail = queryTail(b, cursor + 8, cursor + length, flags);
+                            int status = queryTailValue(b, tail, cursor + length, flags, 0x80000);
+                            int left = queryTailValue(b, tail, cursor + length, flags, 0x200000);
+                            int right = queryTailValue(b, tail, cursor + length, flags, 0x400000);
+                            if (left >= 0) card.leftScale = left;
+                            if (right >= 0) card.rightScale = right;
                             if (status >= 0) {
                                 card.disabled = (status & 1) != 0;
                             }
@@ -611,7 +661,12 @@ public final class DuelVisualState {
         return p + 4 <= limit ? i32(b, p) : null;
     }
 
-    private static int queryStatus(byte[] b, int data, int limit, int flags) {
+    private static int queryTailValue(byte[] b, int tail, int limit, int flags, int field) {
+        int p = tail + 4 * Integer.bitCount(flags & (field - 1) & (0x80000 | 0x200000 | 0x400000));
+        return tail >= 0 && (flags & field) != 0 && p + 4 <= limit ? i32(b, p) : -1;
+    }
+
+    private static int queryTail(byte[] b, int data, int limit, int flags) {
         int p = data;
 
         for (int bit = 1; bit <= 16384; bit <<= 1) {
@@ -626,7 +681,9 @@ public final class DuelVisualState {
                     return -1;
                 }
 
-                p += 4 + 4 * i32(b, p);
+                int count = i32(b, p);
+                if (count < 0 || count > (limit - p - 4) / 4) return -1;
+                p += 4 + 4 * count;
             }
         }
 
@@ -634,7 +691,7 @@ public final class DuelVisualState {
             p += 4;
         }
 
-        return (flags & 524288) != 0 && p + 4 <= limit ? i32(b, p) : -1;
+        return p;
     }
 
     private void draw(byte[] b, int o) {
@@ -674,6 +731,10 @@ public final class DuelVisualState {
 
             boolean sameSlot = sameAddress(from, to);
             if (!sameSlot) {
+                card.leftScale = card.rightScale = null;
+                card.inPendulumZone = to.scaleSlot() && to.faceUp() && (to.sequence() >= 6 ||
+                    (from.location() == HAND && (reason & 0x2000000L) != 0 &&
+                     CardRegistry.get(card.code).map(info -> (info.type() & 0x1000000) != 0).orElse(false)));
                 this.compactRemoval(from, card.id);
                 this.expandInsertion(to, card.id);
             }
@@ -689,7 +750,13 @@ public final class DuelVisualState {
             }
 
             int targetCount = to.location() == 0 ? 0 : this.zoneCount(to);
-            this.events.add(new DuelVisualState.Event("move", card.snapshot(), from, to, reason, null, sourceCount, targetCount, -1));
+            boolean arrival = to.controller() == this.pendulumSide && to.location() == MONSTER && to.faceUp()
+                && (reason & 0x800L) != 0 && (from.location() == HAND || from.location() == EXTRA);
+            if (arrival) {
+                this.pendulumArrivals.add(card.id);
+            }
+            this.events.add(new DuelVisualState.Event(arrival ? "pendulum_summon" : "move",
+                card.snapshot(), from, to, reason, null, sourceCount, targetCount, -1));
             if (to.location() == 0) {
                 this.cards.remove(card.id);
             }
@@ -762,6 +829,13 @@ public final class DuelVisualState {
             card.publicKnown = publiclyVisible(to);
             String kind = function == 54 ? "set" : (function == 62 ? "special_summon" : (function == 64 ? "flip_summon" : "summon"));
 
+            if (function == 62 && to.controller() == this.pendulumSide && to.location() == MONSTER) {
+                // MOVE can already have reached the client before SPSUMMONING arrives.
+                if (!this.pendulumArrivals.add(card.id)) {
+                    return;
+                }
+                kind = "pendulum_summon";
+            }
             for (int i = this.events.size() - 1; i >= 0; i--) {
                 DuelVisualState.Event pending = this.events.get(i);
                 if (pending.card() != null && pending.card().id() == card.id) {
@@ -990,6 +1064,54 @@ public final class DuelVisualState {
 
             this.emitSimple("attack_disabled", null, null, 0L, -1);
         }
+    }
+
+    private void endPendulum() {
+        this.firstScale = null;
+        this.pendulumSide = -1;
+        this.pendulumArrivals.clear();
+    }
+
+    private boolean pendulumTargets(byte[] b, int o) {
+        int count = u8(b, o + 1);
+        if ((this.phase != 4 && this.phase != 0x100) || this.latestChain != 0 || count < 1 || count > 2) {
+            this.firstScale = null;
+            return false;
+        }
+        MutableCard first = count == 2 ? this.scaleAt(address(b, o + 2)) : this.firstScale;
+        MutableCard last = this.scaleAt(address(b, o + 2 + (count - 1) * 4));
+        this.firstScale = null;
+        if (last == null || (count == 2 && first == null)) {
+            return false;
+        }
+        if (first == null || first.address.controller() != last.address.controller()
+            || first.address.sequence() == last.address.sequence()) {
+            this.firstScale = count == 1 ? last : null;
+            return count == 1;
+        }
+        MutableCard left = first.address.sequence() < last.address.sequence() ? first : last;
+        MutableCard right = left == first ? last : first;
+        int leftSlot = left.address.sequence();
+        int rightSlot = right.address.sequence();
+        if (!(leftSlot == 0 && rightSlot == 4 || leftSlot == 6 && rightSlot == 7)) {
+            return false;
+        }
+        if (this.pendulumSide == -1) {
+            this.pendulumSide = left.address.controller();
+            this.events.add(new Event("pendulum_scales", left.snapshot(), left.address, right.address, 0,
+                right.snapshot(), left.scale(true), right.scale(false), -1));
+        }
+        return true;
+    }
+
+    private MutableCard scaleAt(Address a) {
+        if (a.location() != SPELL || a.controller() > 1 ||
+            !(a.sequence() == 0 || a.sequence() == 4 || a.sequence() == 6 || a.sequence() == 7)) {
+            return null;
+        }
+        MutableCard c = this.find(a);
+        return c != null && c.address.faceUp() && CardRegistry.get(c.code)
+            .map(info -> (info.type() & 0x1000000) != 0).orElse(false) ? c : null;
     }
 
     private void targetList(String kind, byte[] b, int o, int header) {
@@ -1460,6 +1582,14 @@ public final class DuelVisualState {
     }
 
     public record Address(int controller, int location, int sequence, int position) {
+        boolean scaleSlot() {
+            return location == SPELL && (sequence == 0 || sequence == 4 || sequence == 6 || sequence == 7);
+        }
+
+        boolean leftScaleSlot() {
+            return sequence == 0 || sequence == 6;
+        }
+
         public boolean overlay() {
             return (this.location & 128) != 0;
         }
@@ -1473,7 +1603,14 @@ public final class DuelVisualState {
         }
     }
 
-    public record Card(long id, int code, DuelVisualState.Address address, boolean publicKnown, boolean disabled) {
+    public record Card(long id, int code, DuelVisualState.Address address, boolean publicKnown, boolean disabled, int pendulumScale, int ownerSide) {
+        public Card(long id, int code, Address address, boolean publicKnown, boolean disabled, int pendulumScale) {
+            this(id, code, address, publicKnown, disabled, pendulumScale, address.controller());
+        }
+
+        public Card(long id, int code, Address address, boolean publicKnown, boolean disabled) {
+            this(id, code, address, publicKnown, disabled, -1);
+        }
     }
 
     public record Event(
@@ -1491,6 +1628,7 @@ public final class DuelVisualState {
 
     private static final class MutableCard {
         final long id;
+        final int ownerSide;
         int code;
         DuelVisualState.Address address;
         boolean publicKnown;
@@ -1498,9 +1636,19 @@ public final class DuelVisualState {
         Integer attack;
         Integer attribute;
         Integer race;
+        Integer leftScale, rightScale;
+        boolean inPendulumZone;
+
+        int scale(boolean left) {
+            Integer current = left ? leftScale : rightScale;
+            if (current != null) return current;
+            int packed = CardRegistry.get(code).map(CardInfo::level).orElse(0);
+            return (packed >>> (left ? 24 : 16)) & 255;
+        }
 
         MutableCard(long id, int code, DuelVisualState.Address address, boolean publicKnown, boolean disabled) {
             this.id = id;
+            this.ownerSide = address.controller();
             this.code = code;
             this.address = address;
             this.publicKnown = publicKnown;
@@ -1508,7 +1656,8 @@ public final class DuelVisualState {
         }
 
         DuelVisualState.Card snapshot() {
-            return new DuelVisualState.Card(this.id, this.code, this.address, this.publicKnown, this.disabled);
+            int value = inPendulumZone && address.scaleSlot() && address.faceUp() ? scale(address.leftScaleSlot()) : -1;
+            return new DuelVisualState.Card(id, code, address, publicKnown, disabled, value, ownerSide);
         }
     }
 }

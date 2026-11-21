@@ -23,6 +23,7 @@ public final class ClientCardCaseBridge {
     public static void openScreen(ModNetwork.CardCaseOpen message) {
         Minecraft minecraft = Minecraft.getInstance();
         DeckData deck = DeckData.of(message.name(), message.main(), message.extra(), message.side());
+        deck.setCardBack(message.cardBack());
         mirrorToHand(minecraft, deck);
         CardCaseScreen screen = new CardCaseScreen(deck);
         minecraft.setScreen(screen);

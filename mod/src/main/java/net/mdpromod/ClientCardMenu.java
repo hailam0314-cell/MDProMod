@@ -27,7 +27,7 @@ public final class ClientCardMenu {
     private static final float FRONT_GAP = 0.62F;
     private static final float GAP = 0.07F;
     private static final float TEXT_SCALE = 0.018F;
-    private static final String[] LABELS = new String[]{"召唤", "盖放", "发动", "攻击", "表示", "特殊召唤"};
+    static final String[] LABELS = new String[]{"召唤", "盖放", "发动", "攻击", "表示", "特殊召唤"};
     private static int entityId = -1;
     private static int mask;
 

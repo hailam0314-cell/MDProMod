@@ -38,6 +38,10 @@ final class DuelSessionManager {
     private final int[][] lastHand = new int[][]{new int[0], new int[0]};
     private final int[] lastTurn = new int[]{-1, -1};
     private final boolean[] handActive = new boolean[]{false, false};
+    private final long[] lastPanelPrompt = {-1, -1};
+    private final Map<Integer, List<DuelVisualState.Card>> lastPanelMonsters = new HashMap<>();
+    private UUID panelDuel;
+    private long answeredPanelPrompt;
     private int[] previewHand;
     private int[] lastPlaceHints = new int[0];
     private final Set<Integer> cardSelection = new LinkedHashSet<>();
@@ -140,6 +144,9 @@ final class DuelSessionManager {
         }
 
         this.host.start(deck0, deck1, auto, ai == null ? null : ai.name(), ai == null ? null : ai.dialog(), withAi, aiSeat);
+        this.panelDuel = UUID.randomUUID();
+        this.answeredPanelPrompt = 0;
+        Arrays.fill(this.lastPanelPrompt, -1);
         this.server = server;
         this.scene = new DuelAnimationScene();
         this.scene.initialize(this.host.initialMain(0), this.host.initialExtra(0), this.host.initialMain(1), this.host.initialExtra(1));
@@ -646,7 +653,7 @@ final class DuelSessionManager {
                 this.ownerId = id;
             }
 
-            field.bindDeck(side, deck);
+            field.bindPlayerDeck(side, deck, player);
             field.setSeatId(side, id);
             this.fieldDecks.computeIfAbsent(field.getUUID(), ignored -> new HashMap<>()).put(side, deck);
             if (!p2) {
@@ -660,6 +667,16 @@ final class DuelSessionManager {
             LOGGER.info("Card case bound: {} -> {} ({})", new Object[]{player.getName().getString(), side, id});
             MDProMod.duels().vacateOthers(player, this);
         }
+    }
+
+    synchronized void refreshPlayerBack(ServerPlayer player) {
+        DuelFieldEntity field = linkedField(player.server);
+        int seat = seatOf(player);
+        String side = seat == 1 ? "p2" : "p1";
+        if (field == null || !isParticipant(player) || field.aiSide() == seat) return;
+        DeckData deck = boundDeck(field, side);
+        field.setCardBack(seat, DuelAppearance.of(player).backOr(deck == null ? 0 : deck.cardBack()));
+        if (scene != null) scene.refreshCardBacks(field);
     }
 
     synchronized void clearCaseSide(ServerPlayer player, DuelFieldEntity field, String side) {
@@ -724,14 +741,108 @@ final class DuelSessionManager {
                         : (this.scene != null ? this.scene.hand(seat) : (running ? this.host.handOf(seat) : new int[0]))
                 );
             int turn = running ? this.host.turnPlayer() : 0;
-            boolean active = running && !opening;
-            if (this.handActive[seat] != active || this.lastTurn[seat] != turn || !Arrays.equals(hand, this.lastHand[seat])) {
+            DuelFieldEntity field = running ? this.field(this.server) : null;
+            boolean active = running && !opening && this.host.duelActive() && !this.host.isEnded()
+                && field != null && !field.hasResult() && viewer.level() == field.level();
+            long prompt = active && this.canUsePanel(seat) ? this.host.promptSeq() : 0;
+            List<DuelVisualState.Card> monsters = active && this.scene != null ? this.scene.monsters(seat) : List.of();
+            if (this.handActive[seat] != active || this.lastTurn[seat] != turn || prompt != this.lastPanelPrompt[seat]
+                || !Arrays.equals(hand, this.lastHand[seat]) || !monsters.equals(this.lastPanelMonsters.get(seat))) {
+                this.lastPanelMonsters.put(seat, monsters);
                 this.handActive[seat] = active;
                 this.lastTurn[seat] = turn;
                 this.lastHand[seat] = hand;
-                ModNetwork.sendTo(viewer, new ModNetwork.HandSync(hand, active, running && turn == seat));
+                this.lastPanelPrompt[seat] = prompt;
+                int[] actions = new int[hand.length];
+                int phases = 0;
+                int[] places = new int[0];
+                if (prompt > 0) {
+                    if (this.host.promptFunction() == 10 || this.host.promptFunction() == 11) {
+                        for (int i = 0; i < hand.length; i++) {
+                            actions[i] = this.cardActionMask(seat, 2, i);
+                        }
+                        if (this.host.promptToBattle()) phases |= 1;
+                        if (this.host.promptToMain2()) phases |= 2;
+                        if (this.host.promptToEnd()) phases |= 4;
+                    } else {
+                        places = this.host.placeAddresses();
+                    }
+                }
+                boolean canAct = prompt > 0 && (this.host.promptFunction() == 10 || this.host.promptFunction() == 11);
+                List<ModNetwork.PanelMonster> monsterOptions = monsters.stream().map(c -> new ModNetwork.PanelMonster(
+                    c.address().sequence(), c.code(), c.address().position(),
+                    canAct ? this.cardActionMask(seat, 4, c.address().sequence()) : 0)).toList();
+                ModNetwork.sendTo(viewer, new ModNetwork.HandSync(hand, active, running && turn == seat,
+                    this.panelDuel, active ? field.getId() : -1, seat, prompt, actions, phases, places,
+                    places.length > 0 ? this.host.placeCount() : 0, monsterOptions));
             }
         }
+    }
+
+    private boolean canUsePanel(int seat) {
+        return this.host != null && this.host.isRunning() && !this.host.isEnded() && this.host.promptPlayer() == seat
+            && (this.scene == null || !this.scene.busy()) && this.host.promptSeq() != this.answeredPanelPrompt
+            && (this.pendingActivation == null || this.pendingActivation.seq() != this.host.promptSeq());
+    }
+
+    synchronized void performPanelAction(ServerPlayer player, ModNetwork.PanelAction action) {
+        int seat = this.seatOf(player);
+        DuelFieldEntity field = this.field(player.server);
+        if (!action.duel().equals(this.panelDuel) || !this.isParticipant(player) || field == null || field.hasResult()
+            || player.level() != field.level() || !this.canUsePanel(seat) || action.prompt() <= 0
+            || this.host.promptSeq() != action.prompt() || action.prompt() != this.lastPanelPrompt[seat]) {
+            return;
+        }
+        try {
+            if (action.kind() == ModNetwork.PanelAction.PLACE) {
+                if (!this.submitPanelPlaces(action)) return;
+            } else if (action.kind() >= ModNetwork.PanelAction.BATTLE && action.kind() <= ModNetwork.PanelAction.END) {
+                String phase = switch (action.kind()) {
+                    case ModNetwork.PanelAction.BATTLE -> "BP";
+                    case ModNetwork.PanelAction.MAIN2 -> "M2";
+                    default -> "EP";
+                };
+                this.submitPhase(field, player, phase);
+            } else {
+                int i = action.index();
+                int location = action.location();
+                int code;
+                if (location == 4 && i >= 0 && i < 7) {
+                    code = this.host.monsterCode(seat, i);
+                } else if (location == 2) {
+                    int[] hand = this.host.handOf(seat);
+                    if (i < 0 || i >= hand.length) return;
+                    code = hand[i];
+                } else {
+                    return;
+                }
+                String[] kinds = kindsFor(action.kind());
+                if (code <= 0 || code != action.code() || kinds.length == 0
+                    || !this.submitCardAction(player, seat, location, i, kinds)) return;
+                if (this.pendingActivation != null && this.pendingActivation.seq() == action.prompt()) return;
+            }
+            this.answeredPanelPrompt = action.prompt();
+        } catch (Exception ex) {
+            player.displayClientMessage(Component.literal("对局操作失败：" + ex.getMessage()), true);
+        }
+    }
+
+    private boolean submitPanelPlaces(ModNetwork.PanelAction action) throws Exception {
+        if (!this.host.hasPlacePrompt() || action.otherPlaces().length + 1 != this.host.placeCount()) return false;
+        int addr = action.index();
+        if (action.otherPlaces().length == 0) {
+            return addr == (addr & 0x1ffff) && this.submitPlaceFor(addr >> 16, addr >> 8 & 255, addr & 255);
+        }
+        Set<Integer> allowed = new HashSet<>();
+        for (int place : this.host.placeAddresses()) allowed.add(place);
+        Set<Integer> picked = new LinkedHashSet<>();
+        picked.add(addr);
+        for (int place : action.otherPlaces()) picked.add(place);
+        if (picked.size() != this.host.placeCount() || !allowed.containsAll(picked)) return false;
+        StringBuilder hex = new StringBuilder();
+        for (int place : picked) hex.append(String.format("%06X", place));
+        this.host.respondBytes(hex.toString());
+        return true;
     }
 
     synchronized void linkField(MinecraftServer server, DuelFieldEntity field, ServerPlayer owner) {
@@ -761,6 +872,11 @@ final class DuelSessionManager {
             this.lastHand[seat] = new int[0];
             this.lastTurn[seat] = -1;
             this.handActive[seat] = false;
+        }
+
+        if (this.host != null && owner != null && isParticipant(owner) && field.aiSide() != seatOf(owner)) {
+            int selected = DuelAppearance.of(owner).cardBack();
+            if (selected != DuelAppearance.FROM_CASE) field.setCardBack(seatOf(owner), selected);
         }
 
         if (this.host != null && this.scene == null) {
@@ -899,7 +1015,7 @@ final class DuelSessionManager {
                                     where.append(DuelLocation.label(hints[i], this.seatOf(hintPlayer)));
                                 }
 
-                                hintPlayer.displayClientMessage(Component.literal("请左键点绿色的格子来选定落点：" + where), false);
+                                hintPlayer.displayClientMessage(Component.literal("请在对局操作面板选择落点，也可以左键点场上的绿色格子：" + where), false);
                             }
                         }
                     }
@@ -1002,7 +1118,8 @@ final class DuelSessionManager {
                         }
                     }
 
-                    if (this.host != null && reveal && this.host.hasSelectCardPrompt() && !this.host.unselectPrompt()) {
+                    if (this.host != null && reveal && this.host.hasSelectCardPrompt() && !this.host.unselectPrompt()
+                        && this.host.promptSeq() != this.answeredPanelPrompt) {
                         String signature = this.host.promptSeq() + ":" + this.host.selectSignature() + ":" + this.host.hintSelectText();
                         if (!signature.equals(this.lastSelectSignature)) {
                             this.lastSelectSignature = signature;
@@ -1019,7 +1136,7 @@ final class DuelSessionManager {
                                         this.seatOf(chooser),
                                         this.host.hintSelectText(),
                                         this.host.selectCancelable(),
-                                        this.host.selectFieldFirst()
+                                        this.host.selectFieldFirst(), this.panelDuel, this.host.promptSeq(), this.host.selectingAttackTarget()
                                     )
                                 );
                             }
@@ -1057,7 +1174,7 @@ final class DuelSessionManager {
                     if (this.host != null && reveal && this.host.chainVersion() != this.lastChainVersion) {
                         this.lastChainVersion = this.host.chainVersion();
                         ModNetwork.sendNear(
-                            level, field.position(), 96.0, new ModNetwork.ChainState(field.getId(), this.host.chainCodes(), this.host.chainResolving())
+                            level, field.position(), 96.0, new ModNetwork.ChainState(field.getId(), this.host.chainCodes(), this.host.chainResolving(), this.host.chainOwnerSides())
                         );
                     }
 
@@ -1381,6 +1498,7 @@ final class DuelSessionManager {
             field.discard();
             MDProMod.duels().forget(field.getUUID(), this);
             ItemStack stack = new ItemStack((ItemLike)ModItems.DUEL_FIELD_ITEM.get());
+            if (field.theme() != DuelFieldTheme.CLASSIC) field.theme().write(stack.getOrCreateTag());
             if (!player.getInventory().add(stack)) {
                 player.drop(stack, false);
             }
@@ -1479,6 +1597,7 @@ final class DuelSessionManager {
                 card.moveTo(at.x, at.y, at.z, field.getYRot(), 0.0F);
             }
 
+            card.setCardBack(field.cardBack(0));
             card.setPrivateCode(this.previewHand[i]);
             card.setCardCode(0);
             ServerPlayer owner = this.playerForSeat(0);
@@ -1534,7 +1653,7 @@ final class DuelSessionManager {
         }
     }
 
-    synchronized void animationDemo(ServerPlayer player, DuelFieldEntity field) {
+    synchronized void animationDemo(ServerPlayer player, DuelFieldEntity field, boolean pendulum) {
         if (this.isRunning()) {
             throw new IllegalStateException("请先结束当前对局，再播放动画演示");
         }
@@ -1545,14 +1664,14 @@ final class DuelSessionManager {
         this.scene.initialize(40, 15, 40, 15);
         DeckData demoDeck = DeckData.of("动画演示", new int[40], new int[15], new int[0]);
         if (!field.hasDeck("p1")) {
-            field.bindDeck("p1", demoDeck);
+            field.bindPlayerDeck("p1", demoDeck, player);
         }
 
         if (!field.hasDeck("p2")) {
             field.bindDeck("p2", demoDeck);
         }
 
-        this.scene.enqueue(DuelAnimationDemo.events());
+        this.scene.enqueue(pendulum ? DuelAnimationDemo.pendulum() : DuelAnimationDemo.events());
     }
 
     synchronized void setPendingDeck(DeckData deck) {
@@ -2043,6 +2162,28 @@ final class DuelSessionManager {
         }
     }
 
+    private static String[] kindsFor(int kind) {
+        return switch (kind) {
+            case 0 -> new String[]{"summon"};
+            case 1 -> new String[]{"mset", "sset"};
+            case 2 -> new String[]{"activate"};
+            case 3 -> new String[]{"attack"};
+            case 4 -> new String[]{"position"};
+            case 5 -> new String[]{"spsummon"};
+            default -> new String[0];
+        };
+    }
+
+    private int cardActionMask(int controller, int location, int sequence) {
+        int mask = 0;
+        for (int kind = 0; kind <= ModNetwork.CARD_MENU_SPSUMMON; kind++) {
+            if (this.host.promptAction(controller, location, sequence, kindsFor(kind)) >= 0) {
+                mask |= 1 << kind;
+            }
+        }
+        return mask;
+    }
+
     synchronized void offerCardActions(ServerPlayer player, int entityId, int[][] candidates) {
         if (this.host != null && this.host.isRunning() && candidates != null) {
             if (!this.refuseIfNotAsked(player)) {
@@ -2055,30 +2196,7 @@ final class DuelSessionManager {
 
                     for (int[] address : candidates) {
                         if (address != null) {
-                            if (this.host.promptAction(address[0], address[1], address[2], "summon") >= 0) {
-                                mask |= 1;
-                            }
-
-                            if (this.host.promptAction(address[0], address[1], address[2], "spsummon") >= 0) {
-                                mask |= 32;
-                            }
-
-                            if (this.host.promptAction(address[0], address[1], address[2], "mset") >= 0
-                                || this.host.promptAction(address[0], address[1], address[2], "sset") >= 0) {
-                                mask |= 2;
-                            }
-
-                            if (this.host.promptAction(address[0], address[1], address[2], "activate") >= 0) {
-                                mask |= 4;
-                            }
-
-                            if (this.host.promptAction(address[0], address[1], address[2], "attack") >= 0) {
-                                mask |= 8;
-                            }
-
-                            if (this.host.promptAction(address[0], address[1], address[2], "position") >= 0) {
-                                mask |= 16;
-                            }
+                            mask |= this.cardActionMask(address[0], address[1], address[2]);
                         }
                     }
 
@@ -2212,7 +2330,11 @@ final class DuelSessionManager {
         }
     }
 
-    synchronized void answerSelect(ServerPlayer player, int[] indices) {
+    synchronized void answerSelect(ServerPlayer player, ModNetwork.SelectChoose answer) {
+        if (this.host == null || !answer.duel().equals(this.panelDuel) || answer.prompt() <= 0
+            || answer.prompt() != this.host.promptSeq() || answer.prompt() == this.answeredPanelPrompt
+            || !this.isParticipant(player) || this.host.promptPlayer() != this.seatOf(player)) return;
+        int[] indices = answer.indices();
         if (this.host != null && this.host.isRunning() && this.host.hasSelectCardPrompt()) {
             if (!this.refuseIfNotAsked(player)) {
                 int count = this.host.selectCodes().length;
@@ -2220,6 +2342,7 @@ final class DuelSessionManager {
                     if (this.host.selectCancelable()) {
                         try {
                             this.host.respond(-1);
+                            this.answeredPanelPrompt = answer.prompt();
                             this.lastSelectSignature = "";
                             this.cardSelection.clear();
                         } catch (Exception ex) {
@@ -2254,6 +2377,7 @@ final class DuelSessionManager {
                         try {
                             this.host.respondBytes(hex.toString());
                             LOGGER.info("Select list answered: {} -> {}", player == null ? "-" : player.getScoreboardName(), hex);
+                            this.answeredPanelPrompt = answer.prompt();
                             this.lastSelectSignature = "";
                             this.cardSelection.clear();
                         } catch (Exception ex) {
@@ -2545,15 +2669,7 @@ final class DuelSessionManager {
                         candidates.add(DuelFieldLayout.engineAddress(zone, 0));
                     }
                 }
-                String[] kinds = switch (kind) {
-                    case 0 -> new String[]{"summon"};
-                    case 1 -> new String[]{"mset", "sset"};
-                    case 2 -> new String[]{"activate"};
-                    case 3 -> new String[]{"attack"};
-                    case 4 -> new String[]{"position"};
-                    case 5 -> new String[]{"spsummon"};
-                    default -> new String[0];
-                };
+                String[] kinds = kindsFor(kind);
                 if (kinds.length != 0) {
                     try {
                         for (int[] address : candidates) {

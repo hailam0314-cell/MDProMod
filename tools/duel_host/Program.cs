@@ -2013,7 +2013,10 @@ internal static class DuelHostProgram
 			output->Code = value.Id;
 			output->Alias = value.Alias;
 			output->Type = value.Type;
-			output->Level = value.Level;
+			// The CDB packs both pendulum scales above the monster level.
+			output->Level = value.Level & 0xFF;
+			output->LScale = (value.Level >> 24) & 0xFF;
+			output->RScale = (value.Level >> 16) & 0xFF;
 			output->Attribute = value.Attribute;
 			output->Race = value.Race;
 			bool flag = (value.Type & 0x4000000) != 0;

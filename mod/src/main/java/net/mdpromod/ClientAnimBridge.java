@@ -90,7 +90,12 @@ public final class ClientAnimBridge {
                         }
                     }
 
-                    SPRITES.put(key, new ClientAnimBridge.SpriteState(message, Math.min(now + 30000.0, start), continued));
+                    SpriteState sprite = new SpriteState(message, Math.min(now + 30000.0, start), continued);
+                    SPRITES.put(key, sprite);
+                    ClientBattleCamera.onAnimation(message, sprite.startMs, sprite.endMs());
+                    if (message.kind().equals("pendulum_summon")) {
+                        ClientPendulumEffects.land(message, sprite.endMs());
+                    }
                     trim(SPRITES, 384);
                 }
             }
@@ -238,6 +243,16 @@ public final class ClientAnimBridge {
         for (ClientAnimBridge.SpriteState state : SPRITES.values()) {
             if (!(now < state.startMs)) {
                 double t = clamp((now - state.startMs) / state.durationMs);
+                if ("attack".equals(state.event.kind()) && t >= 0.55 && !state.burstDone) {
+                    state.burstDone = true;
+                    Vec3 hit = state.event.to().add(0, 0.44, 0);
+                    currentLevel.addParticle(ParticleTypes.FLASH, hit.x, hit.y, hit.z, 0, 0, 0);
+                    for (int j = 0; j < 10; j++) {
+                        double angle = j * Math.PI / 5;
+                        currentLevel.addParticle(ParticleTypes.CRIT, hit.x, hit.y, hit.z,
+                            0.23 * Math.cos(angle), 0.14, 0.23 * Math.sin(angle));
+                    }
+                }
                 if ("destroy".equals(state.event.kind()) && t >= 0.2 && !state.burstDone) {
                     state.burstDone = true;
                     destructionBurst(cardCenter(state.event.from(), state.event.fromPitch(), height(state.event.fromPitch())));
@@ -344,6 +359,16 @@ public final class ClientAnimBridge {
                 cardW = fromW;
                 cardH = fromH;
                 break;
+            case "scale_place":
+            case "scale_effect":
+                // The scale stands up at its destination without travelling above the field.
+                double standing = "scale_effect".equals(e.kind()) ? 1.0 : smoother(t);
+                pitch = (float)(90.0 * (1.0 - standing));
+                cardW = 0.859375F;
+                cardH = 1.25F;
+                center = e.to().add(0, 0.03 + 0.5 * cardH * Math.cos(Math.toRadians(pitch)), 0);
+                yaw = endYaw;
+                break;
             case "material":
                 center = from.lerp(to, 0.18 * p).add(0.0, 1.25 * smoother(Math.min(1.0, t / 0.68)), 0.0);
                 scale = (float)(1.0 - smoother(clamp((t - 0.42) / 0.58)));
@@ -428,6 +453,7 @@ public final class ClientAnimBridge {
             e.sessionId(),
             e.eventId(),
             e.kind(),
+            e.cardBack(),
             e.faceUp() ? Math.max(0, e.cardCode()) : 0,
             e.faceUp(),
             center,
@@ -468,7 +494,7 @@ public final class ClientAnimBridge {
 
     private static double liftHeight(String kind) {
         return switch (kind) {
-            case "summon", "special_summon" -> 0.85;
+            case "summon", "special_summon", "pendulum_summon" -> 0.85;
             case "set" -> 0.6;
             case "draw", "search" -> 0.45;
             default -> 0.55;
@@ -485,7 +511,7 @@ public final class ClientAnimBridge {
             && Math.abs(p.y) <= 100000.0;
     }
 
-    private static double now() {
+    static double now() {
         Minecraft minecraft = Minecraft.getInstance();
         long nano = System.nanoTime();
         if (minecraft.level != currentLevel) {
@@ -544,6 +570,7 @@ public final class ClientAnimBridge {
         UUID sessionId,
         long eventId,
         String kind,
+        int cardBack,
         int cardCode,
         boolean faceUp,
         Vec3 center,

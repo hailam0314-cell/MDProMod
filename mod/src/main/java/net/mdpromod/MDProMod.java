@@ -50,6 +50,7 @@ public final class MDProMod {
                 output.accept((ItemLike)DUEL_ANCHOR_ITEM.get());
                 output.accept((ItemLike)ModItems.DUEL_FIELD_ITEM.get());
                 output.accept((ItemLike)ModItems.CARD_CASE_ITEM.get());
+                output.accept(ModItems.APPEARANCE_SETTINGS_ITEM.get());
                 output.accept((ItemLike)ModItems.MUSIC_SETTINGS_ITEM.get());
                 output.accept((ItemLike)ModItems.AI_DECK_ITEM.get());
                 output.accept(DuelCardItem.createStack(89631139, 1));

@@ -1,6 +1,9 @@
 package net.mdpromod;
 
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.client.KeyMapping;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import org.lwjgl.glfw.GLFW;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -9,6 +12,13 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
 @EventBusSubscriber(modid = "mdpromod", value = Dist.CLIENT, bus = Bus.MOD)
 public final class ClientModEvents {
+    static final KeyMapping DUEL_PANEL = new KeyMapping("key.mdpromod.duel_panel", GLFW.GLFW_KEY_G, "key.categories.gameplay");
+
+    @SubscribeEvent
+    public static void registerKeys(RegisterKeyMappingsEvent event) {
+        event.register(DUEL_PANEL);
+    }
+
     private ClientModEvents() {
     }
 

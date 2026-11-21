@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 @OnlyIn(Dist.CLIENT)
 public final class ClientSummonEffects {
-    private static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("mdpromod.summonFx", "true"));
+    static final boolean ENABLED = Boolean.parseBoolean(System.getProperty("mdpromod.summonFx", "true"));
     private static final String[][] LAYERS = new String[][]{
         {"fusion_010", "fusion_011", "flash"},
         {"synchro_noise", "synchro_line", "flash"},
@@ -93,10 +93,12 @@ public final class ClientSummonEffects {
     }
 
     public static void stopField(int fieldId) {
+        ClientPendulumEffects.stop(fieldId);
         ACTIVE.removeIf(active -> active.fieldEntityId() == fieldId);
     }
 
     public static void tick(Minecraft minecraft) {
+        if (ENABLED) ClientPendulumEffects.tick(minecraft);
         resetForLevel(minecraft);
         if (!ACTIVE.isEmpty()) {
             long now = System.currentTimeMillis();
@@ -132,6 +134,7 @@ public final class ClientSummonEffects {
     }
 
     public static void render(Minecraft minecraft, PoseStack poses) {
+        if (ENABLED) ClientPendulumEffects.render(minecraft, poses);
         resetForLevel(minecraft);
         if (!ACTIVE.isEmpty() && minecraft.level != null) {
             Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();

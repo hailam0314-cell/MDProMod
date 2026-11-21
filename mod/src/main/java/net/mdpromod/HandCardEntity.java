@@ -31,7 +31,18 @@ public class HandCardEntity extends Entity {
         this.blocksBuilding = false;
     }
 
+    private static final EntityDataAccessor<Integer> DATA_CARD_BACK = SynchedEntityData.defineId(HandCardEntity.class, EntityDataSerializers.INT);
+
+    int cardBack() {
+        return entityData.get(DATA_CARD_BACK);
+    }
+
+    void setCardBack(int id) {
+        entityData.set(DATA_CARD_BACK, CardBacks.validId(id));
+    }
+
     protected void defineSynchedData() {
+        entityData.define(DATA_CARD_BACK, 0);
         this.entityData.define(DATA_CARD, 0);
         this.entityData.define(DATA_FIELD, "");
         this.entityData.define(DATA_SIDE, 0);
@@ -41,6 +52,7 @@ public class HandCardEntity extends Entity {
     }
 
     protected void readAdditionalSaveData(CompoundTag tag) {
+        setCardBack(tag.getInt("CardBack"));
         this.entityData.set(DATA_CARD, tag.getInt("Card"));
         this.entityData.set(DATA_FIELD, tag.getString("Field"));
         this.entityData.set(DATA_SIDE, tag.getInt("Side"));
@@ -50,6 +62,7 @@ public class HandCardEntity extends Entity {
     }
 
     protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("CardBack", cardBack());
         tag.putInt("Card", this.getCardCode());
         tag.putString("Field", this.fieldId());
         tag.putInt("Side", this.side());

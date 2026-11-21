@@ -27,6 +27,22 @@ public class DuelCardEntity extends Entity {
     private static final EntityDataAccessor<String> DATA_ZONE_ID = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DATA_DISABLED = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
 
+    private static final EntityDataAccessor<Integer> DATA_PENDULUM_SCALE = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SCALE_LINK = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.BOOLEAN);
+
+    public int pendulumScale() {
+        return this.entityData.get(DATA_PENDULUM_SCALE);
+    }
+
+    public boolean hasScaleLink() {
+        return this.entityData.get(DATA_SCALE_LINK);
+    }
+
+    public void setPendulumScale(int scale, boolean linked) {
+        this.entityData.set(DATA_PENDULUM_SCALE, scale);
+        this.entityData.set(DATA_SCALE_LINK, linked);
+    }
+
     public void configureDuel(UUID field, String owner, int privateCode) {
         this.duelField = field;
         this.owner = owner == null ? "" : owner;
@@ -44,28 +60,48 @@ public class DuelCardEntity extends Entity {
         this.blocksBuilding = false;
     }
 
+    private static final EntityDataAccessor<Integer> DATA_CARD_BACK = SynchedEntityData.defineId(DuelCardEntity.class, EntityDataSerializers.INT);
+
+    int cardBack() {
+        return entityData.get(DATA_CARD_BACK);
+    }
+
+    void setCardBack(int id) {
+        entityData.set(DATA_CARD_BACK, CardBacks.validId(id));
+    }
+
     protected void defineSynchedData() {
+        entityData.define(DATA_CARD_BACK, 0);
         this.entityData.define(DATA_CARD_CODE, 0);
         this.entityData.define(DATA_FACE_UP, true);
         this.entityData.define(DATA_DEFENSE, false);
         this.entityData.define(DATA_ZONE_ID, "");
         this.entityData.define(DATA_DISABLED, false);
+        this.entityData.define(DATA_PENDULUM_SCALE, -1);
+        this.entityData.define(DATA_SCALE_LINK, false);
     }
 
     protected void readAdditionalSaveData(CompoundTag tag) {
+        setCardBack(tag.getInt("CardBack"));
         this.setCardCode(tag.getInt("CardCode"));
         this.setFaceUp(tag.getBoolean("FaceUp"));
         this.setDefense(tag.getBoolean("Defense"));
         this.setZoneId(tag.getString("ZoneId"));
         this.setDisabled(tag.getBoolean("Disabled"));
+        this.setPendulumScale(tag.contains("PendulumScale") ? tag.getInt("PendulumScale") : -1, tag.getBoolean("ScaleLink"));
     }
 
     protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("CardBack", cardBack());
         tag.putInt("CardCode", this.getCardCode());
         tag.putBoolean("FaceUp", this.isFaceUp());
         tag.putBoolean("Defense", this.isDefense());
         tag.putString("ZoneId", this.getZoneId());
         tag.putBoolean("Disabled", this.isDisabled());
+        if (pendulumScale() >= 0) {
+            tag.putInt("PendulumScale", pendulumScale());
+            tag.putBoolean("ScaleLink", hasScaleLink());
+        }
     }
 
     public void tick() {

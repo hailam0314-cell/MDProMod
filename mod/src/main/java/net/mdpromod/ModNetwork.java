@@ -23,11 +23,11 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import org.slf4j.LoggerFactory;
 
 public final class ModNetwork {
-    private static final String PROTOCOL = "8";
+    private static final String PROTOCOL = "16";
     public static final SimpleChannel CHANNEL = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath("mdpromod", "main"))
-        .networkProtocolVersion(() -> "8")
-        .clientAcceptedVersions("8"::equals)
-        .serverAcceptedVersions("8"::equals)
+        .networkProtocolVersion(() -> PROTOCOL)
+        .clientAcceptedVersions(PROTOCOL::equals)
+        .serverAcceptedVersions(PROTOCOL::equals)
         .simpleChannel();
     public static final int CARD_MENU_SUMMON = 0;
     public static final int CARD_MENU_SET = 1;
@@ -301,6 +301,47 @@ public final class ModNetwork {
             .decoder(ModNetwork.SumAnswer::decode)
             .consumerMainThread(ModNetwork.SumAnswer::handle)
             .add();
+        CHANNEL.messageBuilder(PendulumScales.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+            .encoder(PendulumScales::encode).decoder(PendulumScales::decode)
+            .consumerMainThread(PendulumScales::handle).add();
+        CHANNEL.messageBuilder(PanelAction.class, id++, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(PanelAction::encode).decoder(PanelAction::decode)
+            .consumerMainThread(PanelAction::handle).add();
+        CHANNEL.messageBuilder(AppearanceOpen.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+            .encoder((m, b) -> writeAppearance(b, m.value())).decoder(b -> new AppearanceOpen(readAppearance(b)))
+            .consumerMainThread(AppearanceOpen::handle).add();
+        CHANNEL.messageBuilder(AppearanceSave.class, id++, NetworkDirection.PLAY_TO_SERVER)
+            .encoder((m, b) -> writeAppearance(b, m.value())).decoder(b -> new AppearanceSave(readAppearance(b)))
+            .consumerMainThread(AppearanceSave::handle).add();
+    }
+
+    private static void writeAppearance(FriendlyByteBuf buf, DuelAppearance value) {
+        buf.writeUtf(value.fieldId(), 16);
+        buf.writeVarInt(value.cardBack());
+    }
+
+    private static DuelAppearance readAppearance(FriendlyByteBuf buf) {
+        return new DuelAppearance(buf.readUtf(16), buf.readVarInt());
+    }
+
+    record AppearanceOpen(DuelAppearance value) {
+        static void handle(AppearanceOpen message, Supplier<Context> context) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> AppearanceScreen.open(message.value()));
+            context.get().setPacketHandled(true);
+        }
+    }
+
+    record AppearanceSave(DuelAppearance value) {
+        static void handle(AppearanceSave message, Supplier<Context> context) {
+            ServerPlayer player = context.get().getSender();
+            if (player != null && player.isHolding(ModItems.APPEARANCE_SETTINGS_ITEM.get()) && message.value().valid()) {
+                DuelAppearance previous = DuelAppearance.of(player);
+                message.value().save(player);
+                if (previous.cardBack() != message.value().cardBack()) MDProMod.sessions(player).refreshPlayerBack(player);
+                player.displayClientMessage(Component.translatable("appearance.mdpromod.saved"), true);
+            }
+            context.get().setPacketHandled(true);
+        }
     }
 
     public static void sendToServer(Object message) {
@@ -585,6 +626,9 @@ public final class ModNetwork {
                             case 3:
                             default:
                                 break;
+                            case 5:
+                                deck.setCardBack(message.code);
+                                break;
                             case 4:
                                 try {
                                     Path path = DeckYdk.write(deck, ModPaths.deckDir());
@@ -604,9 +648,9 @@ public final class ModNetwork {
         }
     }
 
-    public record CardCaseOpen(String name, int[] main, int[] extra, int[] side) {
+    public record CardCaseOpen(String name, int[] main, int[] extra, int[] side, int cardBack) {
         public static ModNetwork.CardCaseOpen of(DeckData deck) {
-            return new ModNetwork.CardCaseOpen(deck.name(), deck.mainArray(), deck.extraArray(), deck.sideArray());
+            return new ModNetwork.CardCaseOpen(deck.name(), deck.mainArray(), deck.extraArray(), deck.sideArray(), deck.cardBack());
         }
 
         static void encode(ModNetwork.CardCaseOpen message, FriendlyByteBuf buffer) {
@@ -614,10 +658,11 @@ public final class ModNetwork {
             buffer.writeVarIntArray(message.main);
             buffer.writeVarIntArray(message.extra);
             buffer.writeVarIntArray(message.side);
+            buffer.writeVarInt(message.cardBack);
         }
 
         static ModNetwork.CardCaseOpen decode(FriendlyByteBuf buffer) {
-            return new ModNetwork.CardCaseOpen(buffer.readUtf(64), buffer.readVarIntArray(), buffer.readVarIntArray(), buffer.readVarIntArray());
+            return new ModNetwork.CardCaseOpen(buffer.readUtf(64), buffer.readVarIntArray(), buffer.readVarIntArray(), buffer.readVarIntArray(), buffer.readVarInt());
         }
 
         static void handle(ModNetwork.CardCaseOpen message, Supplier<Context> context) {
@@ -647,6 +692,7 @@ public final class ModNetwork {
                     ItemStack stack = CardCaseItem.findCase(player);
                     if (stack != null) {
                         DeckData deck = DeckData.of(message.name, message.main, message.extra, message.side);
+                        deck.setCardBack(CardCaseItem.getDeck(stack).cardBack());
                         CardCaseItem.setDeck(stack, deck);
                         player.inventoryMenu.broadcastChanges();
                         ModNetwork.sendTo(player, ModNetwork.CardCaseSync.of(deck));
@@ -657,13 +703,15 @@ public final class ModNetwork {
         }
     }
 
-    public record CardCaseSync(String name, int[] main, int[] extra, int[] side) {
+    public record CardCaseSync(String name, int[] main, int[] extra, int[] side, int cardBack) {
         public static ModNetwork.CardCaseSync of(DeckData deck) {
-            return new ModNetwork.CardCaseSync(deck.name(), deck.mainArray(), deck.extraArray(), deck.sideArray());
+            return new ModNetwork.CardCaseSync(deck.name(), deck.mainArray(), deck.extraArray(), deck.sideArray(), deck.cardBack());
         }
 
         public DeckData toDeck() {
-            return DeckData.of(this.name, this.main, this.extra, this.side);
+            DeckData deck = DeckData.of(this.name, this.main, this.extra, this.side);
+            deck.setCardBack(cardBack);
+            return deck;
         }
 
         static void encode(ModNetwork.CardCaseSync message, FriendlyByteBuf buffer) {
@@ -671,6 +719,7 @@ public final class ModNetwork {
             buffer.writeVarIntArray(message.main);
             buffer.writeVarIntArray(message.extra);
             buffer.writeVarIntArray(message.side);
+            buffer.writeVarInt(message.cardBack);
         }
 
         static ModNetwork.CardCaseSync decode(FriendlyByteBuf buffer) {
@@ -678,7 +727,7 @@ public final class ModNetwork {
             int[] main = buffer.readVarIntArray();
             int[] extra = buffer.readVarIntArray();
             int[] side = buffer.readVarIntArray();
-            return new ModNetwork.CardCaseSync(name, main, extra, side);
+            return new ModNetwork.CardCaseSync(name, main, extra, side, buffer.readVarInt());
         }
 
         static void handle(ModNetwork.CardCaseSync message, Supplier<Context> context) {
@@ -794,22 +843,23 @@ public final class ModNetwork {
         }
     }
 
-    public record ChainState(int fieldEntityId, int[] codes, int resolving) {
+    public record ChainState(int fieldEntityId, int[] codes, int resolving, int[] ownerSides) {
         static void encode(ModNetwork.ChainState message, FriendlyByteBuf buffer) {
             buffer.writeVarInt(message.fieldEntityId);
             buffer.writeVarIntArray(message.codes);
             buffer.writeVarInt(message.resolving);
+            buffer.writeVarIntArray(message.ownerSides);
         }
 
         static ModNetwork.ChainState decode(FriendlyByteBuf buffer) {
-            return new ModNetwork.ChainState(buffer.readVarInt(), buffer.readVarIntArray(), buffer.readVarInt());
+            return new ModNetwork.ChainState(buffer.readVarInt(), buffer.readVarIntArray(), buffer.readVarInt(), buffer.readVarIntArray());
         }
 
         static void handle(ModNetwork.ChainState message, Supplier<Context> context) {
             Context ctx = context.get();
             ctx.enqueueWork(
                 () -> DistExecutor.unsafeRunWhenOn(
-                    Dist.CLIENT, () -> () -> ClientChainState.apply(message.fieldEntityId(), message.codes(), message.resolving())
+                    Dist.CLIENT, () -> () -> ClientChainState.apply(message.fieldEntityId(), message.codes(), message.resolving(), message.ownerSides())
                 )
             );
             ctx.setPacketHandled(true);
@@ -874,7 +924,8 @@ public final class ModNetwork {
         int durationMs,
         int delayMs,
         int hideEntityId,
-        float fieldYaw
+        float fieldYaw,
+        int cardBack
     ) {
         static void encode(ModNetwork.DuelAnimation m, FriendlyByteBuf b) {
             b.writeUUID(m.sessionId);
@@ -895,6 +946,7 @@ public final class ModNetwork {
             b.writeVarInt(m.delayMs);
             b.writeVarInt(m.hideEntityId);
             b.writeFloat(m.fieldYaw);
+            b.writeVarInt(m.cardBack);
         }
 
         static ModNetwork.DuelAnimation decode(FriendlyByteBuf b) {
@@ -916,7 +968,8 @@ public final class ModNetwork {
                 b.readVarInt(),
                 b.readVarInt(),
                 b.readVarInt(),
-                b.readFloat()
+                b.readFloat(),
+                b.readVarInt()
             );
         }
 
@@ -1111,15 +1164,68 @@ public final class ModNetwork {
         }
     }
 
-    public record HandSync(int[] cards, boolean active, boolean yourTurn) {
+    public record PanelAction(UUID duel, long prompt, int kind, int index, int code, int[] otherPlaces, int location) {
+        static final int BATTLE = 6, MAIN2 = 7, END = 8, PLACE = 9;
+        PanelAction(UUID duel, long prompt, int kind, int index, int code) {
+            this(duel, prompt, kind, index, code, new int[0]);
+        }
+        PanelAction(UUID duel, long prompt, int kind, int index, int code, int[] otherPlaces) {
+            this(duel, prompt, kind, index, code, otherPlaces, 2);
+        }
+
+        static void encode(PanelAction m, FriendlyByteBuf b) {
+            b.writeUUID(m.duel);
+            b.writeVarLong(m.prompt);
+            b.writeVarInt(m.kind);
+            b.writeVarInt(m.index);
+            b.writeVarInt(m.code);
+            b.writeVarIntArray(m.otherPlaces);
+            b.writeByte(m.location);
+        }
+
+        static PanelAction decode(FriendlyByteBuf b) {
+            return new PanelAction(b.readUUID(), b.readVarLong(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarIntArray(63), b.readUnsignedByte());
+        }
+
+        static void handle(PanelAction message, Supplier<Context> context) {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) {
+                MDProMod.sessions(player).performPanelAction(player, message);
+            }
+            context.get().setPacketHandled(true);
+        }
+    }
+
+    public record PanelMonster(int slot, int code, int position, int actions) {}
+
+    public record HandSync(int[] cards, boolean active, boolean yourTurn, UUID duel, int field, int seat,
+                           long prompt, int[] actions, int phases, int[] places, int placeCount, List<PanelMonster> monsters) {
+        HandSync(int[] cards, boolean active, boolean yourTurn) {
+            this(cards, active, yourTurn, null, -1, -1, 0, new int[0], 0, new int[0], 0, List.of());
+        }
+
         static void encode(ModNetwork.HandSync message, FriendlyByteBuf buffer) {
             buffer.writeVarIntArray(message.cards);
             buffer.writeBoolean(message.active);
             buffer.writeBoolean(message.yourTurn);
+            buffer.writeNullable(message.duel, FriendlyByteBuf::writeUUID);
+            buffer.writeVarInt(message.field);
+            buffer.writeVarInt(message.seat);
+            buffer.writeVarLong(message.prompt);
+            buffer.writeVarIntArray(message.actions);
+            buffer.writeVarInt(message.phases);
+            buffer.writeVarIntArray(message.places);
+            buffer.writeVarInt(message.placeCount);
+            buffer.writeCollection(message.monsters, (b, m) -> {
+                b.writeByte(m.slot()); b.writeVarInt(m.code()); b.writeByte(m.position()); b.writeVarInt(m.actions());
+            });
         }
 
         static ModNetwork.HandSync decode(FriendlyByteBuf buffer) {
-            return new ModNetwork.HandSync(buffer.readVarIntArray(), buffer.readBoolean(), buffer.readBoolean());
+            return new HandSync(buffer.readVarIntArray(256), buffer.readBoolean(), buffer.readBoolean(),
+                buffer.readNullable(FriendlyByteBuf::readUUID), buffer.readVarInt(), buffer.readVarInt(), buffer.readVarLong(),
+                buffer.readVarIntArray(256), buffer.readVarInt(), buffer.readVarIntArray(64), buffer.readVarInt(),
+                buffer.readList(b -> new PanelMonster(b.readUnsignedByte(), b.readVarInt(), b.readUnsignedByte(), b.readVarInt())));
         }
 
         static void handle(ModNetwork.HandSync message, Supplier<Context> context) {
@@ -1488,13 +1594,15 @@ public final class ModNetwork {
         }
     }
 
-    public record SelectChoose(int[] indices) {
+    public record SelectChoose(int[] indices, UUID duel, long prompt) {
         static void encode(ModNetwork.SelectChoose message, FriendlyByteBuf buffer) {
             buffer.writeVarIntArray(message.indices);
+            buffer.writeUUID(message.duel);
+            buffer.writeVarLong(message.prompt);
         }
 
         static ModNetwork.SelectChoose decode(FriendlyByteBuf buffer) {
-            return new ModNetwork.SelectChoose(buffer.readVarIntArray());
+            return new ModNetwork.SelectChoose(buffer.readVarIntArray(256), buffer.readUUID(), buffer.readVarLong());
         }
 
         static void handle(ModNetwork.SelectChoose message, Supplier<Context> context) {
@@ -1502,7 +1610,7 @@ public final class ModNetwork {
             ctx.enqueueWork(() -> {
                 ServerPlayer player = ctx.getSender();
                 if (player != null) {
-                    MDProMod.sessions(player).answerSelect(player, message.indices());
+                    MDProMod.sessions(player).answerSelect(player, message);
                 }
 
                 ctx.setPacketHandled(true);
@@ -1527,15 +1635,8 @@ public final class ModNetwork {
         }
     }
 
-    public record SelectList(int[] codes, int min, int max, int[] addrs, int viewerSeat, String hint, boolean cancelable, boolean fieldFirst) {
-        public SelectList(int[] codes, int min, int max, int[] addrs, int viewerSeat) {
-            this(codes, min, max, addrs, viewerSeat, "");
-        }
-
-        public SelectList(int[] codes, int min, int max, int[] addrs, int viewerSeat, String hint) {
-            this(codes, min, max, addrs, viewerSeat, hint, false, false);
-        }
-
+    public record SelectList(int[] codes, int min, int max, int[] addrs, int viewerSeat, String hint,
+                             boolean cancelable, boolean fieldFirst, UUID duel, long prompt, boolean attackTarget) {
         static void encode(ModNetwork.SelectList message, FriendlyByteBuf buffer) {
             buffer.writeVarIntArray(message.codes);
             buffer.writeVarInt(message.min);
@@ -1545,6 +1646,9 @@ public final class ModNetwork {
             buffer.writeUtf(message.hint == null ? "" : message.hint, 256);
             buffer.writeBoolean(message.cancelable);
             buffer.writeBoolean(message.fieldFirst);
+            buffer.writeUUID(message.duel);
+            buffer.writeVarLong(message.prompt);
+            buffer.writeBoolean(message.attackTarget);
         }
 
         static ModNetwork.SelectList decode(FriendlyByteBuf buffer) {
@@ -1556,6 +1660,9 @@ public final class ModNetwork {
                 buffer.readVarInt(),
                 buffer.readUtf(256),
                 buffer.readBoolean(),
+                buffer.readBoolean(),
+                buffer.readUUID(),
+                buffer.readVarLong(),
                 buffer.readBoolean()
             );
         }
@@ -1681,6 +1788,33 @@ public final class ModNetwork {
         static void handle(ModNetwork.SumChoice message, Supplier<Context> context) {
             Context ctx = context.get();
             ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPacketScreens.openSumChoice(message)));
+            ctx.setPacketHandled(true);
+        }
+    }
+
+    public record PendulumScales(int fieldId, Vec3 center, float yaw, int leftCode, int rightCode,
+                                 int leftScale, int rightScale, boolean fieldLights) {
+        static void encode(PendulumScales m, FriendlyByteBuf b) {
+            b.writeVarInt(m.fieldId);
+            b.writeDouble(m.center.x);
+            b.writeDouble(m.center.y);
+            b.writeDouble(m.center.z);
+            b.writeFloat(m.yaw);
+            b.writeVarInt(m.leftCode);
+            b.writeVarInt(m.rightCode);
+            b.writeVarInt(m.leftScale);
+            b.writeVarInt(m.rightScale);
+            b.writeBoolean(m.fieldLights);
+        }
+
+        static PendulumScales decode(FriendlyByteBuf b) {
+            return new PendulumScales(b.readVarInt(), new Vec3(b.readDouble(), b.readDouble(), b.readDouble()),
+                b.readFloat(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readBoolean());
+        }
+
+        static void handle(PendulumScales m, Supplier<Context> context) {
+            Context ctx = context.get();
+            ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPendulumEffects.start(m)));
             ctx.setPacketHandled(true);
         }
     }

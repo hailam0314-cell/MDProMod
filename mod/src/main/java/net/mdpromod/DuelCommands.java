@@ -43,7 +43,8 @@ final class DuelCommands {
                                     .then(
                                         ((LiteralArgumentBuilder)Commands.literal("anim")
                                                 .then(
-                                                    Commands.literal("demo").executes(context -> this.animationDemo((CommandSourceStack)context.getSource()))
+                                                    Commands.literal("demo").executes(context -> this.animationDemo(context.getSource(), false))
+                                                        .then(Commands.literal("pendulum").executes(context -> this.animationDemo(context.getSource(), true)))
                                                 ))
                                             .then(Commands.literal("stop").executes(context -> this.stop((CommandSourceStack)context.getSource())))
                                     ))
@@ -144,7 +145,7 @@ final class DuelCommands {
                             ))
                         .then(
                             ((LiteralArgumentBuilder)((LiteralArgumentBuilder)Commands.literal("field")
-                                        .then(Commands.literal("place").executes(context -> this.placeField((CommandSourceStack)context.getSource()))))
+                                        .then(fieldPlacement()))
                                     .then(Commands.literal("bind").executes(context -> this.bindField((CommandSourceStack)context.getSource()))))
                                 .then(Commands.literal("info").executes(context -> this.fieldInfo((CommandSourceStack)context.getSource())))
                         ))
@@ -284,7 +285,7 @@ final class DuelCommands {
         }
     }
 
-    private int animationDemo(CommandSourceStack source) throws CommandSyntaxException {
+    private int animationDemo(CommandSourceStack source, boolean pendulum) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         DuelFieldEntity field = nearest(player, DuelFieldEntity.class, 48.0);
         if (field == null) {
@@ -293,8 +294,8 @@ final class DuelCommands {
         }
 
         try {
-            this.sessions.animationDemo(player, field);
-            source.sendSuccess(() -> Component.literal("开始动画演示：抽卡、检索展示、召唤、盖放、攻击、破坏、素材、效果与回收；/mdpromod anim stop 可清除"), false);
+            this.sessions.animationDemo(player, field, pendulum);
+            source.sendSuccess(() -> Component.literal(pendulum ? "灵摆演示：刻度 1、8，召唤黑魔术师和精灵剑士" : "开始动画演示：抽卡、检索展示、召唤、盖放、攻击、破坏、素材、效果与回收；/mdpromod anim stop 可清除"), false);
             return 1;
         } catch (Exception ex) {
             source.sendFailure(Component.literal(ex.getMessage()));
@@ -472,7 +473,17 @@ final class DuelCommands {
         return 1;
     }
 
-    private int placeField(CommandSourceStack source) throws CommandSyntaxException {
+    private LiteralArgumentBuilder<CommandSourceStack> fieldPlacement() {
+        var place = Commands.literal("place").executes(ctx -> placeField(ctx.getSource(), DuelAppearance.of(ctx.getSource().getPlayerOrException()).fieldOr(DuelFieldTheme.CLASSIC)));
+        for (var theme : DuelFieldTheme.values()) {
+            if (theme != DuelFieldTheme.CLASSIC) {
+                place.then(Commands.literal(theme.id).executes(ctx -> placeField(ctx.getSource(), theme)));
+            }
+        }
+        return place;
+    }
+
+    private int placeField(CommandSourceStack source, DuelFieldTheme theme) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         DuelFieldEntity field = (DuelFieldEntity)((EntityType)ModEntities.DUEL_FIELD.get()).create(player.serverLevel());
         if (field == null) {
@@ -481,6 +492,8 @@ final class DuelCommands {
 
         Vec3 position = player.position().add(player.getLookAngle().scale(5.0));
         field.moveTo(position.x, position.y, position.z, DuelFieldItem.snapYaw(player.getYRot() + 180.0F), 0.0F);
+        field.setTheme(theme);
+        field.setPlacer(player.getUUID());
         player.serverLevel().addFreshEntity(field);
         source.sendSuccess(() -> Component.literal("已放置决斗盘：16 x 14 方块，" + DuelFieldLayout.zoneCount() + " 个区域（把卡盒右键到场地即可放卡组）"), false);
         return 1;
@@ -505,7 +518,7 @@ final class DuelCommands {
                     return 0;
                 } else {
                     String side = field.playerSide(player);
-                    field.bindDeck(side, deck);
+                    field.bindPlayerDeck(side, deck, player);
                     this.sessions.setPendingDeck(field, side, deck);
                     source.sendSuccess(
                         () -> Component.literal(

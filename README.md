@@ -4,7 +4,7 @@
 button — and duel one of 57 WindBot opponents under the real ocgcore rules, with Master Duel's own summon
 sequences, ace-monster cut-ins, monster closeups and music.
 
-* Minecraft **1.20.1** · **Forge 47.4.20** (any 47.x)
+* Minecraft **1.20.1** · tested with **Forge 47.4.29**
 * **Windows x64** — the bundled duel host is a Windows/.NET program (it ships with its own runtime)
 * Ready-to-play jar: see **[Releases](../../releases)** — fully self-contained, no MDPro3 or ygopro install
 
@@ -18,17 +18,16 @@ sequences, ace-monster cut-ins, monster closeups and music.
 | **Summons** | Six sequences (Fusion / Synchro / Xyz / Link / Ritual / Pendulum) using Master Duel's own meshes and measured timings |
 | **Presentation** | 497 ace-monster cut-ins (real Spine animations), 11,091 closeups, 110 BGM tracks, 2,443 sound effects |
 | **Prompts** | Every decision window — select, place, position, chain, sort, material, option, yes/no — as Minecraft-styled panels with card art |
-| **Survival** | Crafting recipes for Card Case, Duel Field, AI Deck and Music Settings |
+| **Survival** | Crafting recipes for Card Case, Duel Field, AI Deck, Music Settings and Duel Appearance |
 
-## Source update (0.3.0)
+## Duel appearance in 0.4.0
 
-The Forge sources in `mod/` target Minecraft 1.20.1 and Forge 47.4.29. This update incorporates the recovered 0.2.0 code and the 0.3.0 duel-session, networking and host changes. Build the host with the .NET 8 SDK using `dotnet build tools/duel_host/duel_host.csproj -c Release`. The packaged assets for earlier releases are distributed separately.
+Craft **Duel Appearance** with one paper and one blue dye. Right-click it to choose from 48 MDPro3 fields plus the classic field, and 256 sleeves plus the original card back. Save the selection to use it when placing a field or playing a deck. Each player can also choose to use the field item's theme and the card case's sleeve. Special-finish sleeves use static artwork.
 
-## Install the packaged 0.1.0 release
+## Install 0.4.0
 
-1. Install Minecraft 1.20.1 with Forge 47.4.20 — on the **client** *and* the **server** (singleplayer
-   counts; the duel runs on the server side).
-2. Drop `mdpromod-0.1.0.jar` into `mods/`.
+1. Install Minecraft 1.20.1 with Forge 47.4.29.
+2. Download `mdpromod-0.4.0.jar` from [Releases](../../releases/latest). Replace your previous MDProMod jar in `mods/` and restart the game. Multiplayer clients and servers must use the same version.
 3. First launch unpacks its assets into `<game dir>/mdpromod/` — about 26,500 files / 396 MB / ~35 seconds.
    A progress readout scrolls on the action bar and chat says so when it is done. Deleting that folder is
    safe: it is rebuilt from the jar.
@@ -45,7 +44,7 @@ The Forge sources in `mod/` target Minecraft 1.20.1 and Forge 47.4.29. This upda
 ```powershell
 # Java mod — JDK 17, Gradle wrapper included
 cd mod
-.\gradlew.bat build                       # -> mod/build/libs/mdpromod-0.1.0.jar
+.\gradlew.bat build                       # -> mod/build/libs/mdpromod-0.4.0.jar
 
 # C# duel host — any .NET 8 SDK (a local copy lives in tools/dotnet)
 .\..\tools\dotnet\dotnet.exe publish ..\tools\duel_host\duel_host.csproj -c Release

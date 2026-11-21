@@ -46,7 +46,7 @@ public class DecisionScreen extends Screen implements RequiredAnswer {
         int left = this.width / 2 - boxW / 2;
         int top = this.panelTop;
         McPanel.panel(graphics, left, top, left + boxW, top + this.panelH);
-        graphics.drawCenteredString(this.font, "发动确认", this.width / 2, top + 8, 4210752);
+        graphics.drawCenteredString(this.font, this.function == 12 ? "发动确认" : "决斗确认", this.width / 2, top + 8, 4210752);
         List<FormattedCharSequence> lines = this.font.split(Component.literal(this.question), this.panelW - 24);
 
         for (int i = 0; i < lines.size(); i++) {

@@ -17,6 +17,10 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
     private final String hint;
     private final boolean cancelable;
     private final boolean fieldFirst;
+    private final java.util.UUID duel;
+    private final long prompt;
+    private final boolean attackTarget;
+    private final DuelControlScreen returnPanel;
     private final int min;
     private final int max;
     private final List<Integer> chosen = new ArrayList<>();
@@ -46,15 +50,42 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
     }
 
     public SelectCardScreen(int[] codes, int min, int max, int[] addrs, int viewerSeat, String hint, boolean cancelable, boolean fieldFirst) {
-        super(Component.literal("选择卡片"));
+        this(codes, min, max, addrs, viewerSeat, hint, cancelable, fieldFirst, null, 0, false, null);
+    }
+
+    SelectCardScreen(ModNetwork.SelectList m, DuelControlScreen panel) {
+        this(m.codes(), m.min(), m.max(), m.addrs(), m.viewerSeat(), m.hint(), m.cancelable(), m.fieldFirst(),
+            m.duel(), m.prompt(), m.attackTarget(), panel);
+    }
+
+    private SelectCardScreen(int[] codes, int min, int max, int[] addrs, int viewerSeat, String hint, boolean cancelable,
+                             boolean fieldFirst, java.util.UUID duel, long prompt, boolean attackTarget, DuelControlScreen panel) {
+        super(Component.literal(attackTarget ? "选择攻击目标" : "选择卡片"));
+        this.duel = duel;
+        this.prompt = prompt;
+        this.attackTarget = attackTarget;
+        this.returnPanel = panel;
         this.codes = codes == null ? new int[0] : codes;
         this.addrs = addrs == null ? new int[0] : addrs;
         this.viewerSeat = viewerSeat;
-        this.hint = hint == null ? "" : hint;
+        this.hint = attackTarget || hint == null ? "" : hint;
         this.cancelable = cancelable;
         this.fieldFirst = cancelable && fieldFirst;
         this.min = Math.max(0, min);
         this.max = Math.max(this.min, max);
+    }
+
+    DuelControlScreen returnPanel() {
+        return this.returnPanel;
+    }
+
+    private void answer(int[] indices) {
+        ModNetwork.HandSync current = ClientHandBridge.snapshot();
+        java.util.UUID id = duel != null ? duel : current == null ? null : current.duel();
+        long seq = duel != null ? prompt : current == null ? 0 : current.prompt();
+        if (id != null && seq > 0) ModNetwork.sendToServer(new ModNetwork.SelectChoose(indices, id, seq));
+        if (returnPanel != null && returnPanel.isCurrent()) this.minecraft.setScreen(returnPanel);
+        else this.onClose();
     }
 
     private int pages() {
@@ -63,6 +94,20 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
     }
 
     protected void init() {
+        if (this.attackTarget) {
+            int columns = Math.max(1, Math.min(6, (this.width - 20) / 58));
+            int count = Math.max(1, this.codes.length);
+            this.rows = (count + columns - 1) / columns;
+            this.panelW = Math.min(this.width - 8, Math.max(142, Math.min(count, columns) * 58 + 16));
+            this.panelH = this.rows * 82 + (this.cancelable ? 53 : 32);
+            this.panelLeft = (this.width - this.panelW) / 2;
+            this.panelTop = Math.max(2, (this.height - this.panelH) / 2);
+            this.gridLeft = (this.width - Math.min(count, columns) * 58) / 2 + 2;
+            this.gridTop = this.panelTop + 24;
+            if (this.cancelable) this.addRenderableWidget(Button.builder(Component.literal("取消选择"), b -> this.cancelSelection())
+                .bounds(this.width / 2 - 39, this.gridTop + this.rows * 82, 78, 18).build());
+            return;
+        }
         this.rows = Math.max(1, (this.height - (this.hint.isEmpty() ? 100 : 120)) / 82);
         this.panelW = Math.min(Math.max(this.width - 40, 300), 358);
         this.panelH = Math.min(Math.max(this.height - 40, 200), this.rows * 82 + (this.hint.isEmpty() ? 64 : 80));
@@ -93,14 +138,18 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
         }
     }
 
+    private int columns() {
+        return this.attackTarget ? Math.max(1, Math.min(6, (this.width - 20) / 58)) : COLS;
+    }
+
     private void cancelSelection() {
         if (this.cancelable) {
-            ModNetwork.sendToServer(new ModNetwork.SelectChoose(new int[]{-1}));
-            this.onClose();
+            answer(new int[]{-1});
         }
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (this.attackTarget) return false;
         this.page = Math.max(0, Math.min(this.pages() - 1, this.page - (int)Math.signum(delta)));
         return true;
     }
@@ -124,8 +173,7 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
         if (this.chosen.size() >= this.min) {
             ClientDuelAudio.playUi("SE_DUEL_DECIDE");
             int[] indices = this.chosen.stream().mapToInt(Integer::intValue).toArray();
-            ModNetwork.sendToServer(new ModNetwork.SelectChoose(indices));
-            this.onClose();
+            answer(indices);
         }
     }
 
@@ -135,8 +183,8 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
             int start = this.page * perPage;
 
             for (int i = 0; i < perPage && start + i < this.codes.length; i++) {
-                int x = this.gridLeft + i % 6 * 58;
-                int y = this.gridTop + i / 6 * 82;
+                int x = this.gridLeft + i % columns() * 58;
+                int y = this.gridTop + i / columns() * 82;
                 if (McPanel.inside(mouseX, mouseY, x, y, 54, 78)) {
                     this.toggle(start + i);
                     return true;
@@ -152,7 +200,8 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
         McPanel.panel(graphics, this.panelLeft, this.panelTop, this.panelLeft + this.panelW, this.panelTop + this.panelH);
         graphics.drawCenteredString(
             this.font,
-            "选择卡片　已选 " + this.chosen.size() + " / " + this.min + ".." + this.max + "　（第 " + (this.page + 1) + "/" + this.pages() + " 页）",
+            this.attackTarget ? this.getTitle().getString()
+                : this.getTitle().getString() + "　已选 " + this.chosen.size() + " / " + this.min + ".." + this.max + "　（第 " + (this.page + 1) + "/" + this.pages() + " 页）",
             this.panelLeft + this.panelW / 2,
             this.panelTop + 8,
             4210752
@@ -165,12 +214,18 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
         int start = this.page * perPage;
 
         for (int i = 0; i < perPage && start + i < this.codes.length; i++) {
-            int x = this.gridLeft + i % 6 * 58;
-            int y = this.gridTop + i / 6 * 82;
+            int x = this.gridLeft + i % columns() * 58;
+            int y = this.gridTop + i / columns() * 82;
             boolean picked = this.chosen.contains(start + i);
             McPanel.cardInSlot(graphics, this.codes[start + i], x, y, picked);
             if (start + i < this.addrs.length) {
                 ClientCardMarkers.drawGuiMark(graphics, x, y, 54, 78, ClientCardMarkers.markAt(this.addrs[start + i]));
+                if (this.attackTarget) {
+                    int addr = this.addrs[start + i];
+                    String zone = DuelLocation.monsterZone(addr & 255, (addr >> 16 & 1) == this.viewerSeat);
+                    graphics.fill(x, y + 65, x + 54, y + 78, 0xdb152029);
+                    graphics.drawCenteredString(this.font, zone, x + 27, y + 67, -1);
+                }
             }
 
             if (picked) {
@@ -179,8 +234,8 @@ public class SelectCardScreen extends Screen implements RequiredAnswer {
         }
 
         for (int i = 0; i < perPage && start + i < this.codes.length; i++) {
-            int x = this.gridLeft + i % 6 * 58;
-            int y = this.gridTop + i / 6 * 82;
+            int x = this.gridLeft + i % columns() * 58;
+            int y = this.gridTop + i / columns() * 82;
             if (McPanel.inside(mouseX, mouseY, x, y, 54, 78)) {
                 int index = start + i;
                 int code = this.codes[index];

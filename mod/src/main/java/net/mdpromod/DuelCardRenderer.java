@@ -16,7 +16,7 @@ public class DuelCardRenderer extends EntityRenderer<DuelCardEntity> {
     }
 
     public ResourceLocation getTextureLocation(DuelCardEntity entity) {
-        return CardTextureCache.CARD_BACK;
+        return CardBacks.texture(entity.cardBack());
     }
 
     public void render(DuelCardEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
@@ -36,10 +36,15 @@ public class DuelCardRenderer extends EntityRenderer<DuelCardEntity> {
                 poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
             }
 
-            ResourceLocation texture = entity.isFaceUp() ? CardTextureCache.get(entity.getCardCode(), entity.isDisabled()) : CardTextureCache.CARD_BACK;
+            ResourceLocation texture = entity.isFaceUp() ? CardTextureCache.get(entity.getCardCode(), entity.isDisabled()) : getTextureLocation(entity);
             poseStack.translate(0.0, 0.03, 0.0);
-            poseStack.mulPose(Axis.XP.rotationDegrees(entity.isFaceUp() ? -90.0F : 90.0F));
-            ClientDuelAnimationRenderer.drawCard(poseStack, buffer, texture, 0.859375F, 1.25F, packedLight);
+            if (entity.pendulumScale() >= 0 && entity.isFaceUp()) {
+                ClientPendulumEffects.renderScale(poseStack, buffer, entity, partialTicks);
+                poseStack.translate(0, 0.625, 0);
+            } else {
+                poseStack.mulPose(Axis.XP.rotationDegrees(entity.isFaceUp() ? -90.0F : 90.0F));
+            }
+            ClientDuelAnimationRenderer.drawCard(poseStack, buffer, texture, getTextureLocation(entity), 0.859375F, 1.25F, packedLight);
             poseStack.popPose();
             super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }

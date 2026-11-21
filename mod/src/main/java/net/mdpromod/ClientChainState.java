@@ -20,13 +20,15 @@ public final class ClientChainState {
     private static int fieldEntityId = -1;
     private static int[] codes = new int[0];
     private static int resolving;
+    private static int[] owners = new int[0];
     private static int lastCount = -1;
     private static long changedAt;
 
     private ClientChainState() {
     }
 
-    public static void apply(int fieldId, int[] newCodes, int newResolving) {
+    public static void apply(int fieldId, int[] newCodes, int newResolving, int[] ownerSides) {
+        owners = ownerSides;
         if (newCodes != null && codes.length != newCodes.length) {
             changedAt = System.currentTimeMillis();
         }
@@ -56,7 +58,9 @@ public final class ClientChainState {
                     poses.translate(offset, 0.0F, 0.0F);
                     poses.mulPose(Axis.XP.rotationDegrees(15.0F));
                     poses.scale(pop, pop, pop);
-                    ClientDuelAnimationRenderer.drawCard(poses, buffer, CardTextureCache.get(codes[i]), 0.55F, 0.8F, 15728880);
+                    int side = i < owners.length ? owners[i] : -1;
+                    var back = CardBacks.texture(side < 0 ? 0 : field.cardBack(side));
+                    ClientDuelAnimationRenderer.drawCard(poses, buffer, codes[i] > 0 ? CardTextureCache.get(codes[i]) : back, back, 0.55F, 0.8F, 15728880);
                     poses.popPose();
                     poses.pushPose();
                     poses.translate(field.getX() - cam.x, field.getY() - cam.y + 1.5, field.getZ() - cam.z);

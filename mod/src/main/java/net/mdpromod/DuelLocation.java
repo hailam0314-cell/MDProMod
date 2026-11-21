@@ -13,13 +13,18 @@ final class DuelLocation {
         return switch (location) {
             case 1 -> who + "卡组";
             case 2 -> who + "手牌";
-            case 4 -> sequence < 5 ? who + "怪兽区" + (sequence + 1) : "额外怪兽区";
+            case 4 -> sequence < 5 ? who + monsterZone(sequence, true) : monsterZone(sequence, controller == viewerSeat);
             case 8 -> sequence == 5 ? who + "场地魔法区" : who + "魔陷区" + (sequence + 1);
             case 16 -> who + "墓地";
             case 32 -> who + "除外区";
             case 64 -> who + "额外卡组";
             default -> who + "区域 " + location + "-" + sequence;
         };
+    }
+
+    static String monsterZone(int slot, boolean own) {
+        if (slot < 5) return "怪兽区" + (slot + 1);
+        return (slot == 5) == own ? "左额外怪兽区" : "右额外怪兽区";
     }
 
     static String tooltipLine(int packed, int viewerSeat) {

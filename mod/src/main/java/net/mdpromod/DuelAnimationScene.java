@@ -64,6 +64,12 @@ final class DuelAnimationScene {
             .toArray();
     }
 
+    List<DuelVisualState.Card> monsters(int side) {
+        return this.cards.values().stream()
+            .filter(c -> c.address().controller() == side && c.address().location() == 4)
+            .sorted(Comparator.comparingInt(c -> c.address().sequence())).toList();
+    }
+
     int[] publicCodesIn(int side, int location) {
         return this.cards
             .values()
@@ -149,7 +155,7 @@ final class DuelAnimationScene {
         } else if ((this.materialReason & 1048576) != 0) {
             return 4;
         } else {
-            return (this.materialReason & 4194304) != 0 ? 5 : -1;
+            return -1;
         }
     }
 
@@ -173,7 +179,7 @@ final class DuelAnimationScene {
                 } else if ((type & 128) != 0 && (this.materialReason & 1048576) != 0) {
                     return 4;
                 } else {
-                    return (type & 16777216) != 0 && (this.materialReason & 4194304) != 0 ? 5 : -1;
+                    return -1;
                 }
             }
         }
@@ -185,6 +191,17 @@ final class DuelAnimationScene {
 
     private int play(ServerLevel level, DuelFieldEntity field, DuelVisualState.Event e) {
         DuelVisualState.Card card = e.card();
+        if (e.kind().equals("pendulum_scales")) {
+            Vec3 center = field.position();
+            float orientation = yaw(field, e.from());
+            ModNetwork.sendNear(level, center, 128.0, new ModNetwork.PendulumScales(field.getId(), center,
+                orientation, card.code(), e.target().code(), e.fromCount(), e.toCount(), e.from().sequence() == 0));
+            this.audio.summon(level, field, 5, 0, 0, center);
+            if (e.from().sequence() == 0) {
+                this.audio.timeline(level, field, "prefab", "SummonPendulumScaleSet", center, 0, 0);
+            }
+            return SummonTiming.summonMs(5);
+        }
         if (card == null) {
             if (e.kind().startsWith("audio_")) {
                 return this.audio.semantic(level, field, e);
@@ -201,12 +218,13 @@ final class DuelAnimationScene {
         } else {
             DuelVisualState.Address from = e.from();
             DuelVisualState.Address to = e.to();
-            String kind = e.kind();
+            boolean pendulum = e.kind().equals("pendulum_summon");
+            String kind = pendulum ? "special_summon" : e.kind();
             this.pendingDelayMs = 0;
             this.holdMs = 0;
             long reason = e.reason();
             if ((reason & 8L) != 0L) {
-                int bits = (int)(reason & 276692992L);
+                int bits = (int)(reason & 272498688L);
                 if (bits != 0) {
                     this.materialReason |= bits;
                     this.materialReasonAt = System.nanoTime() / 1000000L;
@@ -350,7 +368,7 @@ final class DuelAnimationScene {
                         }
                     }
 
-                    if (relocation || !kind.equals("summon") && !kind.equals("special_summon") && !kind.equals("set")) {
+                    if (pendulum || relocation || !kind.equals("summon") && !kind.equals("special_summon") && !kind.equals("set")) {
                         int duration = switch (kind) {
                             case "draw", "search" -> 520;
                             case "summon", "special_summon", "flip_summon" -> 660;
@@ -375,8 +393,8 @@ final class DuelAnimationScene {
                         }
 
                         if (kind.equals("summon") || kind.equals("special_summon")) {
-                            int fxKind = this.summonFxKind(card.code());
-                            audioSummonKind = fxKind;
+                            int fxKind = pendulum ? -1 : this.summonFxKind(card.code());
+                            audioSummonKind = pendulum ? 5 : fxKind;
                             int cutinMs = CutinRoster.durationMs(card.code());
                             if (fxKind >= 0) {
                                 Vec3 center = field.position().add(0.0, 0.12, 0.0);
@@ -436,7 +454,7 @@ final class DuelAnimationScene {
                                     )
                                 );
                                 this.pendingDelayMs = cutinMs;
-                                this.holdMs = Math.max(this.holdMs, cutinMs);
+                                this.holdMs = Math.max(this.holdMs, cutinMs + (pendulum ? duration : 0));
                                 LoggerFactory.getLogger("mdpromod").info("Cut-in: card={} 先演出 {}ms 再落地", card.code(), cutinMs);
                             }
                         }
@@ -488,7 +506,13 @@ final class DuelAnimationScene {
                                 destination = source;
                         }
 
-                        this.send(level, field, card, kind, source, destination, from, to, duration, hide, audience, forcePublic);
+                        String visual = pendulum ? "pendulum_summon" : kind;
+                        if (card.pendulumScale() >= 0) {
+                            if (kind.equals("move")) visual = "scale_place";
+                            if (kind.equals("effect")) visual = "scale_effect";
+                        }
+                        this.send(level, field, card, visual,
+                            source, destination, from, to, duration, hide, audience, forcePublic);
                         this.audio.card(level, field, e, kind, source, destination, duration, this.pendingDelayMs, audioSummonKind);
                         if (this.opening && kind.equals("draw")) {
                             this.openingDrew = true;
@@ -524,6 +548,16 @@ final class DuelAnimationScene {
         return side == 1 ? this.seat1 : this.seat0;
     }
 
+    void refreshCardBacks(DuelFieldEntity field) {
+        for (var entry : entities.entrySet()) {
+            var card = cards.get(entry.getKey());
+            if (card == null) continue;
+            int back = field.cardBack(card.ownerSide());
+            if (entry.getValue() instanceof HandCardEntity hand) hand.setCardBack(back);
+            else if (entry.getValue() instanceof DuelCardEntity placed) placed.setCardBack(back);
+        }
+    }
+
     private void reconcile(ServerLevel level, DuelFieldEntity field) {
         this.entities.entrySet().removeIf(entry -> {
             if (this.cards.containsKey(entry.getKey())) {
@@ -534,6 +568,10 @@ final class DuelAnimationScene {
             return true;
         });
 
+        boolean[] rightScales = new boolean[2];
+        for (DuelVisualState.Card c : this.cards.values()) {
+            if (c.pendulumScale() >= 0 && !c.address().leftScaleSlot()) rightScales[c.address().controller()] = true;
+        }
         for (DuelVisualState.Card card : this.cards.values()) {
             DuelVisualState.Address at = card.address();
             Entity entity = this.entities.get(card.id());
@@ -565,6 +603,7 @@ final class DuelAnimationScene {
                     }
 
                     h.configure(field.getUUID(), ownerText, at.controller(), at.sequence());
+                    h.setCardBack(field.cardBack(card.ownerSide()));
                     h.setPrivateCode(card.code());
                     h.setRevealed(card.publicKnown());
                     h.setCardCode(card.publicKnown() ? card.code() : 0);
@@ -583,12 +622,14 @@ final class DuelAnimationScene {
                     }
 
                     boolean face = publicFace(card);
+                    d.setCardBack(field.cardBack(card.ownerSide()));
                     d.configureDuel(field.getUUID(), ownerText, card.code());
                     d.setCardCode(face ? card.code() : 0);
                     d.setFaceUp(face);
                     d.setDefense(defense(at));
                     d.setZoneId(zoneId(at));
                     d.setDisabled(card.disabled());
+                    d.setPendulumScale(card.pendulumScale(), card.pendulumScale() >= 0 && at.leftScaleSlot() && rightScales[at.controller()]);
                     d.moveTo(position.x, position.y, position.z, yaw, 0.0F);
                     if (entity == null) {
                         level.addFreshEntity(d);
@@ -663,7 +704,8 @@ final class DuelAnimationScene {
                             duration,
                             this.pendingDelayMs,
                             hide,
-                            field.getYRot()
+                            field.getYRot(),
+                            field.cardBack(card.ownerSide())
                         )
                     );
                 }
